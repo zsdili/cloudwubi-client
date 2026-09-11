@@ -24,7 +24,7 @@ SRCS = $(SRC_DIR)/main.c \
 
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-.PHONY: all clean size help
+.PHONY: all clean size test check-size help
 
 all: $(TARGET)
 
@@ -43,5 +43,25 @@ size: $(TARGET)
 	@echo "----------------------------"
 	@echo "目标：小于 800KB"
 
+# 运行单元测试（CI 使用）
+test: $(TARGET)
+	$(CC) -std=c99 -O2 -Isrc -o $(OBJ_DIR)/test_engine \
+		tests/test_engine.c \
+		$(SRC_DIR)/wubi_engine.c \
+		$(SRC_DIR)/lru_cache.c \
+		$(SRC_DIR)/json_parser.c
+	./$(OBJ_DIR)/test_engine
+
+# 强制校验包体 < 800KB（CI 硬性门禁，超限返回非0）
+check-size: $(TARGET)
+	@size=$$(stat -c %s $(TARGET) 2>/dev/null || stat -f %z $(TARGET)); \
+	echo "二进制体积: $$size 字节"; \
+	if [ "$$size" -ge 819200 ]; then \
+		echo "❌ 超过 800KB 上限，构建失败！"; \
+		exit 1; \
+	else \
+		echo "✅ 体积达标（< 800KB）"; \
+	fi
+
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	rm -rf $(OBJ_DIR) $(TARGET) $(TARGET)_offline

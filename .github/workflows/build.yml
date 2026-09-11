@@ -1,0 +1,70 @@
+name: Build & Test CloudWubi Client
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 编译 + 体积门禁 + 单元测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GCC
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc
+
+      - name: 编译（-Os 体积优化）
+        run: make
+
+      - name: 体积门禁（必须 < 800KB）
+        run: make check-size
+
+      - name: 单元测试
+        run: make test
+
+      - name: 上传编译制品
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudwubi-client-bin
+          path: |
+            cloudwubi_demo
+            cloudwubi_demo_offline
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Release 自动打包
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GCC
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc
+
+      - name: 编译
+        run: make
+
+      - name: 打包发布文件
+        run: |
+          mkdir -p dist
+          cp cloudwubi_demo dist/cloudwubi-client-linux-x86_64
+          tar -czf cloudwubi-client-linux-x86_64.tar.gz -C dist .
+          echo "打包完成"
+
+      - name: 上传到 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cloudwubi-client-linux-x86_64.tar.gz
+          generate_release_notes: true
