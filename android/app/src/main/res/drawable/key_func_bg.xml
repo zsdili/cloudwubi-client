@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔按键样式 v0.4.6：普通键白底深字大圆角（严格对齐参考截图） -->
+<!-- 云五笔功能键样式 v0.4.6：浅紫灰底深字大圆角（严格对齐参考截图功能键色） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#E0E0E0" />
+            <solid android:color="#B0B0C4" />
             <corners android:radius="15dp" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#FFFFFF" />
+            <solid android:color="#C8C8D8" />
             <corners android:radius="15dp" />
         </shape>
     </item>

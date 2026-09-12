@@ -38,7 +38,9 @@ public class CloudKeyboardView extends KeyboardView {
         hintPaint.setTextSize(10 * density);
     }
 
-    /** 上滑符号映射：字母键 -> 数字/标点（0 表示无映射） */
+    /** 上滑符号映射（v0.4.6 严格对齐参考截图）：
+     *  行1 Q→1…P→0；行2 A→~ S→@ D→# F→$ G→% H→& J→* K→( L→)；
+     *  行3 Z→' X→/ C→- V→_ B→: N→; M→` */
     public static int swipeSymbol(Keyboard.Key key) {
         if (key == null || key.codes == null || key.codes.length == 0) return 0;
         int code = key.codes[0];
@@ -53,22 +55,22 @@ public class CloudKeyboardView extends KeyboardView {
             case 105: return '8';  // I
             case 111: return '9';  // O
             case 112: return '0';  // P
-            case 97: return '@';   // A
-            case 115: return '#';  // S
-            case 100: return '$';  // D
-            case 102: return '%';  // F
-            case 103: return '&';  // G
-            case 104: return '*';  // H
-            case 106: return '(';  // J
-            case 107: return ')';  // K
-            case 108: return '!';  // L
-            case 122: return '-';  // Z
-            case 120: return '_';  // X
-            case 99: return '=';   // C
-            case 118: return '+';  // V
-            case 98: return '[';   // B
-            case 110: return ']';  // N
-            case 109: return ';';  // M
+            case 97: return '~';   // A
+            case 115: return '@';  // S
+            case 100: return '#';  // D
+            case 102: return '$';  // F
+            case 103: return '%';  // G
+            case 104: return '&';  // H
+            case 106: return '*';  // J
+            case 107: return '(';  // K
+            case 108: return ')';  // L
+            case 122: return '\''; // Z
+            case 120: return '/';  // X
+            case 99: return '-';   // C
+            case 118: return '_';  // V
+            case 98: return ':';   // B
+            case 110: return ';';  // N
+            case 109: return '`';  // M
             default: return 0;
         }
     }

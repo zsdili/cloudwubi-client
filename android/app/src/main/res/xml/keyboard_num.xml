@@ -23,8 +23,8 @@
         <Key android:codes="57" android:keyLabel="9" android:keyTextColor="#1F2937" />
     </Row>
     <Row android:keyHeight="46dp">
-        <Key android:codes="-103" android:keyLabel="返回" android:keyTextColor="#3B82F6" />
+        <Key android:codes="-103" android:keyLabel="返回" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
         <Key android:codes="48" android:keyLabel="0" android:keyTextColor="#1F2937" />
-        <Key android:codes="-5" android:keyLabel="⌫" android:keyTextColor="#6B7280" android:isRepeatable="true" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" android:isRepeatable="true" />
     </Row>
 </Keyboard>

@@ -52,12 +52,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final boolean GATEWAY_READY =
             !GATEWAY_URL.contains("YOUR-GATEWAY-URL");
 
-    // ===== 功能键编码（与 XML 严格对应） =====
+    // ===== 功能键编码（与 XML 严格对应，v0.4.6 按截图） =====
     private static final int KEY_123 = -101;      // 数字面板
     private static final int KEY_LANG = -102;     // 中/英
     private static final int KEY_SYMBOL = -103;   // 面板返回主键盘
     private static final int KEY_SYM_IN = -104;   // 符号面板
     private static final int KEY_SHIFT = -105;    // ↑ Shift（单击切换/双击锁定大写）
+    private static final int KEY_PUNCT_BANG = -106; // !，双标点循环
+    private static final int KEY_MIC = -107;      // 🎤 语音（占位）
+    private static final int KEY_PUNCT_QM = -108; // ？。双标点循环
     private static final int KEY_SPACE = 32;
     private static final int KB_DELETE = -5;      // Keyboard.KEYCODE_DELETE
     private static final int KB_ENTER = -4;       // Keyboard.KEYCODE_ENTER
@@ -82,6 +85,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     // Shift / Caps（反馈③）
     private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
     private long lastShiftTap = 0L;
+
+    // 双标点循环（v0.4.6：！，/ ？。 键）
+    private boolean bangFirst = true;       // !，键当前输出 ！（再点切 ，）
+    private boolean qmFirst = true;         // ？。键当前输出 ？（再点切 。）
 
     private ClipboardManager clipManager;
     private SharedPreferences prefs;
@@ -127,15 +134,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardView.setOnKeyboardActionListener(this);
         keyboardView.setPreviewEnabled(false);
         keyboardView.setHapticFeedbackEnabled(true);
-        keyboardView.setBackgroundColor(0xFFF3F4F6);
-        // 反馈④：键盘左右留边
+        keyboardView.setBackgroundColor(0xFFE8EBEF);   // 键盘底色对齐截图
+        // 反馈④：键盘左右留边（截图约 4.5% 屏宽）
+        int dp12 = Math.round(12 * getResources().getDisplayMetrics().density);
         int dp6 = Math.round(6 * getResources().getDisplayMetrics().density);
-        int dp4 = Math.round(4 * getResources().getDisplayMetrics().density);
-        keyboardView.setPadding(dp6, dp4, dp6, dp4);
+        keyboardView.setPadding(dp12, dp6, dp12, dp6);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(0xFFF3F4F6);
+        root.setBackgroundColor(0xFFE8EBEF);
         root.addView(candidateView);
         root.addView(keyboardView);
         applyLangLabels();
@@ -215,18 +222,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             int c = k.codes[0];
             if (c == KEY_LANG) {
                 k.label = chineseMode ? "中" : "EN";
-            } else if (c == KEY_123) {
-                String cur = k.label == null ? "" : k.label.toString();
-                if (cur.length() > 3) {        // 行1「？123 / ?123」（含？）
-                    k.label = chineseMode ? "？123" : "?123";
-                }
-                // 行4「123」保持不变
-            } else if (c == 63) {
-                k.label = chineseMode ? "？" : "?";
-            } else if (c == 44) {
-                k.label = chineseMode ? "，" : ",";
             } else if (c == KEY_SYM_IN) {
                 k.label = chineseMode ? "符" : "SYM";
+            } else if (c == KEY_PUNCT_BANG) {
+                k.label = chineseMode ? "！，" : "!,";
+            } else if (c == KEY_PUNCT_QM) {
+                k.label = chineseMode ? "？。" : "?.";
             }
         }
         keyboardView.invalidateAllKeys();
@@ -307,6 +308,19 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 return;
             case KEY_SHIFT:
                 handleShift();
+                return;
+            case KEY_PUNCT_BANG:   // ！，双标点循环
+                commitText(bangFirst ? "！" : "，");
+                bangFirst = !bangFirst;
+                return;
+            case KEY_PUNCT_QM:     // ？。双标点循环
+                commitText(qmFirst ? "？" : "。");
+                qmFirst = !qmFirst;
+                return;
+            case KEY_MIC:          // 🎤 语音占位（开源共建项）
+                candidates.clear();
+                candidates.add("语音输入开发中，欢迎开源共建（GitHub issue）");
+                updateCandidateView();
                 return;
             case KEY_SPACE:
                 commitSpaceOrFirst();
