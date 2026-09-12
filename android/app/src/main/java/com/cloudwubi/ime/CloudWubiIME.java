@@ -88,6 +88,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     @Override
     public void onCreate() {
         super.onCreate();
+        WubiDb.init(this);   // 加载离线词库（res/raw）
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         loadClipHistory();
         try {
