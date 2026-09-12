@@ -112,7 +112,6 @@
         return;
     }
     [_candidateWindow setCandidateData:cands];
-    [_candidateWindow updateCandidateData];
     [_candidateWindow show:kIMKLocateCandidatesBelowHint];
 }
 
