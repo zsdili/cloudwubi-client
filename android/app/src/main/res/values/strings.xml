@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">云五笔</string>
+    <string name="app_version">v0.4.3</string>
+    <string name="app_author">钟志胜</string>
+    <string name="app_qq">175571</string>
 </resources>

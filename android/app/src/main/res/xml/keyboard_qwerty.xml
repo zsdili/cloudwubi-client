@@ -1,59 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔主键盘：3行字母 + 功能行（对齐主流输入法布局，深色主题） -->
+<!-- 云五笔主键盘 v0.4.3：大写字母 + 对齐主流输入法布局（，。居空格两侧，退格/回车充盈） -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="10%p"
-    android:keyHeight="48dp"
-    android:horizontalGap="1.5%p"
+    android:keyHeight="50dp"
+    android:horizontalGap="1.2%p"
     android:verticalGap="4dp"
     android:keyBackground="@drawable/key_bg">
 
-    <!-- 行1：q w e r t y u i o p -->
+    <!-- 行1：Q W E R T Y U I O P -->
     <Row android:keyWidth="10%p">
-        <Key android:codes="113" android:keyLabel="q" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="119" android:keyLabel="w" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="101" android:keyLabel="e" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="114" android:keyLabel="r" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="116" android:keyLabel="t" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="121" android:keyLabel="y" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="117" android:keyLabel="u" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="105" android:keyLabel="i" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="111" android:keyLabel="o" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="112" android:keyLabel="p" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="113" android:keyLabel="Q" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="119" android:keyLabel="W" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="101" android:keyLabel="E" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="114" android:keyLabel="R" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="116" android:keyLabel="T" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="121" android:keyLabel="Y" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="117" android:keyLabel="U" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="105" android:keyLabel="I" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="111" android:keyLabel="O" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="112" android:keyLabel="P" android:keyTextColor="#FFFFFF" />
     </Row>
 
-    <!-- 行2：a s d f g h j k l -->
+    <!-- 行2：A S D F G H J K L -->
     <Row android:keyWidth="11.11%p">
-        <Key android:codes="97" android:keyLabel="a" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="115" android:keyLabel="s" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="100" android:keyLabel="d" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="102" android:keyLabel="f" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="103" android:keyLabel="g" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="104" android:keyLabel="h" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="106" android:keyLabel="j" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="107" android:keyLabel="k" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="108" android:keyLabel="l" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="97" android:keyLabel="A" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="115" android:keyLabel="S" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="100" android:keyLabel="D" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="102" android:keyLabel="F" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="103" android:keyLabel="G" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="104" android:keyLabel="H" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="106" android:keyLabel="J" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="107" android:keyLabel="K" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="108" android:keyLabel="L" android:keyTextColor="#FFFFFF" />
     </Row>
 
-    <!-- 行3：符号 ?! + z x c v b n m + 删除 -->
-    <Row android:keyWidth="9%p">
-        <Key android:codes="-103" android:keyLabel="？" android:keyTextColor="#9CA3AF" />
-        <Key android:codes="122" android:keyLabel="z" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="120" android:keyLabel="x" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="99" android:keyLabel="c" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="118" android:keyLabel="v" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="98" android:keyLabel="b" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="110" android:keyLabel="n" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="109" android:keyLabel="m" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="-5" android:keyLabel="⌫" android:keyTextColor="#9CA3AF" android:isRepeatable="true" />
+    <!-- 行3：符号(进符号面板) + Z X C V B N M + 大退格（充盈） -->
+    <Row android:keyWidth="10%p">
+        <Key android:codes="-104" android:keyLabel="符" android:keyTextColor="#9CA3AF" />
+        <Key android:codes="122" android:keyLabel="Z" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="120" android:keyLabel="X" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="99" android:keyLabel="C" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="118" android:keyLabel="V" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="98" android:keyLabel="B" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="110" android:keyLabel="N" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="109" android:keyLabel="M" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:keyWidth="16%p" android:keyTextColor="#9CA3AF" android:isRepeatable="true" />
     </Row>
 
-    <!-- 行4：功能行 123 | 中/英 | ， | 。 | 空格 | 回车 -->
-    <Row android:keyWidth="10%p" android:keyHeight="44dp">
+    <!-- 行4：123 | 中/英 | ， | 空格(大) | 。 | 回车(充盈) —— ，。分布在空格两侧 -->
+    <Row android:keyWidth="9%p" android:keyHeight="46dp">
         <Key android:codes="-101" android:keyLabel="123" android:keyTextColor="#9CA3AF" />
         <Key android:codes="-102" android:keyLabel="中/英" android:keyTextColor="#60A5FA" />
         <Key android:codes="44" android:keyLabel="，" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="32" android:keyLabel="空格" android:keyWidth="38%p" android:keyTextColor="#9CA3AF" />
         <Key android:codes="46" android:keyLabel="。" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="32" android:keyLabel="空格" android:keyWidth="30%p" android:keyTextColor="#9CA3AF" />
-        <Key android:codes="-4" android:keyLabel="↵" android:keyTextColor="#60A5FA" />
+        <Key android:codes="-4" android:keyLabel="↵" android:keyWidth="16%p" android:keyTextColor="#60A5FA" />
     </Row>
 </Keyboard>
