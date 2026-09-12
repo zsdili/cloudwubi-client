@@ -43,6 +43,7 @@ cloudwubi-client（本仓库）
 | JSON解析 | `src/json_parser.c/h` | 极简解析候选码点数组 |
 | 主程序 | `src/main.c` | 命令行演示（验证端到端链路） |
 | 单元测试 | `tests/test_engine.c` | 19 项核心逻辑测试 |
+| macOS 输入法 | `macos/` | InputMethodKit 封装（阶段6） |
 
 ## 快速开始
 
@@ -89,6 +90,25 @@ $ echo "wq" | ./cloudwubi_demo   # 需要云端网关已部署
 | 单元测试 | 19 项核心逻辑测试 |
 | 制品上传 | 每次构建产出 `cloudwubi-client-bin` |
 | Release | 打 tag（v*）自动打包发布 |
+
+## macOS 输入法（阶段6）
+
+`macos/` 目录包含 InputMethodKit 输入法封装（查询引擎 + IMK 控制器 + .app 打包）：
+
+```bash
+cd macos
+make test        # 查询引擎单元测试（13项，离线可跑）
+make build-app   # 编译并打包 CloudWubi.app
+```
+
+| 组件 | 状态 |
+| ---- | ---- |
+| C 内核 macOS 编译 | ✅ CI 实测（4,512 字节） |
+| 查询引擎（CWQueryEngine） | ✅ 13 项单测通过 |
+| IMK 控制器 + .app 打包 | ✅ CI 实测（可执行 60,280 字节，.app 64KB） |
+| 真机输入体验（弹出/上屏） | ⚠️ 待 macOS 实机验证 |
+
+详见 [macos/README.md](macos/README.md)
 
 ## 设计原则
 
