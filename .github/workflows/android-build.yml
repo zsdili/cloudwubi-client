@@ -1,0 +1,50 @@
+name: Android Build
+
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android-build.yml']
+  workflow_dispatch:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: 构建 Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 安装 Android SDK 组件
+        run: |
+          echo "y" | sdkmanager --install "build-tools;34.0.0" "platforms;android-33" 2>/dev/null || true
+          ls "$ANDROID_HOME/build-tools/"
+          ls "$ANDROID_HOME/platforms/"
+
+      - name: 构建 APK
+        run: |
+          cd android
+          bash build_apk.sh
+
+      - name: 上传 APK 工件
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudwubi-apk
+          path: android/build-apk/CloudWubi.apk
+
+      - name: 上传 Release 资产（tag 触发时）
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          gh release upload "$TAG" android/build-apk/CloudWubi.apk --clobber

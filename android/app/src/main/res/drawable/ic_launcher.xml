@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 云五笔应用图标：简约"五"字设计（矢量，零图片资源） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- 背景圆角方块 -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M4,4 h40 a4,4 0 0 1 4,4 v40 a4,4 0 0 1 -4,4 h-40 a4,4 0 0 1 -4,-4 v-40 a4,4 0 0 1 4,-4 z" />
+    <!-- 白色"五"字笔画（横） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,12 h24 v4 h-24 z" />
+    <!-- 中横 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,22 h18 v4 h-18 z" />
+    <!-- 底横 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,32 h24 v4 h-24 z" />
+    <!-- 竖 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22,12 h4 v24 h-4 z" />
+</vector>
