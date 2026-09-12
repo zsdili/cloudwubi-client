@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/**'
       - 'Makefile'
+      - 'macos/**'
       - '.github/workflows/macos-build.yml'
   pull_request:
     branches: [main]
