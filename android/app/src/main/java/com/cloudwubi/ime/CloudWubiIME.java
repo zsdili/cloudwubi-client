@@ -120,6 +120,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardMain = new Keyboard(this, R.xml.keyboard_qwerty);
         keyboardNum = new Keyboard(this, R.xml.keyboard_num);
         keyboardSymbols = new Keyboard(this, R.xml.keyboard_sym);
+        // shiftLabel 需代码设置（XML 无此属性）：字母键大写显示依赖它
+        for (Keyboard.Key k : keyboardMain.getKeys()) {
+            int c = k.codes[0];
+            if (c >= 'a' && c <= 'z') {
+                k.shiftLabel = String.valueOf(Character.toUpperCase((char) c));
+            }
+        }
         keyboardView = new CloudKeyboardView(this, null);
         keyboardView.setKeyboard(keyboardMain);
         keyboardView.setOnKeyboardActionListener(this);
