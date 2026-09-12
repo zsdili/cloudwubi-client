@@ -29,9 +29,9 @@ import java.util.List;
  *   2. 核心算力在云端：动态构词 + AI 排序
  *   3. 断网降级：本地一级简码兜底（25 个高频字）
  *   4. 候选规则（用户固化）：
- *      1码 → 高频单字；2码 → 单字再二字词；上次选中置顶；3码 → 预测第4码词组
+ *      1码 → 高频单字；2码 → 先单字再二字词；上次选中置顶；3码 → 预测第4码词组
  */
-public class CloudWubiIME extends InputMethodService {
+public class CloudWubiIME extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
     /** 云端网关地址（部署后替换，默认本地演示） */
     private static final String GATEWAY_URL =
@@ -52,20 +52,72 @@ public class CloudWubiIME extends InputMethodService {
     private final StringBuilder composingCode = new StringBuilder();
     private List<String> candidates = new ArrayList<>();
     private TextView candidateView;
+    private KeyboardView keyboardView;
+    private Keyboard keyboard;
 
     @Override
     public View onCreateInputView() {
         candidateView = new TextView(this);
         candidateView.setTextSize(18);
-        candidateView.setPadding(12, 8, 12, 8);
+        candidateView.setPadding(12, 10, 12, 10);
         candidateView.setTextColor(0xFF333333);
+        candidateView.setBackgroundColor(0xFFFFFFFF);
+
+        // 软键盘（数字选字行 + 五笔26键）
+        keyboard = new Keyboard(this, R.xml.keyboard_qwerty);
+        keyboardView = new KeyboardView(this);
+        keyboardView.setKeyboard(keyboard);
+        keyboardView.setOnKeyboardActionListener(this);
+        keyboardView.setPreviewEnabled(false);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFFF5F5F5);
         root.addView(candidateView);
+        root.addView(keyboardView);
         return root;
     }
+
+    // ===== KeyboardView.OnKeyboardActionListener =====
+
+    @Override
+    public void onKey(int primaryCode, int[] keyCodes) {
+        if (primaryCode >= 'a' && primaryCode <= 'z') {
+            // 五笔编码键（含 z 万能键）
+            appendCode((char) primaryCode);
+        } else if (primaryCode >= '0' && primaryCode <= '9') {
+            // 数字选字：1-9 对应候选1-9，0 对应候选10
+            int idx = (primaryCode == '0') ? 9 : (primaryCode - '1');
+            selectCandidate(idx);
+        } else if (primaryCode == KeyEvent.KEYCODE_DEL) {
+            clearComposing();
+        } else if (primaryCode == KeyEvent.KEYCODE_ENTER) {
+            commitFirstCandidate();
+        }
+    }
+
+    @Override
+    public void onPress(int primaryCode) { }
+
+    @Override
+    public void onRelease(int primaryCode) { }
+
+    @Override
+    public void onText(CharSequence text) { }
+
+    @Override
+    public void swipeLeft() { }
+
+    @Override
+    public void swipeRight() { }
+
+    @Override
+    public void swipeDown() { }
+
+    @Override
+    public void swipeUp() { }
+
+    // ===== 物理键盘支持（可选） =====
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
