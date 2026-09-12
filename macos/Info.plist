@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh_CN</string>
+    <key>CFBundleExecutable</key>
+    <string>CloudWubi</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.cloudwubi.inputmethod</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>CloudWubi</string>
+    <key>CFBundleDisplayName</key>
+    <string>云五笔</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.3.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.13</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 CloudWubi Contributors</string>
+    <key>TSInputMethodConnectionName</key>
+    <string>com.cloudwubi.inputmethod.Connection</string>
+    <key>InputMethodConnectionName</key>
+    <string>com.cloudwubi.inputmethod.Connection</string>
+    <key>InputMethodServerControllerClass</key>
+    <string>CloudWubiController</string>
+    <key>InputMethodServerClass</key>
+    <string>IMKServer</string>
+    <key>ComponentInputModeDict</key>
+    <dict>
+        <key>0</key>
+        <dict>
+            <key>tsInputModeListKey</key>
+            <array>
+                <dict>
+                    <key>tsInputModeKey</key>
+                    <string>com.cloudwubi.inputmethod.wubi</string>
+                    <key>tsInputModePrimaryInScriptKey</key>
+                    <integer>0</integer>
+                    <key>tsInputModeScriptKey</key>
+                    <string>smRoman</string>
+                    <key>tsInputModeNameKey</key>
+                    <string>云五笔</string>
+                </dict>
+            </array>
+            <key>tsInputModeListNameKey</key>
+            <string>云五笔</string>
+        </dict>
+    </dict>
+</dict>
+</plist>

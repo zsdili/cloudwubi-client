@@ -40,6 +40,13 @@ jobs:
         run: |
           make test
 
+      - name: 阶段6 查询引擎测试 + .app 打包
+        run: |
+          cd macos
+          make test
+          make build-app
+          ls -la CloudWubi.app/Contents/MacOS/
+
       - name: 端到端冒烟（本地回环）
         run: |
           # 用 Python 起本地网关做端到端验证
