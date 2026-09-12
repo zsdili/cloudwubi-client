@@ -10,6 +10,7 @@ import android.inputmethodservice.KeyboardView;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
@@ -747,7 +748,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.4.8 反馈①⑦：上屏单字后的联想词组（MRU 置顶 + 本地含字词组 + 云端热点）与英文翻译提示 */
     private void renderAssociateHint() {
-        StringBuilder sb = new StringBuilder();
+        SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(lastCommittedChar).append(" ▸ ");
         if (!candidates.isEmpty()) {
             int shown = Math.min(8, candidates.size());
@@ -757,7 +758,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 sb.append(i + 1).append(".").append(c).append("  ");
                 int e = sb.length();
                 final int idx = i;
-                SpannableString css = new SpannableString(sb.toString());
                 ClickableSpan cs = new ClickableSpan() {
                     @Override
                     public void onClick(View widget) {
@@ -769,12 +769,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                         ds.setUnderlineText(false);
                     }
                 };
-                css.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                if (i == 0) css.setSpan(new ForegroundColorSpan(0xFFF59E0B), s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                if (i == 0) sb.setSpan(new ForegroundColorSpan(0xFFF59E0B), s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } else if (!lastEnHint.isEmpty()) {
             sb.append("EN: ").append(lastEnHint);
-            candidateView.setText(sb.toString());
+            candidateView.setText(sb);
             return;
         } else {
             sb.append("（暂无联想，继续输入编码）");
@@ -782,7 +782,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (!lastEnHint.isEmpty()) {
             sb.append("  EN: ").append(lastEnHint);
         }
-        candidateView.setText(sb.toString());
+        candidateView.setText(sb);
     }
 
     private void setHintText(String text) {
@@ -855,14 +855,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderCandidates() {
         candidateView.setLineSpacing(0f, 1.0f);
         String code = composingCode.toString();
-        StringBuilder sb = new StringBuilder();
-        SpannableString css = new SpannableString("");
+        SpannableStringBuilder sb = new SpannableStringBuilder();
         for (int i = 0; i < candidates.size() && i < 10; i++) {
             String c = candidates.get(i);
             int s = sb.length();
             sb.append(i + 1).append(".").append(c).append("  ");
             int e = sb.length();
-            css = new SpannableString(sb.toString());
             final int idx = i;
             ClickableSpan cs = new ClickableSpan() {
                 @Override
@@ -875,17 +873,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     ds.setUnderlineText(false);
                 }
             };
-            css.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             if (i == 0) {
-                css.setSpan(new ForegroundColorSpan(0xFFF59E0B), s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(new ForegroundColorSpan(0xFFF59E0B), s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
         // 编码括号置于末尾（v0.4.8 反馈⑦）
         int encStart = sb.length();
         sb.append("（").append(code).append("）");
-        css = new SpannableString(sb.toString());
-        css.setSpan(new ForegroundColorSpan(0xFF3B82F6), encStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        candidateView.setText(css);
+        sb.setSpan(new ForegroundColorSpan(0xFF3B82F6), encStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        candidateView.setText(sb);
     }
 
     /** v0.4.8 反馈④：回车——无候选时上屏换行（此前误上屏空格） */
@@ -984,7 +981,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setConnectTimeout(2500);
                 conn.setReadTimeout(2500);
                 String body = "{\"word\":\"" + word + "\"}";
-                try (OutputStream os = conn.getOutputStream()) os.write(body.getBytes("UTF-8"));
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(body.getBytes("UTF-8"));
+                }
                 if (conn.getResponseCode() == 200) {
                     try (InputStream is = conn.getInputStream()) {
                         BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
@@ -1030,7 +1029,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setConnectTimeout(2500);
                 conn.setReadTimeout(2500);
                 String body = "{\"word\":\"" + word + "\",\"en\":true}";
-                try (OutputStream os = conn.getOutputStream()) os.write(body.getBytes("UTF-8"));
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(body.getBytes("UTF-8"));
+                }
                 if (conn.getResponseCode() == 200) {
                     try (InputStream is = conn.getInputStream()) {
                         BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
