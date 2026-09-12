@@ -51,8 +51,8 @@ echo "== 2/6 链接资源+Manifest =="
     --target-sdk-version 33 \
     "$OUT/res.zip"
 
-echo "== 3/6 编译 Java（javac）=="
-find app/src/main/java -name "*.java" > "$OUT/sources.txt"
+echo "== 3/6 编译 Java（javac，含 aapt2 生成的 R.java）=="
+find app/src/main/java "$OUT/gen" -name "*.java" > "$OUT/sources.txt"
 javac -source 1.8 -target 1.8 \
     -classpath "$ANDROID_JAR" \
     -d "$OUT/classes" \

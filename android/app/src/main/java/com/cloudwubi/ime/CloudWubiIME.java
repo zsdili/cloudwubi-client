@@ -65,7 +65,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
         // 软键盘（数字选字行 + 五笔26键）
         keyboard = new Keyboard(this, R.xml.keyboard_qwerty);
-        keyboardView = new KeyboardView(this);
+        keyboardView = new KeyboardView(this, null);
         keyboardView.setKeyboard(keyboard);
         keyboardView.setOnKeyboardActionListener(this);
         keyboardView.setPreviewEnabled(false);
