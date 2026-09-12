@@ -1,15 +1,24 @@
 # Makefile - CloudWubi 端侧内核
-# 目标：编译出 < 800KB 的极简二进制
+# 目标：编译出 < 800KB 的极简二进制（跨 Linux/macOS）
 #
 # 体积优化核心参数：
 #   -Os      : 优化体积
 #   -s       : 剥离符号表
 #   -ffunction-sections -fdata-sections : 让链接器可剔除未用函数/数据
-#   -Wl,--gc-sections                   : 垃圾回收未用段，进一步瘦身
+#   -Wl,--gc-sections（Linux）/ -Wl,-dead_strip（macOS）：回收未用段
 #   -fno-stack-protector                : 关闭栈保护（嵌入式场景可省空间）
 
-CC      ?= gcc
-CFLAGS  ?= -std=c99 -Os -s -ffunction-sections -fdata-sections -Wl,--gc-sections -fno-stack-protector -Wall -Wextra
+CC      ?= cc
+UNAME_S := $(shell uname -s)
+
+# 跨平台体积优化：Linux 用 gc-sections，macOS 用 dead_strip
+ifeq ($(UNAME_S),Darwin)
+GC_SECTIONS := -Wl,-dead_strip
+else
+GC_SECTIONS := -Wl,--gc-sections
+endif
+
+CFLAGS  ?= -std=c99 -Os -s -ffunction-sections -fdata-sections $(GC_SECTIONS) -fno-stack-protector -Wall -Wextra
 LDFLAGS ?=
 
 SRC_DIR = src
