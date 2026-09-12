@@ -30,21 +30,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CloudWubiIME - 云五笔 Android 输入法服务（v0.4.4）
+ * CloudWubiIME - 云五笔 Android 输入法服务（v0.4.5）
  *
- * v0.4.4 修复清单（真机第二轮 8 项反馈）：
- *   ① 全产品统一命名「云五笔」
- *   ② 图标：红底白字印章，上行「云」下行「五笔」，上下左右居中
- *   ③ 词组可输入：词库扩至 4297 词组（4000 常用二字节词 + 46 热词，含云计算/人工智能/算力）
- *   ④ 键盘对齐参考图：留边、圆角、浅色；?123/↑/符/← 功能键布局
- *   ⑤ 字母键上滑输入数字/标点（Q→1 … P→0，A→@ … L→!，Z→- … M→;）
- *   ⑥ 数字面板与符号面板均为九宫格布局（3 列）
- *   ⑦ 版本/版权/联系方式移入「应用信息」界面（AboutActivity + settingsActivity）
- *   ⑧ 剪贴板历史：下拉候选条查看，最新复制或上屏置顶，仅文本、支持段落格式
- *
- * 候选排序（用户固化）：
- *   1码 → 高频单字；2码 → 单字在前、二字词在后；3码 → 单字 + 第4码高频词组预测；
- *   4码 → 词组优先、单字殿后；上次选中词 MRU 置顶
+ * v0.4.5 修复清单（真机第三轮 8 项反馈）：
+ *   ① 键盘布局严格对齐参考截图（键宽比例/留白/圆角；行1 ?123 / 行2 ↑Shift / 行3 符+退格 / 行4 123|中英|，|空格|？|符|回车）
+ *   ② 中/英切换按钮：中文时显示「中」，英文时显示「EN」；英文模式键盘文字切换为英文（?123 / SYM / , / ?）
+ *   ③ ↑ = Shift 键：单击切换大小写，连按两次锁定大写（Caps），再按解锁
+ *   ④ 留边、圆角：键盘左右留白 6dp、键帽圆角 12dp
+ *   ⑤ 功能键布局按截图原样（?123 与 123、符与符 为双入口设计，拇指可达性）
+ *   ⑥ 剪贴板历史仅记录「复制」的文本，不再记录上屏内容
+ *   ⑦ 键帽左上角标注上滑符号（Q 键见「1」、A 键见「@」等）
+ *   ⑧ 候选条显示当前编码：输入 qkhh 时显示「（qkhh）1.钟 2.鈡」
  */
 public class CloudWubiIME extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
@@ -59,12 +55,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int KEY_LANG = -102;     // 中/英
     private static final int KEY_SYMBOL = -103;   // 面板返回主键盘
     private static final int KEY_SYM_IN = -104;   // 符号面板
-    private static final int KEY_UPSWIPE = -105;  // 上滑提示
+    private static final int KEY_SHIFT = -105;    // ↑ Shift（单击切换/双击锁定大写）
     private static final int KEY_SPACE = 32;
     private static final int KB_DELETE = -5;      // Keyboard.KEYCODE_DELETE
     private static final int KB_ENTER = -4;       // Keyboard.KEYCODE_ENTER
 
-    // ===== 剪贴板历史 =====
+    // ===== 剪贴板历史（仅复制文本，v0.4.5） =====
     private static final int CLIP_MAX = 20;
     private static final String PREFS_NAME = "cloudwubi";
     private static final String PREFS_CLIP = "clip_history";
@@ -80,6 +76,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private int panelMode = 0;              // 0=主键盘 1=数字 2=符号
     private boolean clipMode = false;       // 候选条是否显示剪贴板历史
     private String lastSelected = "";       // MRU 置顶
+
+    // Shift / Caps（反馈③）
+    private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
+    private long lastShiftTap = 0L;
 
     private ClipboardManager clipManager;
     private SharedPreferences prefs;
@@ -126,17 +126,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardView.setPreviewEnabled(false);
         keyboardView.setHapticFeedbackEnabled(true);
         keyboardView.setBackgroundColor(0xFFF3F4F6);
+        // 反馈④：键盘左右留边
+        int dp6 = Math.round(6 * getResources().getDisplayMetrics().density);
+        int dp4 = Math.round(4 * getResources().getDisplayMetrics().density);
+        keyboardView.setPadding(dp6, dp4, dp6, dp4);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFFF3F4F6);
         root.addView(candidateView);
         root.addView(keyboardView);
+        applyLangLabels();
+        keyboardView.setShifted(true);   // 中文模式默认大写显示
         updateCandidateView();
         return root;
     }
 
-    // ===== 生命周期：输入窗口关闭时清空未上屏状态 =====
+    // ===== 生命周期 =====
 
     @Override
     public void onFinishInput() {
@@ -150,6 +156,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         panelMode = 0;
         clipMode = false;
         keyboardView.setKeyboard(keyboardMain);
+        keyboardView.setShifted(chineseMode);
         super.onStartInputView(info, restarting);
     }
 
@@ -160,7 +167,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         updateCandidateView();
     }
 
-    // ===== 剪贴板历史 =====
+    // ===== 剪贴板历史（仅复制触发） =====
 
     private final ClipboardManager.OnPrimaryClipChangedListener clipListener = () -> {
         try {
@@ -198,35 +205,78 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
     }
 
+    // ===== 键盘文字：中文「中」/ 英文「EN」及功能键英文（反馈②） =====
+
+    private void applyLangLabels() {
+        if (keyboardMain == null) return;
+        for (Keyboard.Key k : keyboardMain.getKeys()) {
+            int c = k.codes[0];
+            if (c == KEY_LANG) {
+                k.label = chineseMode ? "中" : "EN";
+            } else if (c == KEY_123) {
+                String cur = k.label == null ? "" : k.label.toString();
+                if (cur.length() > 3) {        // 行1「？123 / ?123」（含？）
+                    k.label = chineseMode ? "？123" : "?123";
+                }
+                // 行4「123」保持不变
+            } else if (c == 63) {
+                k.label = chineseMode ? "？" : "?";
+            } else if (c == 44) {
+                k.label = chineseMode ? "，" : ",";
+            } else if (c == KEY_SYM_IN) {
+                k.label = chineseMode ? "符" : "SYM";
+            }
+        }
+        keyboardView.invalidateAllKeys();
+    }
+
+    // ===== Shift / Caps 逻辑（反馈③） =====
+
+    private void handleShift() {
+        long now = System.currentTimeMillis();
+        if (now - lastShiftTap < 350) {
+            shiftState = 2;                    // 双击：锁定大写
+        } else {
+            shiftState = (shiftState == 0) ? 1 : 0;
+        }
+        lastShiftTap = now;
+        keyboardView.setShifted(shiftState > 0);
+    }
+
     // ===== KeyboardView.OnKeyboardActionListener =====
 
     @Override
     public void onKey(int primaryCode, int[] keyCodes) {
         keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
-        // 字母键（大写显示、小写编码与输出）
+        // 字母键
         if (primaryCode >= 'a' && primaryCode <= 'z') {
             if (chineseMode) {
                 appendCode((char) primaryCode);
             } else {
-                commitTextAndClip(String.valueOf((char) primaryCode));
+                char out = (shiftState > 0) ? Character.toUpperCase((char) primaryCode) : (char) primaryCode;
+                commitText(String.valueOf(out));
+                if (shiftState == 1) {          // 单次大写后复位
+                    shiftState = 0;
+                    keyboardView.setShifted(false);
+                }
             }
             return;
         }
         // 数字
         if (primaryCode >= '0' && primaryCode <= '9') {
-            commitTextAndClip(String.valueOf((char) primaryCode));
+            commitText(String.valueOf((char) primaryCode));
             return;
         }
         switch (primaryCode) {
-            case KEY_123:      // 数字九宫格
+            case KEY_123:
                 panelMode = 1;
                 keyboardView.setKeyboard(keyboardNum);
                 return;
-            case KEY_SYM_IN:   // 符号九宫格
+            case KEY_SYM_IN:
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymbols);
                 return;
-            case KEY_SYMBOL:   // 面板返回主键盘
+            case KEY_SYMBOL:
                 panelMode = 0;
                 keyboardView.setKeyboard(keyboardMain);
                 return;
@@ -238,10 +288,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     toggleLang();
                 }
                 return;
-            case KEY_UPSWIPE:  // 上滑提示
-                candidates.clear();
-                candidates.add("上滑字母键可输入数字/标点（Q→1 A→@ Z→- …）");
-                updateCandidateView();
+            case KEY_SHIFT:
+                handleShift();
                 return;
             case KEY_SPACE:
                 commitSpaceOrFirst();
@@ -255,15 +303,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitFirstCandidate();
                 return;
             case 44:
-                commitTextAndClip("，");
+                commitText("，");
                 return;
             case 46:
-                commitTextAndClip("。");
+                commitText("。");
                 return;
             default:
-                // 符号面板/主键盘标点：直接上屏（中文标点自动全角）
                 String s = symbolToText(primaryCode);
-                if (s != null) commitTextAndClip(s);
+                if (s != null) commitText(s);
         }
     }
 
@@ -318,7 +365,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (!chineseMode) {
             composingCode.setLength(0);
             candidates.clear();
+            shiftState = 0;
+            keyboardView.setShifted(false);
+        } else {
+            keyboardView.setShifted(true);
         }
+        applyLangLabels();
         updateCandidateView();
     }
 
@@ -338,10 +390,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
     }
 
-    private void commitTextAndClip(String s) {
+    /** 上屏（v0.4.5：不再写入剪贴板历史，仅系统复制触发历史） */
+    private void commitText(String s) {
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) ic.commitText(s, 1);
-        addClipHistory(s);
     }
 
     /** 码点 -> 上屏文本（中文标点映射全角） */
@@ -473,7 +525,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void updateCandidateView() {
         if (candidateView == null) return;
         if (!chineseMode) {
-            setHintText("中文");
+            setHintText("EN");
             return;
         }
         String code = composingCode.toString();
@@ -482,7 +534,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             return;
         }
         if (code.isEmpty()) {
-            // 空闲态：云五笔 + 剪贴板入口（版本信息已移入应用信息界面）
             SpannableString ss = new SpannableString("云五笔   ▾ 剪贴板");
             ss.setSpan(new ForegroundColorSpan(0xFF9CA3AF), 0, 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             int s = 6, e = ss.length();
@@ -511,12 +562,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setText(ss);
     }
 
-    /** 剪贴板历史列表（最新在前，最多 8 条显示；点击上屏） */
+    /** 剪贴板历史列表（仅复制文本，最新在前，最多 8 条显示；点击上屏） */
     private void renderClipboardList() {
         StringBuilder sb = new StringBuilder();
         sb.append("◀ 返回   ");
         if (clipHistory.isEmpty()) {
-            sb.append("（剪贴板暂无历史，复制文本或上屏内容将自动记录）");
+            sb.append("（剪贴板暂无历史，复制的文本将自动记录）");
         } else {
             sb.append("剪贴板（").append(clipHistory.size()).append("）\n");
             int shown = Math.min(8, clipHistory.size());
@@ -569,10 +620,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setText(css);
     }
 
-    /** 候选列表（1.xxx 2.xxx … 点击选字） */
+    /** 候选列表：反馈⑧ 输入编码显示在括号里（qkhh）1.钟 2.鈡 */
     private void renderCandidates() {
+        String code = composingCode.toString();
         StringBuilder sb = new StringBuilder();
         SpannableString css = new SpannableString("");
+        sb.append("（").append(code).append("）  ");
         for (int i = 0; i < candidates.size() && i < 10; i++) {
             String c = candidates.get(i);
             int s = sb.length();
@@ -596,6 +649,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 css.setSpan(new ForegroundColorSpan(0xFFF59E0B), s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
+        css.setSpan(new ForegroundColorSpan(0xFF3B82F6), 0, code.length() + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setText(css);
     }
 
@@ -614,7 +668,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         } else {
             InputConnection ic = getCurrentInputConnection();
             if (ic != null) ic.commitText(" ", 1);
-            addClipHistory(" ");
         }
     }
 
@@ -625,7 +678,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (ic != null) {
             ic.commitText(text, 1);
         }
-        addClipHistory(text);
         lastSelected = text;   // MRU 置顶
         if (GATEWAY_READY) reportSelection(text);
         composingCode.setLength(0);
