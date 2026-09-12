@@ -120,13 +120,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardMain = new Keyboard(this, R.xml.keyboard_qwerty);
         keyboardNum = new Keyboard(this, R.xml.keyboard_num);
         keyboardSymbols = new Keyboard(this, R.xml.keyboard_sym);
-        // shiftLabel 需代码设置（XML 无此属性）：字母键大写显示依赖它
-        for (Keyboard.Key k : keyboardMain.getKeys()) {
-            int c = k.codes[0];
-            if (c >= 'a' && c <= 'z') {
-                k.shiftLabel = String.valueOf(Character.toUpperCase((char) c));
-            }
-        }
         keyboardView = new CloudKeyboardView(this, null);
         keyboardView.setKeyboard(keyboardMain);
         keyboardView.setOnKeyboardActionListener(this);
@@ -144,7 +137,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         root.addView(candidateView);
         root.addView(keyboardView);
         applyLangLabels();
-        keyboardView.setShifted(true);   // 中文模式默认大写显示
+        applyLetterCase();   // 中文模式默认大写显示
         updateCandidateView();
         return root;
     }
@@ -163,7 +156,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         panelMode = 0;
         clipMode = false;
         keyboardView.setKeyboard(keyboardMain);
-        keyboardView.setShifted(chineseMode);
+        applyLetterCase();
         super.onStartInputView(info, restarting);
     }
 
@@ -237,6 +230,21 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardView.invalidateAllKeys();
     }
 
+    // ===== 字母大小写显示（反馈③：不依赖 shiftLabel，直接切换 label） =====
+
+    private void applyLetterCase() {
+        if (keyboardMain == null) return;
+        boolean upper = chineseMode || shiftState > 0;
+        for (Keyboard.Key k : keyboardMain.getKeys()) {
+            int c = k.codes[0];
+            if (c >= 'a' && c <= 'z') {
+                k.label = upper ? String.valueOf(Character.toUpperCase((char) c))
+                                : String.valueOf((char) c);
+            }
+        }
+        keyboardView.invalidateAllKeys();
+    }
+
     // ===== Shift / Caps 逻辑（反馈③） =====
 
     private void handleShift() {
@@ -247,7 +255,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             shiftState = (shiftState == 0) ? 1 : 0;
         }
         lastShiftTap = now;
-        keyboardView.setShifted(shiftState > 0);
+        applyLetterCase();
     }
 
     // ===== KeyboardView.OnKeyboardActionListener =====
@@ -264,7 +272,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitText(String.valueOf(out));
                 if (shiftState == 1) {          // 单次大写后复位
                     shiftState = 0;
-                    keyboardView.setShifted(false);
+                    applyLetterCase();
                 }
             }
             return;
@@ -373,10 +381,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             composingCode.setLength(0);
             candidates.clear();
             shiftState = 0;
-            keyboardView.setShifted(false);
-        } else {
-            keyboardView.setShifted(true);
         }
+        applyLetterCase();
         applyLangLabels();
         updateCandidateView();
     }
