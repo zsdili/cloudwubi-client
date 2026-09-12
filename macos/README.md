@@ -52,10 +52,29 @@ make check
 
 ## 安装（真机）
 
-1. 构建 CloudWubi.app
-2. 拷贝到 `~/Library/Input Methods/`
-3. 系统设置 → 键盘 → 输入法 → 添加「云五笔」
-4. 首次需在隐私设置授权
+> 一键脚本（推荐）：解决 Gatekeeper 隔离、目录权限、签名验证全部问题
+
+```bash
+# 1. 下载 Release 资产：CloudWubi.app-universal-macos.tar.gz 并解压
+# 2. 运行一键安装（会自动清隔离属性 + 拷贝 + 验证）
+curl -sL https://raw.githubusercontent.com/zsdili/cloudwubi-client/main/macos/install.sh -o /tmp/install.sh
+bash /tmp/install.sh ~/Downloads/CloudWubi.app
+# 3. 必须：注销重登（输入法列表刷新的唯一方式）
+# 4. 系统设置 → 键盘 → 输入法 → + → 添加「云五笔」
+```
+
+**手动安装**：
+1. 下载解压 `CloudWubi.app-universal-macos.tar.gz`（Universal 双架构，Intel/Apple 芯片通用）
+2. 清除隔离属性（否则显示禁止符号）：`xattr -dr com.apple.quarantine CloudWubi.app`
+3. 拷贝到 `/Library/Input Methods/`（需管理员密码）
+4. **注销重登**
+5. 系统设置 → 键盘 → 输入法 → 添加「云五笔」
+6. 首次需在隐私设置授权
+
+**常见问题**：
+- 图标带禁止符号 → 未清隔离属性（执行步骤2）或架构不匹配（确认下载 universal 版）
+- 输入法列表找不到 → 未注销重登
+- 提示无法验证开发者 → 右键 .app → 打开 → 仍要打开
 
 ## 路线
 
