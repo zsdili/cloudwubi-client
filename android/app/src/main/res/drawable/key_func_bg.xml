@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔功能键样式 v0.4.6：浅紫灰底深字大圆角（严格对齐参考截图功能键色） -->
+<!-- 云五笔功能键样式 v0.4.8：浅紫灰底 + 羽化渐变（保持 #C8C8D8 主色） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#B0B0C4" />
+            <gradient android:angle="270" android:startColor="#B4B4C8" android:endColor="#A6A6BC" android:type="linear" />
             <corners android:radius="15dp" />
+            <stroke android:width="1dp" android:color="#1A000000" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#C8C8D8" />
+            <gradient android:angle="270" android:startColor="#CCCCDA" android:endColor="#C0C0D2" android:type="linear" />
             <corners android:radius="15dp" />
+            <stroke android:width="1dp" android:color="#14000000" />
         </shape>
     </item>
 </selector>

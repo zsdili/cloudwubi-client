@@ -1,30 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔数字面板 v0.4.4：九宫格布局（3列） -->
+<!-- 云五笔数字面板 v0.4.8：4 列（数字+运算符），实时计算
+     行1: 1 2 3 +
+     行2: 4 5 6 -
+     行3: 7 8 9 ×
+     行4: 返回 0 ⌫ ÷
+     行5: =（居中，默认带公式上屏） -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
-    android:keyWidth="33%p"
-    android:keyHeight="52dp"
+    android:keyWidth="24.5%p"
+    android:keyHeight="40dp"
     android:horizontalGap="1%p"
-    android:verticalGap="6dp"
+    android:verticalGap="5dp"
     android:keyBackground="@drawable/key_bg">
 
     <Row>
         <Key android:codes="49" android:keyLabel="1" android:keyTextColor="#1F2937" />
         <Key android:codes="50" android:keyLabel="2" android:keyTextColor="#1F2937" />
         <Key android:codes="51" android:keyLabel="3" android:keyTextColor="#1F2937" />
+        <Key android:codes="43" android:keyLabel="+" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
     </Row>
     <Row>
         <Key android:codes="52" android:keyLabel="4" android:keyTextColor="#1F2937" />
         <Key android:codes="53" android:keyLabel="5" android:keyTextColor="#1F2937" />
         <Key android:codes="54" android:keyLabel="6" android:keyTextColor="#1F2937" />
+        <Key android:codes="45" android:keyLabel="-" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
     </Row>
     <Row>
         <Key android:codes="55" android:keyLabel="7" android:keyTextColor="#1F2937" />
         <Key android:codes="56" android:keyLabel="8" android:keyTextColor="#1F2937" />
         <Key android:codes="57" android:keyLabel="9" android:keyTextColor="#1F2937" />
+        <Key android:codes="-203" android:keyLabel="×" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
     </Row>
-    <Row android:keyHeight="46dp">
+    <Row>
         <Key android:codes="-103" android:keyLabel="返回" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
         <Key android:codes="48" android:keyLabel="0" android:keyTextColor="#1F2937" />
         <Key android:codes="-5" android:keyLabel="⌫" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" android:isRepeatable="true" />
+        <Key android:codes="-202" android:keyLabel="÷" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
+    </Row>
+    <Row android:keyWidth="33%p" android:horizontalGap="33.5%p" android:keyHeight="44dp">
+        <Key android:codes="-201" android:keyLabel="=" android:keyTextColor="#FFFFFF" android:keyBackground="@drawable/key_eq_bg" />
     </Row>
 </Keyboard>

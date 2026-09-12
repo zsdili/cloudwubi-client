@@ -79,6 +79,28 @@ public final class WubiDb {
     }
 
     /**
+     * 字后联想（v0.4.8）：上屏某字后，返回本地词库中含该字的词组（最多 12 条）。
+     * 用于「打出任意一个字时，自动显示最近词组 + 带此字的词组」。
+     */
+    public static List<String> queryByChar(String ch) {
+        if (ch == null || ch.length() != 1) return null;
+        ensureIndex();
+        List<String> result = new ArrayList<>();
+        if (phraseIndex != null) {
+            for (List<String> list : phraseIndex.values()) {
+                if (list == null) continue;
+                for (String w : list) {
+                    if (w.indexOf(ch) >= 0 && !result.contains(w)) {
+                        result.add(w);
+                        if (result.size() >= 12) return result;
+                    }
+                }
+            }
+        }
+        return result.isEmpty() ? null : result;
+    }
+
+    /**
      * 候选查询（用户固化的排序规则）：
      *   1码 → 单字；2码 → 单字在前、二字词在后；3码 → 单字；
      *   4码 → 词组优先、单字殿后

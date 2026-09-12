@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔按键样式 v0.4.8：羽化边框（无深色硬边）
-     白底 + 纵向微渐变（顶部亮→底部微暗，模拟柔光）+ 1dp 半透明描边（羽化感） -->
+<!-- 云五笔 = 计算键样式 v0.4.8：品牌蓝底白字 + 羽化渐变 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#E4E6EA" android:endColor="#D6D9DE" android:type="linear" />
+            <gradient android:angle="270" android:startColor="#2563EB" android:endColor="#1D4ED8" android:type="linear" />
             <corners android:radius="15dp" />
             <stroke android:width="1dp" android:color="#1A000000" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#FFFFFF" android:endColor="#F1F3F6" android:type="linear" />
+            <gradient android:angle="270" android:startColor="#3B82F6" android:endColor="#2F6FEE" android:type="linear" />
             <corners android:radius="15dp" />
             <stroke android:width="1dp" android:color="#14000000" />
         </shape>

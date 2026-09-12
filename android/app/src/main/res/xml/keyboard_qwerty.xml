@@ -52,12 +52,12 @@
         <Key android:codes="-5" android:keyLabel="⌫" android:keyWidth="14%p" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" android:isRepeatable="true" />
     </Row>
 
-    <!-- 行4：123 | 中/英 | !, | 🎤(麦克风) | ?。 | 符 | ←(回车宽) -->
+    <!-- 行4：123 | 中/英 | !, | 空格(原🎤，v0.4.8反馈⑤) | ?。 | 符 | ←(回车宽) -->
     <Row android:keyWidth="9%p" android:horizontalGap="0.9%p" android:keyHeight="46dp">
         <Key android:codes="-101" android:keyLabel="123" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
         <Key android:codes="-102" android:keyLabel="中" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
         <Key android:codes="-106" android:keyLabel="!，" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
-        <Key android:codes="-107" android:keyLabel="🎤" android:keyWidth="24%p" android:keyTextColor="#3E3F47" />
+        <Key android:codes="-107" android:keyLabel="空格" android:keyWidth="24%p" android:keyTextColor="#3E3F47" />
         <Key android:codes="-108" android:keyLabel="？。" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
         <Key android:codes="-104" android:keyLabel="符" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
         <Key android:codes="-4" android:keyLabel="←" android:keyWidth="13%p" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />

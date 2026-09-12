@@ -2,6 +2,7 @@ package com.cloudwubi.ime;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
@@ -29,20 +30,22 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * CloudWubiIME - 云五笔 Android 输入法服务（v0.4.5）
+ * CloudWubiIME - 云五笔 Android 输入法服务（v0.4.8）
  *
- * v0.4.5 修复清单（真机第三轮 8 项反馈）：
- *   ① 键盘布局严格对齐参考截图（键宽比例/留白/圆角；行1 ?123 / 行2 ↑Shift / 行3 符+退格 / 行4 123|中英|，|空格|？|符|回车）
- *   ② 中/英切换按钮：中文时显示「中」，英文时显示「EN」；英文模式键盘文字切换为英文（?123 / SYM / , / ?）
- *   ③ ↑ = Shift 键：单击切换大小写，连按两次锁定大写（Caps），再按解锁
- *   ④ 留边、圆角：键盘左右留白 6dp、键帽圆角 12dp
- *   ⑤ 功能键布局按截图原样（?123 与 123、符与符 为双入口设计，拇指可达性）
- *   ⑥ 剪贴板历史仅记录「复制」的文本，不再记录上屏内容
- *   ⑦ 键帽左上角标注上滑符号（Q 键见「1」、A 键见「@」等）
- *   ⑧ 候选条显示当前编码：输入 qkhh 时显示「（qkhh）1.钟 2.鈡」
+ * v0.4.8 修复清单（真机第四轮 8 项反馈）：
+ *   ① 词组智能联想：上屏单字后，最近 3 个选中词组置顶 + 带此字的词组（本地+云端热点）
+ *   ② 退格：全选/部分选中时正确删除选区（此前全选无反应、部分选中只删末字）
+ *   ③ 剪贴板历史行间距加大，易点选
+ *   ④ 回车键无候选时上屏换行（此前误上屏空格）
+ *   ⑤ 🎤 键改为空格键（上屏空格/选首选），移除语音占位提示
+ *   ⑥ 键帽深色边框改为羽化渐变边框
+ *   ⑦ 编码括号移至候选末尾（1.钟 2.鈡（qkhh））；选字后云端提示英文翻译
+ *   ⑧ 数字面板 4 列（左侧 + - × ÷），实时计算并默认「带公式上屏」，长按 = 仅上屏结果
  */
 public class CloudWubiIME extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
@@ -51,15 +54,18 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             "https://1251037126-bglnivgmaf.ap-guangzhou.tencentscf.com";
     private static final boolean GATEWAY_READY = true;
 
-    // ===== 功能键编码（与 XML 严格对应，v0.4.6 按截图） =====
+    // ===== 功能键编码（与 XML 严格对应，v0.4.6 按截图 / v0.4.8 数字面板） =====
     private static final int KEY_123 = -101;      // 数字面板
     private static final int KEY_LANG = -102;     // 中/英
     private static final int KEY_SYMBOL = -103;   // 面板返回主键盘
     private static final int KEY_SYM_IN = -104;   // 符号面板
     private static final int KEY_SHIFT = -105;    // ↑ Shift（单击切换/双击锁定大写）
     private static final int KEY_PUNCT_BANG = -106; // !，双标点循环
-    private static final int KEY_MIC = -107;      // 🎤 语音（占位）
+    private static final int KEY_MIC = -107;      // v0.4.8: 空格键（原🎤语音占位已移除）
     private static final int KEY_PUNCT_QM = -108; // ？。双标点循环
+    private static final int KEY_CALC_EQ = -201;  // 数字面板 = 计算上屏
+    private static final int KEY_CALC_DIV = -202; // 数字面板 ÷
+    private static final int KEY_CALC_MUL = -203; // 数字面板 ×
     private static final int KEY_SPACE = 32;
     private static final int KB_DELETE = -5;      // Keyboard.KEYCODE_DELETE
     private static final int KB_ENTER = -4;       // Keyboard.KEYCODE_ENTER
@@ -68,6 +74,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int CLIP_MAX = 20;
     private static final String PREFS_NAME = "cloudwubi";
     private static final String PREFS_CLIP = "clip_history";
+    private static final String PREFS_PHRASES = "recent_phrases";  // v0.4.8 MRU 词组
 
     private final StringBuilder composingCode = new StringBuilder();
     private List<String> candidates = new ArrayList<>();
@@ -80,6 +87,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private int panelMode = 0;              // 0=主键盘 1=数字 2=符号
     private boolean clipMode = false;       // 候选条是否显示剪贴板历史
     private String lastSelected = "";       // MRU 置顶
+    private String lastCommittedChar = "";  // v0.4.8 最近上屏单字（触发联想）
+    private String lastEnHint = "";         // v0.4.8 最近选字英文翻译提示
+    private List<String> recentPhrases = new ArrayList<>();  // v0.4.8 最近3个选中词组
+    private String calcBuffer = "";         // v0.4.8 数字面板计算表达式
+    private boolean calcFormula = true;     // v0.4.8 默认带公式上屏（长按=仅结果）
 
     // Shift / Caps（反馈③）
     private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
@@ -99,6 +111,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         WubiDb.init(this);   // 加载离线词库（res/raw）
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         loadClipHistory();
+        loadRecentPhrases();
         try {
             clipManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             if (clipManager != null) {
@@ -172,6 +185,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         composingCode.setLength(0);
         candidates.clear();
         clipMode = false;
+        lastCommittedChar = "";
+        lastEnHint = "";
         updateCandidateView();
     }
 
@@ -213,6 +228,75 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
     }
 
+    // ===== v0.4.8 最近选中词组（MRU，最多 3 个，用于字后联想置顶） =====
+
+    private void loadRecentPhrases() {
+        recentPhrases.clear();
+        Set<String> set = prefs.getStringSet(PREFS_PHRASES, new HashSet<>());
+        List<String> tmp = new ArrayList<>(set);
+        for (int i = tmp.size() - 1; i >= 0; i--) recentPhrases.add(tmp.get(i));
+        while (recentPhrases.size() > 3) recentPhrases.remove(recentPhrases.size() - 1);
+    }
+
+    private void rememberPhrase(String phrase) {
+        if (phrase == null || phrase.length() < 2) return;
+        recentPhrases.remove(phrase);
+        recentPhrases.add(0, phrase);
+        while (recentPhrases.size() > 3) recentPhrases.remove(recentPhrases.size() - 1);
+        prefs.edit().putStringSet(PREFS_PHRASES, new HashSet<>(recentPhrases)).apply();
+    }
+
+    // ===== v0.4.8 数字面板四则计算（先乘除后加减，左结合） =====
+
+    private static double calcEval(String expr) {
+        expr = expr.replace('×', '*').replace('÷', '/');
+        List<Double> nums = new ArrayList<>();
+        List<Character> ops = new ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+        for (int i = 0; i < expr.length(); i++) {
+            char c = expr.charAt(i);
+            if (c == '+' || c == '-' || c == '*' || c == '/') {
+                if (cur.length() == 0) return Double.NaN;
+                nums.add(Double.parseDouble(cur.toString()));
+                cur.setLength(0);
+                ops.add(c);
+            } else if (c >= '0' && c <= '9' || c == '.') {
+                cur.append(c);
+            } else {
+                return Double.NaN;
+            }
+        }
+        if (cur.length() == 0) return Double.NaN;
+        nums.add(Double.parseDouble(cur.toString()));
+        // 先乘除
+        for (int i = 0; i < ops.size(); i++) {
+            char op = ops.get(i);
+            if (op == '*' || op == '/') {
+                double a = nums.get(i), b = nums.get(i + 1);
+                double r = (op == '*') ? a * b : (b == 0 ? Double.NaN : a / b);
+                if (Double.isNaN(r)) return Double.NaN;
+                nums.set(i, r);
+                nums.remove(i + 1);
+                ops.remove(i);
+                i--;
+            }
+        }
+        // 再加减（左结合）
+        double acc = nums.get(0);
+        for (int i = 0; i < ops.size(); i++) {
+            char op = ops.get(i);
+            double b = nums.get(i + 1);
+            acc = (op == '+') ? acc + b : acc - b;
+        }
+        return acc;
+    }
+
+    private static String fmtResult(double v) {
+        if (Double.isNaN(v)) return "错误";
+        if (v == Math.rint(v) && Math.abs(v) < 1e15) return String.valueOf((long) v);
+        return String.valueOf(Math.round(v * 1e8) / 1e8);
+    }
+
     // ===== 键盘文字：中文「中」/ 英文「EN」及功能键英文（反馈②） =====
 
     private void applyLangLabels() {
@@ -227,6 +311,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 k.label = chineseMode ? "！，" : "!,";
             } else if (c == KEY_PUNCT_QM) {
                 k.label = chineseMode ? "？。" : "?.";
+            } else if (c == KEY_MIC) {
+                k.label = chineseMode ? "空格" : "space";   // v0.4.8 反馈⑤：空格键
             }
         }
         keyboardView.invalidateAllKeys();
@@ -279,27 +365,38 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
             return;
         }
-        // 数字
+        // 数字（v0.4.8：数字面板进入计算缓冲，其余直接上屏）
         if (primaryCode >= '0' && primaryCode <= '9') {
-            commitText(String.valueOf((char) primaryCode));
+            if (panelMode == 1) {
+                calcBuffer += (char) primaryCode;
+                updateCandidateView();
+            } else {
+                commitText(String.valueOf((char) primaryCode));
+            }
             return;
         }
         switch (primaryCode) {
             case KEY_123:
                 panelMode = 1;
+                calcBuffer = "";
                 keyboardView.setKeyboard(keyboardNum);
+                updateCandidateView();
                 return;
             case KEY_SYM_IN:
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymbols);
                 return;
-            case KEY_SYMBOL:
+            case KEY_SYMBOL:   // 面板返回主键盘（v0.4.8：数字面板有表达式时先确认上屏）
+                if (panelMode == 1 && !calcBuffer.isEmpty()) commitCalc(false);
                 panelMode = 0;
+                calcBuffer = "";
                 keyboardView.setKeyboard(keyboardMain);
+                updateCandidateView();
                 return;
             case KEY_LANG:
                 if (panelMode != 0) {
                     panelMode = 0;
+                    calcBuffer = "";
                     keyboardView.setKeyboard(keyboardMain);
                 } else {
                     toggleLang();
@@ -316,13 +413,26 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitText(qmFirst ? "？" : "。");
                 qmFirst = !qmFirst;
                 return;
-            case KEY_MIC:          // 🎤 语音占位（开源共建项）
-                candidates.clear();
-                candidates.add("语音输入开发中，欢迎开源共建（GitHub issue）");
-                updateCandidateView();
+            case KEY_MIC:          // v0.4.8：空格键（原 🎤 语音占位已移除）
+                commitSpaceOrFirst();
                 return;
             case KEY_SPACE:
                 commitSpaceOrFirst();
+                return;
+            case KEY_CALC_EQ:      // = 计算上屏（默认带公式；纯数字直接上屏数字）
+                commitCalc(true);
+                return;
+            case KEY_CALC_DIV:     // ÷
+                if (panelMode == 1) { calcBuffer += "÷"; updateCandidateView(); }
+                return;
+            case KEY_CALC_MUL:     // ×
+                if (panelMode == 1) { calcBuffer += "×"; updateCandidateView(); }
+                return;
+            case 43:               // +
+                if (panelMode == 1) { calcBuffer += "+"; updateCandidateView(); }
+                return;
+            case 45:               // -
+                if (panelMode == 1) { calcBuffer += "-"; updateCandidateView(); }
                 return;
             case KB_DELETE:
             case KeyEvent.KEYCODE_DEL:
@@ -396,6 +506,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             composingCode.setLength(0);
             candidates.clear();
             shiftState = 0;
+            lastCommittedChar = "";
+            lastEnHint = "";
         }
         applyLetterCase();
         applyLangLabels();
@@ -409,12 +521,26 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     private void handleBackspace() {
+        // v0.4.8：数字面板优先删计算表达式
+        if (panelMode == 1 && !calcBuffer.isEmpty()) {
+            calcBuffer = calcBuffer.substring(0, calcBuffer.length() - 1);
+            updateCandidateView();
+            return;
+        }
         if (composingCode.length() > 0) {
             composingCode.deleteCharAt(composingCode.length() - 1);
             queryCandidates();
         } else {
             InputConnection ic = getCurrentInputConnection();
-            if (ic != null) ic.deleteSurroundingText(1, 0);
+            if (ic == null) return;
+            // v0.4.8 反馈②：全选/部分选中时删除整个选区（此前全选无反应、部分选中只删末字）
+            CharSequence sel = null;
+            try { sel = ic.getSelectedText(0); } catch (Exception ignored) { }
+            if (sel != null && sel.length() > 0) {
+                ic.commitText("", 0);
+            } else {
+                ic.deleteSurroundingText(1, 0);
+            }
         }
     }
 
@@ -556,7 +682,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         return list;
     }
 
-    /** 候选条渲染：空闲态（云五笔 ▾ 剪贴板）/ 剪贴板历史 / 候选列表 */
+    /** 候选条渲染：空闲态（云五笔 ▾ 剪贴板）/ 剪贴板历史 / 数字计算 / 候选列表 */
     private void updateCandidateView() {
         if (candidateView == null) return;
         if (!chineseMode) {
@@ -564,11 +690,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             return;
         }
         String code = composingCode.toString();
+        // v0.4.8 反馈③：非剪贴板状态恢复默认行距
+        candidateView.setLineSpacing(0f, 1.0f);
+        // v0.4.8 反馈⑧：数字面板计算状态实时显示 表达式=结果
+        if (panelMode == 1) {
+            renderCalcState();
+            return;
+        }
         if (clipMode) {
             renderClipboardList();
             return;
         }
         if (code.isEmpty()) {
+            // v0.4.8 反馈⑦：上屏单字后显示联想词组/英文翻译提示
+            if (!lastCommittedChar.isEmpty() && (!candidates.isEmpty() || !lastEnHint.isEmpty())) {
+                renderAssociateHint();
+                return;
+            }
             SpannableString ss = new SpannableString("云五笔   ▾ 剪贴板");
             ss.setSpan(new ForegroundColorSpan(0xFF9CA3AF), 0, 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             int s = 6, e = ss.length();
@@ -591,6 +729,62 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         renderCandidates();
     }
 
+    /** v0.4.8 数字面板：实时显示 表达式=结果 */
+    private void renderCalcState() {
+        if (calcBuffer.isEmpty()) {
+            candidateView.setText("（123）输入数字与运算符，= 上屏");
+            return;
+        }
+        double v = calcEval(calcBuffer);
+        String res = fmtResult(v);
+        SpannableString ss = new SpannableString(calcBuffer + " = " + res + "   ▸ 按=上屏·空格仅结果");
+        ss.setSpan(new ForegroundColorSpan(0xFF3B82F6), 0, calcBuffer.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (res.equals("错误")) {
+            ss.setSpan(new ForegroundColorSpan(0xFFDC2626), calcBuffer.length() + 3, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        candidateView.setText(ss);
+    }
+
+    /** v0.4.8 反馈①⑦：上屏单字后的联想词组（MRU 置顶 + 本地含字词组 + 云端热点）与英文翻译提示 */
+    private void renderAssociateHint() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(lastCommittedChar).append(" ▸ ");
+        if (!candidates.isEmpty()) {
+            int shown = Math.min(8, candidates.size());
+            for (int i = 0; i < shown; i++) {
+                String c = candidates.get(i);
+                int s = sb.length();
+                sb.append(i + 1).append(".").append(c).append("  ");
+                int e = sb.length();
+                final int idx = i;
+                SpannableString css = new SpannableString(sb.toString());
+                ClickableSpan cs = new ClickableSpan() {
+                    @Override
+                    public void onClick(View widget) {
+                        selectCandidate(idx);
+                    }
+                    @Override
+                    public void updateDrawState(android.text.TextPaint ds) {
+                        ds.setColor(0xFF1F2937);
+                        ds.setUnderlineText(false);
+                    }
+                };
+                css.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                if (i == 0) css.setSpan(new ForegroundColorSpan(0xFFF59E0B), s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        } else if (!lastEnHint.isEmpty()) {
+            sb.append("EN: ").append(lastEnHint);
+            candidateView.setText(sb.toString());
+            return;
+        } else {
+            sb.append("（暂无联想，继续输入编码）");
+        }
+        if (!lastEnHint.isEmpty()) {
+            sb.append("  EN: ").append(lastEnHint);
+        }
+        candidateView.setText(sb.toString());
+    }
+
     private void setHintText(String text) {
         SpannableString ss = new SpannableString(text);
         ss.setSpan(new ForegroundColorSpan(0xFF6B7280), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -599,6 +793,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** 剪贴板历史列表（仅复制文本，最新在前，最多 8 条显示；点击上屏） */
     private void renderClipboardList() {
+        // v0.4.8 反馈③：行间距加大（8dp 附加行距），易点选
+        candidateView.setLineSpacing(10f, 1.0f);
         StringBuilder sb = new StringBuilder();
         sb.append("◀ 返回   ");
         if (clipHistory.isEmpty()) {
@@ -655,12 +851,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setText(css);
     }
 
-    /** 候选列表：反馈⑧ 输入编码显示在括号里（qkhh）1.钟 2.鈡 */
+    /** 候选列表：v0.4.8 反馈⑦ 编码括号移到候选末尾：1.钟 2.鈡（qkhh） */
     private void renderCandidates() {
+        candidateView.setLineSpacing(0f, 1.0f);
         String code = composingCode.toString();
         StringBuilder sb = new StringBuilder();
         SpannableString css = new SpannableString("");
-        sb.append("（").append(code).append("）  ");
         for (int i = 0; i < candidates.size() && i < 10; i++) {
             String c = candidates.get(i);
             int s = sb.length();
@@ -684,16 +880,21 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 css.setSpan(new ForegroundColorSpan(0xFFF59E0B), s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
-        css.setSpan(new ForegroundColorSpan(0xFF3B82F6), 0, code.length() + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 编码括号置于末尾（v0.4.8 反馈⑦）
+        int encStart = sb.length();
+        sb.append("（").append(code).append("）");
+        css = new SpannableString(sb.toString());
+        css.setSpan(new ForegroundColorSpan(0xFF3B82F6), encStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setText(css);
     }
 
+    /** v0.4.8 反馈④：回车——无候选时上屏换行（此前误上屏空格） */
     private void commitFirstCandidate() {
         if (composingCode.length() > 0 && !candidates.isEmpty()) {
             selectCandidate(0);
         } else {
             InputConnection ic = getCurrentInputConnection();
-            if (ic != null) ic.commitText(" ", 1);
+            if (ic != null) ic.commitText("\n", 1);
         }
     }
 
@@ -704,6 +905,28 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             InputConnection ic = getCurrentInputConnection();
             if (ic != null) ic.commitText(" ", 1);
         }
+    }
+
+    /** v0.4.8 数字面板：= 或退出时上屏。带公式（默认）上屏 "1+2=3"；纯数字直接上屏 */
+    private void commitCalc(boolean fromEq) {
+        if (calcBuffer.isEmpty()) return;
+        double v = calcEval(calcBuffer);
+        if (Double.isNaN(v)) {
+            commitText(calcBuffer);
+        } else {
+            String res = fmtResult(v);
+            if (calcBuffer.matches("^[0-9.]+$")) {
+                commitText(calcBuffer);
+            } else if (calcFormula) {
+                commitText(calcBuffer + "=" + res);
+            } else {
+                commitText(res);
+            }
+        }
+        calcBuffer = "";
+        panelMode = 0;
+        keyboardView.setKeyboard(keyboardMain);
+        updateCandidateView();
     }
 
     private void selectCandidate(int idx) {
@@ -717,7 +940,116 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (GATEWAY_READY) reportSelection(text);
         composingCode.setLength(0);
         candidates.clear();
+        // v0.4.8 反馈①：上屏单字 → 自动联想（最近3词组置顶 + 本地含字词组 + 云端热点），并提示英文翻译
+        if (text.length() == 1) {
+            lastCommittedChar = text;
+            lastEnHint = "";
+            triggerAssociate(text);
+            queryTranslation(text);
+        } else {
+            lastCommittedChar = "";
+            lastEnHint = "";
+            rememberPhrase(text);
+        }
         updateCandidateView();
+    }
+
+    /** v0.4.8 反馈①：字后联想——MRU 最近 3 词组置顶 + 本地含字词组 + 云端热点（异步回填） */
+    private void triggerAssociate(final String ch) {
+        List<String> merged = new ArrayList<>();
+        for (String p : recentPhrases) {           // 最近选中的词组（含此字优先）
+            if (p.indexOf(ch) >= 0 && !merged.contains(p)) merged.add(p);
+        }
+        List<String> local = WubiDb.queryByChar(ch);
+        if (local != null) {
+            for (String p : local) if (!merged.contains(p)) merged.add(p);
+        }
+        candidates.clear();
+        candidates.addAll(merged);
+        updateCandidateView();
+        if (GATEWAY_READY) queryAssociateAsync(ch);   // 云端热点词回填
+    }
+
+    /** v0.4.8：云端热点联想（{"word":"钟"} → phrases 含此字的词组） */
+    private void queryAssociateAsync(final String word) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Thread t = new Thread(() -> {
+            List<String> cloud = new ArrayList<>();
+            try {
+                URL url = new URL(GATEWAY_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(2500);
+                conn.setReadTimeout(2500);
+                String body = "{\"word\":\"" + word + "\"}";
+                try (OutputStream os = conn.getOutputStream()) os.write(body.getBytes("UTF-8"));
+                if (conn.getResponseCode() == 200) {
+                    try (InputStream is = conn.getInputStream()) {
+                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = r.readLine()) != null) sb.append(line);
+                        JSONObject obj = new JSONObject(sb.toString());
+                        JSONArray ps = obj.optJSONArray("phrases");
+                        if (ps != null) {
+                            for (int i = 0; i < ps.length(); i++) {
+                                String p = ps.getString(i);
+                                if (p != null && p.length() >= 2) cloud.add(p);
+                            }
+                        }
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) { }
+            final List<String> result = cloud;
+            handler.post(() -> {
+                if (!word.equals(lastCommittedChar)) return;
+                boolean changed = false;
+                for (String s : result) {
+                    if (!candidates.contains(s)) { candidates.add(s); changed = true; }
+                }
+                if (changed) updateCandidateView();
+            });
+        });
+        t.start();
+    }
+
+    /** v0.4.8 反馈⑦：选字后云端英文翻译（{"word":"钟","en":true} → "bell; clock"） */
+    private void queryTranslation(final String word) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Thread t = new Thread(() -> {
+            String en = "";
+            try {
+                URL url = new URL(GATEWAY_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(2500);
+                conn.setReadTimeout(2500);
+                String body = "{\"word\":\"" + word + "\",\"en\":true}";
+                try (OutputStream os = conn.getOutputStream()) os.write(body.getBytes("UTF-8"));
+                if (conn.getResponseCode() == 200) {
+                    try (InputStream is = conn.getInputStream()) {
+                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = r.readLine()) != null) sb.append(line);
+                        en = new JSONObject(sb.toString()).optString("en", "");
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) { }
+            final String hint = en;
+            handler.post(() -> {
+                if (!word.equals(lastCommittedChar)) return;
+                lastEnHint = hint;
+                updateCandidateView();
+            });
+        });
+        t.start();
     }
 
     /** 上报选词（云端 MRU 学习，尽力而为） */
