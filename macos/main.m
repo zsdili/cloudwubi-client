@@ -20,7 +20,8 @@ int main(int argc, const char *argv[])
 
         IMKServer *server = [[IMKServer alloc]
             initWithName:kConnectionName
-         controllerClass:[CloudWubiController class]];
+         controllerClass:[CloudWubiController class]
+           delegateClass:[CloudWubiController class]];
 
         if (server == nil) {
             NSLog(@"CloudWubi: IMKServer 初始化失败");

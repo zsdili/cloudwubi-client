@@ -23,9 +23,9 @@
 
         /* 候选窗口：一行平铺（五笔习惯） */
         _candidateWindow = [[IMKCandidates alloc] initWithServer:server
-                                                panelType:kIMKSingleRowScrollingCandidatePanel];
+                                                panelType:kIMKScrollingGridCandidatePanel];
         [_candidateWindow setAttributes:@{
-            IMKCandidatesSendServerKeyEvents: @YES,
+            IMKCandidatesSendServerKeyEventFirst: @YES,
         }];
     }
     return self;
@@ -121,11 +121,11 @@
     if (idx >= cands.count) return;
 
     NSString *selected = cands[idx];
-    [self commitComposition:selected];
+    [self commitText:selected];
     [_engine reportSelection:selected];  /* 云端 MRU 学习 */
 }
 
-- (void)commitComposition:(NSString *)text
+- (void)commitText:(NSString *)text
 {
     id client = [self client];
     if ([client respondsToSelector:@selector(insertText:replacementRange:)]) {
@@ -140,7 +140,7 @@
 - (void)commitComposition:(id)sender
 {
     if (_engine.composingCode.length > 0) {
-        [self commitComposition:[self currentCandidates].firstObject ?: @""];
+        [self commitText:[self currentCandidates].firstObject ?: @""];
     }
 }
 
