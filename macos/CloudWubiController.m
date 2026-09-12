@@ -111,8 +111,9 @@
         [_candidateWindow hide];
         return;
     }
-    [_candidateWindow updateCandidates:cands];
-    [_candidateWindow show:kIMKLocateCandidatesBelowHighlight];
+    [_candidateWindow setCandidateData:cands];
+    [_candidateWindow updateCandidateData];
+    [_candidateWindow show:kIMKLocateCandidatesBelowHint];
 }
 
 - (void)selectCandidateAtIndex:(NSUInteger)idx
@@ -144,9 +145,9 @@
     }
 }
 
-- (void)candidates:(id)sender
+- (NSArray *)candidates:(id)sender
 {
-    [_candidateWindow show:kIMKLocateCandidatesBelowHighlight];
+    return [self currentCandidates];
 }
 
 @end
