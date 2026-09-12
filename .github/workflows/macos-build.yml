@@ -12,6 +12,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: macOS 编译 + 测试 + 体积门禁
@@ -76,3 +79,15 @@ jobs:
         with:
           name: cloudwubi-client-macos-x86_64
           path: cloudwubi_demo
+
+      - name: Release 上传 macOS .app（仅 tag）
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd macos
+          tar -czf ../cloudwubi-client-macos-x86_64.tar.gz CloudWubi.app
+          cd ..
+          TAG=${GITHUB_REF#refs/tags/}
+          gh release upload "$TAG" cloudwubi-client-macos-x86_64.tar.gz --clobber
+          echo "✅ macOS .app 已上传到 Release $TAG"
