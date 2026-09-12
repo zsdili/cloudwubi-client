@@ -80,14 +80,24 @@ jobs:
           name: cloudwubi-client-macos-x86_64
           path: cloudwubi_demo
 
+      - name: 打包并上传 .app（完整输入法）
+        run: |
+          cd macos
+          tar -czf ../CloudWubi.app.tar.gz CloudWubi.app
+          cd ..
+          ls -la CloudWubi.app.tar.gz
+
+      - name: 上传 .app 制品
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudwubi-macos-app
+          path: CloudWubi.app.tar.gz
+
       - name: Release 上传 macOS .app（仅 tag）
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cd macos
-          tar -czf ../cloudwubi-client-macos-x86_64.tar.gz CloudWubi.app
-          cd ..
           TAG=${GITHUB_REF#refs/tags/}
-          gh release upload "$TAG" cloudwubi-client-macos-x86_64.tar.gz --clobber
+          gh release upload "$TAG" CloudWubi.app.tar.gz --clobber
           echo "✅ macOS .app 已上传到 Release $TAG"
