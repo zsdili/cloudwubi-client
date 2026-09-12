@@ -48,7 +48,11 @@ echo "   ✅ 已安装到 $INSTALL_DIR/$APP_NAME"
 echo "== 3/4 再次清除目标目录隔离属性 =="
 xattr -dr com.apple.quarantine "$INSTALL_DIR/$APP_NAME" 2>/dev/null && echo "   ✅ 完成" || true
 
-echo "== 4/4 验证签名与架构 =="
+echo "== 4/5 LaunchServices 注册（关键：让系统识别新输入法 bundle）=="
+LSREG="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+"$LSREG" -f "$INSTALL_DIR/$APP_NAME" && echo "   ✅ 注册完成" || echo "   ⚠️ 注册失败（可尝试注销重登后手动注册）"
+
+echo "== 5/5 验证签名与架构 =="
 codesign -dv "$INSTALL_DIR/$APP_NAME" 2>&1 | grep -E "Signature|Format" || echo "   ⚠️ 签名信息读取失败"
 lipo -info "$INSTALL_DIR/$APP_NAME/Contents/MacOS/"* 2>/dev/null | head -1
 
@@ -57,5 +61,7 @@ echo "======================================================"
 echo "✅ 安装完成！最后一步（必须）："
 echo "   点左上角  → 退出登录 → 重新登录"
 echo "   重新登录后：系统设置 → 键盘 → 输入法 → + → 云五笔"
-echo "   （若仍不显示，可重试：sudo rm -rf \"/Library/Input Methods/$APP_NAME\" 清理系统级残留）"
+echo ""
+echo "   💡 若仍不显示，请运行诊断命令并把输出发我："
+echo "   log show --last 3m --predicate 'process == \"imklaunchagent\" OR process == \"TextInputMenuAgent\"' | tail -20"
 echo "======================================================"
