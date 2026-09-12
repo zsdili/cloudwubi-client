@@ -36,7 +36,7 @@
 
     <!-- 行3：符号 ?! + z x c v b n m + 删除 -->
     <Row android:keyWidth="9%p">
-        <Key android:codes="-103" android:keyLabel="?!" android:keyTextColor="#9CA3AF" />
+        <Key android:codes="-103" android:keyLabel="？" android:keyTextColor="#9CA3AF" />
         <Key android:codes="122" android:keyLabel="z" android:keyTextColor="#FFFFFF" />
         <Key android:codes="120" android:keyLabel="x" android:keyTextColor="#FFFFFF" />
         <Key android:codes="99" android:keyLabel="c" android:keyTextColor="#FFFFFF" />

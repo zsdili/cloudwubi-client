@@ -37,8 +37,8 @@
 
     <!-- 行3：中文标点 -->
     <Row android:keyWidth="10%p">
-        <Key android:codes="63" android:keyLabel="?" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="33" android:keyLabel="!" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="63" android:keyLabel="？" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="33" android:keyLabel="！" android:keyTextColor="#FFFFFF" />
         <Key android:codes="44" android:keyLabel="，" android:keyTextColor="#FFFFFF" />
         <Key android:codes="46" android:keyLabel="。" android:keyTextColor="#FFFFFF" />
         <Key android:codes="8226" android:keyLabel="·" android:keyTextColor="#FFFFFF" />
