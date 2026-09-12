@@ -8,6 +8,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write  # 允许创建 Release 和上传资产
+
 jobs:
   build:
     name: 编译 + 体积门禁 + 单元测试
