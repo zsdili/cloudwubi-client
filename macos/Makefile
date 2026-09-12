@@ -1,19 +1,18 @@
 # Makefile - CloudWubi macOS 输入法构建
 # 目标：编译查询引擎 + IMK 控制器 + 打包 .app 结构
 #
-# 用法：
-#   make build-app    # 编译并打包 CloudWubi.app
-#   make test         # 运行核心查询引擎单元测试
-#   make check        # 编译 + 测试 + 打包全流程（CI 用）
-#   make clean
+# 注意：本 Makefile 设计为在 macos/ 目录内运行（make -C macos 或 cd macos）。
+# 源码路径：
+#   macos/ 下的文件用相对路径直接引用
+#   C 内核在上级 ../src/
 
 APP_NAME   = CloudWubi
 APP_BUNDLE = $(APP_NAME).app
 BUILD_DIR  = build-macos
 
-SRC_IMK   = macos/main.m macos/CloudWubiController.m macos/CWQueryEngine.m
-SRC_CORE  = src/wubi_engine.c src/lru_cache.c src/http_client.c src/json_parser.c
-HDR_IMK   = -Imacos -Isrc
+SRC_IMK   = main.m CloudWubiController.m CWQueryEngine.m
+SRC_CORE  = ../src/wubi_engine.c ../src/lru_cache.c ../src/http_client.c ../src/json_parser.c
+HDR_IMK   = -I. -I../src
 
 FRAMEWORKS = -framework Cocoa -framework InputMethodKit -framework Carbon
 
@@ -35,7 +34,7 @@ build-app: $(BUILD_DIR)
 	mkdir -p $(APP_BUNDLE)/Contents/MacOS
 	mkdir -p $(APP_BUNDLE)/Contents/Resources
 	cp $(BUILD_DIR)/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
-	cp macos/Info.plist $(APP_BUNDLE)/Contents/Info.plist
+	cp Info.plist $(APP_BUNDLE)/Contents/Info.plist
 	plutil -lint $(APP_BUNDLE)/Contents/Info.plist
 	@echo "✅ $(APP_BUNDLE) 打包完成"
 	@du -sh $(APP_BUNDLE)
@@ -44,8 +43,8 @@ build-app: $(BUILD_DIR)
 test: $(BUILD_DIR)
 	@echo "== 编译核心查询引擎测试 =="
 	clang -std=c99 -ObjC -fobjc-arc -O2 $(HDR_IMK) -o $(BUILD_DIR)/test_qe \
-		macos/test_query_engine.m macos/CWQueryEngine.m \
-		src/http_client.c src/json_parser.c src/lru_cache.c src/wubi_engine.c \
+		test_query_engine.m CWQueryEngine.m \
+		$(SRC_CORE) \
 		-framework Foundation
 	@echo "== 运行测试 =="
 	./$(BUILD_DIR)/test_qe
