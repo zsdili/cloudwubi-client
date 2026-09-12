@@ -46,11 +46,10 @@ import java.util.List;
  */
 public class CloudWubiIME extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
-    /** 云端网关地址（占位符时不请求，部署后替换） */
+    /** 云端网关地址（腾讯云 SCF 函数 URL，v0.4.7 启用） */
     private static final String GATEWAY_URL =
-            "https://YOUR-GATEWAY-URL/release/wubi/query";  // TODO: 部署后替换
-    private static final boolean GATEWAY_READY =
-            !GATEWAY_URL.contains("YOUR-GATEWAY-URL");
+            "https://1251037126-bglnivgmaf.ap-guangzhou.tencentscf.com";
+    private static final boolean GATEWAY_READY = true;
 
     // ===== 功能键编码（与 XML 严格对应，v0.4.6 按截图） =====
     private static final int KEY_123 = -101;      // 数字面板
