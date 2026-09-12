@@ -126,3 +126,9 @@ MIT License · 贡献规范见 [CONTRIBUTING.md](CONTRIBUTING.md)
 - [cloudwubi-gateway](https://github.com/zsdili/cloudwubi-gateway) - 云端网关
 - [cloudwubi-rules](https://github.com/zsdili/cloudwubi-rules) - 五笔规则库（去中心化共建）
 - [cloudwubi-ai](https://github.com/zsdili/cloudwubi-ai) - AI 引擎（规划中）
+
+
+## 平台状态
+
+macOS/iOS 官方分发已暂停（Apple 年费门槛声明），Android 已发布。
+详见 [docs/PLATFORM-STATUS.md](docs/PLATFORM-STATUS.md)。
