@@ -65,3 +65,49 @@ size_t json_parse_candidates(const char *json, uint32_t *out, size_t out_max)
 
     return count;
 }
+
+size_t json_parse_phrases(const char *json, char out[][16], size_t out_max)
+{
+    const char *key_pos;
+    const char *p;
+    const char *end;
+    size_t count = 0;
+
+    if (json == NULL || out == NULL || out_max == 0) return 0;
+
+    key_pos = find_key(json, "phrases");
+    if (key_pos == NULL) return 0;
+
+    /* 找到 '[' */
+    p = strchr(key_pos, '[');
+    if (p == NULL) return 0;
+    p++;
+
+    end = strchr(p, ']');
+    if (end == NULL) return 0;
+
+    while (p < end && count < out_max) {
+        /* 跳过空白与逗号 */
+        while (p < end && (*p == ' ' || *p == ',' || *p == '\t')) p++;
+
+        if (p >= end) break;
+
+        /* 必须是字符串字面量（引号开头） */
+        if (*p != '"') { p++; continue; }
+        p++;
+
+        /* 复制字符串内容（UTF-8 字节，最多 7 字节 + 结束符） */
+        {
+            size_t j = 0;
+            while (p < end && *p != '"' && j < 15) {
+                out[count][j++] = *p;
+                p++;
+            }
+            out[count][j] = '\0';
+            if (p < end && *p == '"') p++;  /* 跳过收尾引号 */
+            count++;
+        }
+    }
+
+    return count;
+}
