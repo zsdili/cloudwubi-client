@@ -43,7 +43,7 @@
         <Key android:codes="46" android:keyLabel="。" android:keyTextColor="#FFFFFF" />
         <Key android:codes="8226" android:keyLabel="·" android:keyTextColor="#FFFFFF" />
         <Key android:codes="183" android:keyLabel="·" android:keyTextColor="#FFFFFF" />
-        <Key android:codes="34" android:keyLabel="\"" android:keyTextColor="#FFFFFF" />
+        <Key android:codes="34" android:keyLabel="&quot;" android:keyTextColor="#FFFFFF" />
         <Key android:codes="39" android:keyLabel="'" android:keyTextColor="#FFFFFF" />
         <Key android:codes="42" android:keyLabel="*" android:keyTextColor="#FFFFFF" />
         <Key android:codes="37" android:keyLabel="%" android:keyTextColor="#FFFFFF" />
