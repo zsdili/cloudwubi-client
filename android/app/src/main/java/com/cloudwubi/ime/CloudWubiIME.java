@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
@@ -444,7 +446,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
     }
 
-    /** 候选查询：本地词库优先（MRU 置顶 + 3码预测），云端增强（占位符时跳过） */
+    /** 候选查询：本地词库优先（MRU 置顶 + 3码预测），云端增强（异步回填，不阻塞主线程） */
     private void queryCandidates() {
         candidates.clear();
         String code = composingCode.toString();
@@ -467,22 +469,17 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         }
         if (GATEWAY_READY) {
-            List<String> cloud = queryGateway(code);
-            if (cloud != null) {
-                for (String s : cloud) {
-                    if (!candidates.contains(s)) candidates.add(s);
-                }
-            }
+            queryGatewayAsync(code);   // 后台线程查询，主线程回填
         }
         if (candidates.isEmpty()) candidates.add(code);
         updateCandidateView();
     }
 
-    /** 云端网关查询（部署后启用，异步不阻塞） */
-    private List<String> queryGateway(final String code) {
-        final java.util.concurrent.atomic.AtomicReference<List<String>> result =
-                new java.util.concurrent.atomic.AtomicReference<>();
+    /** 云端网关查询（异步：后台请求，主线程回填，不阻塞输入） */
+    private void queryGatewayAsync(final String code) {
+        final Handler handler = new Handler(Looper.getMainLooper());
         Thread t = new Thread(() -> {
+            List<String> cloud = new ArrayList<>();
             try {
                 URL url = new URL(GATEWAY_URL);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -501,15 +498,27 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                         StringBuilder sb = new StringBuilder();
                         String line;
                         while ((line = r.readLine()) != null) sb.append(line);
-                        result.set(parseCandidates(sb.toString()));
+                        List<String> parsed = parseCandidates(sb.toString());
+                        if (parsed != null) cloud.addAll(parsed);
                     }
                 }
                 conn.disconnect();
             } catch (Exception ignored) { }
+            final List<String> result = cloud;
+            handler.post(() -> {
+                // 仅当编码仍一致时回填，避免过期结果覆盖
+                if (!code.equals(composingCode.toString())) return;
+                boolean changed = false;
+                for (String s : result) {
+                    if (!candidates.contains(s)) {
+                        candidates.add(s);
+                        changed = true;
+                    }
+                }
+                if (changed) updateCandidateView();
+            });
         });
         t.start();
-        try { t.join(2500); } catch (InterruptedException ignored) { }
-        return result.get();
     }
 
     private List<String> parseCandidates(String json) {

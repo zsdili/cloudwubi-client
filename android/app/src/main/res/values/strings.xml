@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">云五笔</string>
-    <string name="about_slogan">云端五笔 · 开源去中心化共建</string>
+    <string name="about_slogan">云五笔 · 开源去中心化共建</string>
     <string name="about_version">版本：v0.4.5</string>
     <string name="about_author">作者：钟志胜</string>
     <string name="about_qq">联系QQ：175571</string>
