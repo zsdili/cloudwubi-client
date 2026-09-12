@@ -1,0 +1,5 @@
+# 编译产物
+build/
+cloudwubi_demo
+cloudwubi_demo_offline
+*.o
