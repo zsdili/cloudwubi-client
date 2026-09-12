@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 按键背景：深色圆角（按压态变亮） -->
+<!-- 云五笔按键样式 v0.4.4：浅色圆角（对齐主流输入法参考图） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
-        <shape>
-            <corners android:radius="6dp" />
-            <solid android:color="#4B5563" />
+        <shape android:shape="rectangle">
+            <solid android:color="#D1D5DB" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
     <item>
-        <shape>
-            <corners android:radius="6dp" />
-            <solid android:color="#374151" />
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
 </selector>

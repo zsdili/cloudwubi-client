@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 云五笔符号面板 v0.4.4：九宫格布局（3列，中文标点） -->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="33%p"
+    android:keyHeight="52dp"
+    android:horizontalGap="1%p"
+    android:verticalGap="6dp"
+    android:keyBackground="@drawable/key_bg">
+
+    <Row>
+        <Key android:codes="44" android:keyLabel="，" android:keyTextColor="#1F2937" />
+        <Key android:codes="46" android:keyLabel="。" android:keyTextColor="#1F2937" />
+        <Key android:codes="63" android:keyLabel="？" android:keyTextColor="#1F2937" />
+    </Row>
+    <Row>
+        <Key android:codes="33" android:keyLabel="！" android:keyTextColor="#1F2937" />
+        <Key android:codes="58" android:keyLabel="：" android:keyTextColor="#1F2937" />
+        <Key android:codes="59" android:keyLabel="；" android:keyTextColor="#1F2937" />
+    </Row>
+    <Row>
+        <Key android:codes="40" android:keyLabel="（" android:keyTextColor="#1F2937" />
+        <Key android:codes="41" android:keyLabel="）" android:keyTextColor="#1F2937" />
+        <Key android:codes="183" android:keyLabel="·" android:keyTextColor="#1F2937" />
+    </Row>
+    <Row android:keyHeight="46dp">
+        <Key android:codes="-103" android:keyLabel="返回" android:keyTextColor="#3B82F6" />
+        <Key android:codes="32" android:keyLabel="空格" android:keyTextColor="#6B7280" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:keyTextColor="#6B7280" android:isRepeatable="true" />
+    </Row>
+</Keyboard>
