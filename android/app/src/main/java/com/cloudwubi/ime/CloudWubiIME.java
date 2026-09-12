@@ -755,7 +755,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             for (int i = 0; i < shown; i++) {
                 String c = candidates.get(i);
                 int s = sb.length();
-                sb.append(i + 1).append(".").append(c).append("  ");
+                sb.append(String.valueOf(i + 1)).append(".").append(c).append("  ");
                 int e = sb.length();
                 final int idx = i;
                 ClickableSpan cs = new ClickableSpan() {
@@ -859,7 +859,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         for (int i = 0; i < candidates.size() && i < 10; i++) {
             String c = candidates.get(i);
             int s = sb.length();
-            sb.append(i + 1).append(".").append(c).append("  ");
+            sb.append(String.valueOf(i + 1)).append(".").append(c).append("  ");
             int e = sb.length();
             final int idx = i;
             ClickableSpan cs = new ClickableSpan() {
