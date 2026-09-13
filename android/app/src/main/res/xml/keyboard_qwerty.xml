@@ -56,9 +56,9 @@
     <Row android:keyWidth="9%p" android:horizontalGap="0.9%p" android:keyHeight="46dp">
         <Key android:codes="-101" android:keyLabel="123" />
         <Key android:codes="-102" android:keyLabel="中" />
-        <Key android:codes="-106" android:keyLabel="!，" />
+        <Key android:codes="-106" android:keyLabel="！&#10;，" />
         <Key android:codes="-107" android:keyLabel="空格" android:keyWidth="24%p" />
-        <Key android:codes="-108" android:keyLabel="？。" />
+        <Key android:codes="-108" android:keyLabel="？&#10;。" />
         <Key android:codes="-104" android:keyLabel="符" />
         <Key android:codes="-4" android:keyLabel="↲" android:keyWidth="13%p" />
     </Row>

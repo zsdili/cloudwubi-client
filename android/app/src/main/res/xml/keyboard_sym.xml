@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔符号面板 v0.5.0：严格对齐参考图一（iOS 符号键盘）
+<!-- 云五笔符号面板 v0.5.1：居中满行布局（行1/2 十键、行3 八键、行4 五键，各行为 100% 满宽），返回固定左下角
      行1: 1 2 3 4 5 6 7 8 9 0
      行2: - / : ; ( ) _ $ & "
      行3: #+= ~ ， … @ ! ' ←(退格)
-     行4: 更多 | . | 🎤 | ? | 返回 | 前往 -->
+     行4: 返回 | 更多 | . | ? | 前往
+     说明：无语音图标 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="9.1%p"
     android:keyHeight="46dp"
@@ -35,7 +36,7 @@
         <Key android:codes="38" android:keyLabel="&amp;" />
         <Key android:codes="34" android:keyLabel="&quot;" />
     </Row>
-    <Row>
+    <Row android:keyWidth="11.625%p">
         <Key android:codes="-101" android:keyLabel="#+=" />
         <Key android:codes="126" android:keyLabel="~" />
         <Key android:codes="44" android:keyLabel="，" />
@@ -45,12 +46,11 @@
         <Key android:codes="39" android:keyLabel="'" />
         <Key android:codes="-5" android:keyLabel="←" android:isRepeatable="true" />
     </Row>
-    <Row android:keyWidth="15.4%p" android:horizontalGap="1.5%p">
+    <Row android:keyWidth="19.2%p">
+        <Key android:codes="-103" android:keyLabel="返回" />
         <Key android:codes="-104" android:keyLabel="更多" />
         <Key android:codes="46" android:keyLabel="." />
-        <Key android:codes="-107" android:keyLabel="🎤" />
         <Key android:codes="63" android:keyLabel="?" />
-        <Key android:codes="-103" android:keyLabel="返回" />
         <Key android:codes="-4" android:keyLabel="前往" />
     </Row>
 </Keyboard>

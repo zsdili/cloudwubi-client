@@ -161,13 +161,30 @@ public class CloudKeyboardView extends KeyboardView {
                                    : (pressed ? 0xFFE5E7EB : keyBgNormal));
             RectF r = new RectF(x + 2, y + 2, x + key.width - 2, y + key.height - 2);
             canvas.drawRoundRect(r, cornerPx, cornerPx, keyPaint);
-            // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护）
+            // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护；v0.5.1 支持上下两行：上行上滑符号小字、下行默认字符）
             if (key.label != null && key.label.length() > 0) {
-                textPaint.setColor(keyTextColor);
-                textPaint.setTextSize(labelSizePx);
-                float cx = x + key.width / 2f;
-                float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
-                canvas.drawText(key.label.toString(), cx, cy, textPaint);
+                String lab = key.label.toString();
+                int nl = lab.indexOf('\n');
+                if (nl >= 0) {
+                    String up = lab.substring(0, nl);
+                    String down = lab.substring(nl + 1);
+                    if (up.length() > 0) {
+                        textPaint.setColor(keyTextColor);
+                        textPaint.setTextSize(labelSizePx * 0.60f);
+                        canvas.drawText(up, x + key.width / 2f, y + key.height * 0.38f, textPaint);
+                    }
+                    if (down.length() > 0) {
+                        textPaint.setColor(keyTextColor);
+                        textPaint.setTextSize(labelSizePx);
+                        canvas.drawText(down, x + key.width / 2f, y + key.height * 0.74f, textPaint);
+                    }
+                } else {
+                    textPaint.setColor(keyTextColor);
+                    textPaint.setTextSize(labelSizePx);
+                    float cx = x + key.width / 2f;
+                    float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
+                    canvas.drawText(lab, cx, cy, textPaint);
+                }
             }
             // 3) 上滑符号标注（左上角）
             int sym = swipeSymbol(key);
