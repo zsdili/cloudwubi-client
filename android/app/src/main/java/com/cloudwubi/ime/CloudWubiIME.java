@@ -227,15 +227,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         brand.setTextSize(13);
         brand.setTextColor(dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
         toolRow.addView(brand);
-        // v0.5.11 反馈①：信息按钮 ℹ️ → 弹窗（版本/作者/开源/微信）
-        android.widget.TextView infoBtn = makeToolButton("ℹ️", v -> showInfoDialog());
-        infoBtn.setPadding(8, 6, 8, 6);
-        toolRow.addView(infoBtn);
         statusInfo = new android.widget.TextView(this);
         statusInfo.setTextSize(12);
         statusInfo.setPadding(8, 0, 0, 0);
-        statusInfo.setSingleLine(true);
-        statusInfo.setEllipsize(android.text.TextUtils.TruncateAt.END);
         statusInfo.setTextColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
         // v0.5.9 反馈⑦：点击状态栏英文翻译 → 上屏翻译内容
         statusInfo.setOnClickListener(v -> {
@@ -289,7 +283,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.0 反馈①：工具行按钮（全选/取消↺/重做↻） */
-    private TextView makeToolButton(String text, View.OnClickListener listener) {        TextView tv = new TextView(this);
+    private TextView makeToolButton(String text, View.OnClickListener listener) {
+        TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextSize(12);
         tv.setPadding(22, 6, 22, 6);
@@ -298,19 +293,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         return tv;
     }
 
-    /** v0.5.11 反馈①：信息弹窗（版本/作者/开源链接/微信）——纯文本实现（体积友好，≤100KB 门禁） */
-    private void showInfoDialog() {
-        try {
-            android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
-            b.setTitle("云五笔");
-            b.setMessage("当前版本：v0.5.11\n作者：zsdili\n开源：github.com/zsdili\n微信：175571");
-            b.setPositiveButton("好", null);
-            b.show();
-        } catch (Exception ignored) { }
-    }
-
     /** v0.5.0 反馈①：全选当前文本框内容 */
-    private void selectAll() {        InputConnection ic = getCurrentInputConnection();
+    private void selectAll() {
+        InputConnection ic = getCurrentInputConnection();
         if (ic == null) return;
         try {
             CharSequence b = ic.getTextBeforeCursor(2000, 0);
@@ -891,28 +876,24 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
             return;
         }
-        InputConnection ic = getCurrentInputConnection();
-        // v0.5.11 反馈⑥：文本框有选区（全选/部分选中）→ 优先删除选区内容（而非备选栏编码）
-        if (ic != null) {
-            CharSequence sel = null;
-            try { sel = ic.getSelectedText(0); } catch (Exception ignored) { }
-            if (sel != null && sel.length() > 0) {
-                pushUndo();
-                ic.commitText("", 0);
-                return;
-            }
-        }
         if (composingCode.length() > 0) {
             composingCode.deleteCharAt(composingCode.length() - 1);
             queryCandidates();
         } else {
+            InputConnection ic = getCurrentInputConnection();
             if (ic == null) return;
-            // v0.4.8 反馈②：全选/部分选中时删除整个选区（此分支现仅兜底，选区已在上面优先处理）
+            // v0.4.8 反馈②：全选/部分选中时删除整个选区（此前全选无反应、部分选中只删末字）
+            CharSequence sel = null;
+            try { sel = ic.getSelectedText(0); } catch (Exception ignored) { }
             // v0.5.3 反馈①：删除刚上屏的字后允许重新输入（清空过滤键）
             String prev = getCursorPrevChar();
             if (!prev.isEmpty() && prev.equals(committedLast)) committedLast = "";
             pushUndo();   // v0.4.9 取消↺ 可恢复删除
-            ic.deleteSurroundingText(1, 0);
+            if (sel != null && sel.length() > 0) {
+                ic.commitText("", 0);
+            } else {
+                ic.deleteSurroundingText(1, 0);
+            }
         }
     }
 
@@ -1215,11 +1196,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** 候选条渲染：空闲态（云五笔 ▾ 剪贴板）/ 剪贴板历史 / 数字计算 / 候选列表 */
     private void updateCandidateView() {
         if (candidateView == null) return;
-        // v0.5.11 反馈⑥：剪贴板态优先渲染（英文输入态也可用剪贴板，原英文分支提前 return 导致不可用）
-        if (clipMode) {
-            renderClipboardList();
-            return;
-        }
         // v0.5.8 反馈⑨：英文模式——候选条渲染字母串 + 自动补全建议（原只显示 EN，用户看不到输入导致"打不上字"）
         if (!chineseMode) {
             String ec = composingCode.toString();
@@ -1250,8 +1226,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     };
                     esb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
-                candidateView.setSingleLine(true);   // v0.5.11 反馈②：英文候选单行不换行
-                candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 candidateView.setText(esb);
             } else {
                 setHintText("EN");
@@ -1286,11 +1260,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             renderClipboardList();
             return;
         }
-        // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
         if (code.isEmpty()) {
             // v0.5.8 反馈①：编码清空 → 状态栏同步（空闲时无编码，翻译如存在则上移状态栏）
             if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : "EN: " + lastEnHint);
-            // v0.4.8/0.4.9 反馈⑦①：上屏后显示连续联想词组（英文翻译不在此显示，仅状态栏）
+            // v0.4.8/0.4.9 反馈⑦①：上屏后显示连续联想词组/英文翻译提示
             if (!lastCommittedText.isEmpty() && (!candidates.isEmpty() || !lastEnHint.isEmpty())) {
                 renderAssociateHint();
                 return;
@@ -1300,8 +1273,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             if (candidates.isEmpty()) {
                 SpannableString ss = new SpannableString("云五笔");
                 ss.setSpan(new ForegroundColorSpan(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                candidateView.setSingleLine(true);
-                candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 candidateView.setText(ss);
             }
             return;
@@ -1350,11 +1321,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }, s, s + text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
-    /** v0.4.8 反馈①⑦：上屏单字后的联想词组（MRU 置顶 + 本地锚字前缀词组 + 云端热点）
-     *  v0.5.11 反馈②：英文翻译不在此显示（仅第一行状态栏），且单行不换行 */
+    /** v0.4.8 反馈①⑦：上屏单字后的联想词组（MRU 置顶 + 本地含字词组 + 云端热点）与英文翻译提示 */
+    /** v0.4.8/0.4.9 反馈①：连续联想候选条（MRU 置顶 + 前缀/含字联想 + 翻页 + 英文翻译提示） */
     private void renderAssociateHint() {
-        candidateView.setSingleLine(true);
-        candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(lastCommittedText).append(" ▸ ");
         if (!candidates.isEmpty()) {
@@ -1383,8 +1352,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 sb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             appendPager(sb, pages);
+        } else if (!lastEnHint.isEmpty()) {
+            sb.append("EN: ").append(lastEnHint);
+            candidateView.setText(sb);
+            return;
         } else {
             sb.append("（暂无联想，继续输入编码）");
+        }
+        if (!lastEnHint.isEmpty()) {
+            sb.append("  EN: ").append(lastEnHint);
         }
         candidateView.setText(sb);
     }
@@ -1439,11 +1415,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** 剪贴板历史列表（仅复制文本，最新在前，最多 8 条显示；点击上屏）
-     *  v0.5.3 反馈④：2 倍行距 + 灰色下横线分隔 + 跟随系统色
-     *  v0.5.11 反馈②：剪贴板列表恢复多行（候选单行仅限候选/联想态） */
+     *  v0.5.3 反馈④：2 倍行距 + 灰色下横线分隔 + 跟随系统色 */
     private void renderClipboardList() {
-        candidateView.setSingleLine(false);
-        candidateView.setEllipsize(null);
         // v0.5.9 反馈⑨：适度行距（0,1.3f 非增大 extra）——条目间用浅色相间背景区分（非虚横线、非空行）
         candidateView.setLineSpacing(0f, 1.3f);
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
@@ -1507,12 +1480,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setText(css);
     }
 
-    /** 候选列表：v0.5.3 反馈③⑦——纯候选（去杂项）；v0.5.4 反馈④：编码前缀实时显示（含删除时同步）
-     *  v0.5.11 反馈②：单行不换行 */
+    /** 候选列表：v0.5.3 反馈③⑦——纯候选（去杂项）；v0.5.4 反馈④：编码前缀实时显示（含删除时同步） */
     private void renderCandidates() {
         candidateView.setLineSpacing(0f, 1.0f);
-        candidateView.setSingleLine(true);
-        candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         String code = composingCode.toString();
         int total = candidates.size();
         int pages = Math.max(1, (total + CAND_PAGE_SIZE - 1) / CAND_PAGE_SIZE);
@@ -1546,16 +1516,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setText(sb);
     }
 
-    /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
-     *  v0.5.11 反馈④：按回车 → 上屏当前编码的小写英文（qq → qq），不再误选中文候选（多） */
+    /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格） */
     private void commitFirstCandidate() {
-        if (composingCode.length() > 0) {
-            String raw = composingCode.toString();
-            composingCode.setLength(0);
-            candidates.clear();
-            candPage = 0;
-            commitText(raw);
-            updateCandidateView();
+        if (composingCode.length() > 0 && !candidates.isEmpty()) {
+            selectCandidate(0);
         } else if (isMultiline()) {
             commitText("\n");
         }
@@ -1571,15 +1535,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
     }
 
-    /** v0.5.11 反馈④：空格——备选栏第一个是中文候选则上中文；候选仅有编码本身（无中文命中）则输出空格 */
     private void commitSpaceOrFirst() {
         if (composingCode.length() > 0 && !candidates.isEmpty()) {
-            String first = candidates.get(0);
-            if (first.equals(composingCode.toString())) {
-                commitText(" ");   // 无中文命中（候选=编码兜底）→ 空格
-            } else {
-                selectCandidate(0);   // 有中文候选 → 上首选中文
-            }
+            selectCandidate(0);
         } else {
             commitText(" ");
         }
@@ -1606,18 +1564,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             lastCalcResult = "";
         } else {
             String res = fmtResult(v);
-            // v0.5.11 反馈③：★先保存上一次结果作为去重基准，再更新 lastCalcResult
-            // （原代码先覆盖 lastCalcResult=新结果，导致 expr.startsWith(新结果) 恒 false → 不去重 → 1+2=33*4=12）
-            String oldResult = lastCalcResult;
-            lastCalcResult = res;
+            lastCalcResult = res;   // v0.5.3 反馈②：记住结果供接续计算
             if (calcBuffer.matches("^[0-9.]+$")) {
                 commitText(calcBuffer);
             } else if (calcFormula) {
                 // v0.5.5 反馈③：续算带式去重——表达式以"上次结果"开头时省略重复结果（2+5=7 上屏后 -4= 上屏"-4=3"）
                 // v0.5.8 反馈⑥：去重仅限"运算符自动续接"（calcAuto=true），手动完整输入 3*2 不受影响
                 String expr = calcBuffer;
-                if (calcAuto && !oldResult.isEmpty() && expr.startsWith(oldResult)) {
-                    expr = expr.substring(oldResult.length());
+                if (calcAuto && expr.startsWith(lastCalcResult)) {
+                    expr = expr.substring(lastCalcResult.length());
                     if (expr.isEmpty()) expr = res;
                 }
                 commitText(expr + "=" + res);
@@ -1688,7 +1643,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.4.9 反馈① + v0.5.1 反馈⑤：联想基准=整个上屏词组（如"前进"→"前进浪潮/前进号角"），
-     *  不再按单字含字联想（避免"驶进/共进"式不合理联想）；MRU 置顶 + 整词前缀 + 锚字前缀 + 云端 */
+     *  不再按单字含字联想（避免"驶进/共进"式不合理联想）；MRU 置顶 + 整词前缀 + 云端 */
     private void triggerAssociate() {
         // v0.5.0 反馈③：联想锚字取光标前一字（删除光标前字、移动光标后自动重新联想）
         String anchor = getCursorPrevChar();
@@ -1709,12 +1664,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 for (String p : prefix) if (!merged.contains(p)) merged.add(p);
             }
         }
-        // ②b v0.5.11 反馈⑤：锚字前缀联想（进→进一步/进行/进入/进攻…，光标前一字开头的常用搭配）
-        //   （原 queryByChar 含字联想会返回"共进/驶进"等 X进 结尾词——方向错误，已废弃）
+        // ②b v0.5.4 反馈⑧：锚字含字词组兜底（我们→你们/他们/咱们；陈胜→陈胜吴广）
         if (merged.size() < 12 && !anchor.isEmpty()) {
-            List<String> byPrefix = WubiDb.queryByPrefix(anchor);
-            if (byPrefix != null) {
-                for (String p : byPrefix) {
+            List<String> byChar = WubiDb.queryByChar(anchor);
+            if (byChar != null) {
+                for (String p : byChar) {
                     if (!merged.contains(p)) merged.add(p);
                     if (merged.size() >= 12) break;
                 }
@@ -1773,10 +1727,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         Thread t = new Thread(() -> {
             List<String> cloud = new ArrayList<>();
             try {
-                // v0.5.11 反馈⑤：前缀通道用"锚字"（光标前一字）查询——进→进一步/进行/进入…
-                // （原用整词链"前进"→返回前进X，偏离"光标前字联想"要求；含字通道已停用）
-                String query = lastChar == null || lastChar.isEmpty() ? chain : lastChar;
-                List<String> p1 = postGateway("{\"prefix\":\"" + query + "\"}");
+                // 前缀通道（v0.5.1 反馈⑤：整词联想基准，只用整词前缀；含字通道已停用）
+                List<String> p1 = postGateway("{\"prefix\":\"" + chain + "\"}");
                 if (p1 != null) cloud.addAll(p1);
             } catch (Exception ignored) { }
             final List<String> result = cloud;
