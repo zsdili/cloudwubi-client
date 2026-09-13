@@ -60,6 +60,6 @@
         <Key android:codes="-107" android:keyLabel="空格" android:keyWidth="24%p" />
         <Key android:codes="-108" android:keyLabel="？。" />
         <Key android:codes="-104" android:keyLabel="符" />
-        <Key android:codes="-4" android:keyLabel="←" android:keyWidth="13%p" />
+        <Key android:codes="-4" android:keyLabel="↲" android:keyWidth="13%p" />
     </Row>
 </Keyboard>

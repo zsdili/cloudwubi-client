@@ -1,42 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔数字面板 v0.4.8：4 列（数字+运算符），实时计算
-     行1: 1 2 3 +
-     行2: 4 5 6 -
-     行3: 7 8 9 ×
-     行4: 返回 0 ⌫ ÷
-     行5: =（居中，默认带公式上屏） -->
+<!-- 云五笔数字面板 v0.5.0：严格对齐参考图二（iOS 计算器式深色数字键盘）
+     行1: + | 1 | 2 | 3 | ←(退格)
+     行2: - | 4 | 5 | 6 | @
+     行3: * | 7 | 8 | 9 | .
+     行4: / | 返回 | 🎤 | 0 | 符号 | 搜索 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
-    android:keyWidth="24.5%p"
-    android:keyHeight="40dp"
+    android:keyWidth="15.8%p"
+    android:keyHeight="44dp"
     android:horizontalGap="1%p"
     android:verticalGap="5dp"
     android:keyBackground="@drawable/key_bg">
 
-    <Row>
+    <Row android:keyWidth="18.4%p" android:horizontalGap="2%p">
+        <Key android:codes="43" android:keyLabel="+" />
         <Key android:codes="49" android:keyLabel="1" />
         <Key android:codes="50" android:keyLabel="2" />
         <Key android:codes="51" android:keyLabel="3" />
-        <Key android:codes="43" android:keyLabel="+" />
+        <Key android:codes="-5" android:keyLabel="←" android:isRepeatable="true" />
     </Row>
-    <Row>
+    <Row android:keyWidth="18.4%p" android:horizontalGap="2%p">
+        <Key android:codes="45" android:keyLabel="-" />
         <Key android:codes="52" android:keyLabel="4" />
         <Key android:codes="53" android:keyLabel="5" />
         <Key android:codes="54" android:keyLabel="6" />
-        <Key android:codes="45" android:keyLabel="-" />
+        <Key android:codes="64" android:keyLabel="@" />
     </Row>
-    <Row>
+    <Row android:keyWidth="18.4%p" android:horizontalGap="2%p">
+        <Key android:codes="42" android:keyLabel="*" />
         <Key android:codes="55" android:keyLabel="7" />
         <Key android:codes="56" android:keyLabel="8" />
         <Key android:codes="57" android:keyLabel="9" />
-        <Key android:codes="-203" android:keyLabel="×" />
+        <Key android:codes="46" android:keyLabel="." />
     </Row>
     <Row>
+        <Key android:codes="47" android:keyLabel="/" />
         <Key android:codes="-103" android:keyLabel="返回" />
+        <Key android:codes="-107" android:keyLabel="🎤" />
         <Key android:codes="48" android:keyLabel="0" />
-        <Key android:codes="-5" android:keyLabel="⌫" android:isRepeatable="true" />
-        <Key android:codes="-202" android:keyLabel="÷" />
-    </Row>
-    <Row android:keyWidth="33%p" android:horizontalGap="33.5%p" android:keyHeight="44dp">
-        <Key android:codes="-201" android:keyLabel="=" android:keyBackground="@drawable/key_eq_bg" />
+        <Key android:codes="-104" android:keyLabel="符号" />
+        <Key android:codes="-211" android:keyLabel="搜索" />
     </Row>
 </Keyboard>

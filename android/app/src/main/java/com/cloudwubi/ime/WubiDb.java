@@ -21,6 +21,8 @@ public final class WubiDb {
 
     private static Map<String, List<String>> singleIndex;
     private static Map<String, List<String>> phraseIndex;
+    /** v0.5.0 反馈②：词组→编码 反向索引（MRU 置顶排序用） */
+    private static Map<String, String> phraseCodeIndex;
 
     private WubiDb() { }
 
@@ -29,8 +31,17 @@ public final class WubiDb {
         if (singleIndex != null) return;
         singleIndex = new HashMap<>();
         phraseIndex = new HashMap<>();
+        phraseCodeIndex = new HashMap<>();
         loadRaw(ctx, R.raw.wubi_single, singleIndex);
         loadRaw(ctx, R.raw.wubi_phrase, phraseIndex);
+        // 词组反向索引（同一词可能多码，保留首条）
+        if (phraseIndex != null) {
+            for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
+                for (String w : e.getValue()) {
+                    if (!phraseCodeIndex.containsKey(w)) phraseCodeIndex.put(w, e.getKey());
+                }
+            }
+        }
     }
 
     private static void loadRaw(Context ctx, int resId, Map<String, List<String>> map) {
@@ -159,5 +170,13 @@ public final class WubiDb {
             if (singles != null) result.addAll(singles);
         }
         return result.isEmpty() ? null : result;
+    }
+
+    /** v0.5.0 反馈②：取词组的五笔编码（反向索引首条），无则返回 null */
+    public static String phraseCode(String word) {
+        if (word == null || word.isEmpty()) return null;
+        ensureIndex();
+        if (phraseCodeIndex == null) return null;
+        return phraseCodeIndex.get(word);
     }
 }
