@@ -143,7 +143,7 @@ public class CloudKeyboardView extends KeyboardView {
         return super.onTouchEvent(ev);
     }
 
-    /** v0.5.3 反馈⑨：数字/符号面板满宽居中——键盘按当前视图可用宽高重排（%p 以屏幕宽为基准，窗口变窄会偏左/截断） */
+    /** v0.5.3 反馈⑨：数字/符号面板满宽居中——键盘按当前视图可用宽高等比缩放（幂等：以当前实际边界为基准） */
     private void fitKeyboardWidth() {
         Keyboard kb = getKeyboard();
         int w = getWidth();
@@ -153,13 +153,28 @@ public class CloudKeyboardView extends KeyboardView {
         int availH = h - getPaddingTop() - getPaddingBottom();
         if (availW <= 0 || availH <= 0) return;
         try {
-            kb.resize(availW, availH, 0, 0);
+            int maxX = 0, maxY = 0;
+            for (Keyboard.Key k : kb.getKeys()) {
+                int right = k.x + k.width;
+                int bottom = k.y + k.height;
+                if (right > maxX) maxX = right;
+                if (bottom > maxY) maxY = bottom;
+            }
+            if (maxX <= 0 || maxY <= 0) return;
+            float sx = availW / (float) maxX;
+            float sy = availH / (float) maxY;
+            for (Keyboard.Key k : kb.getKeys()) {
+                k.x = Math.round(k.x * sx);
+                k.y = Math.round(k.y * sy);
+                k.width = Math.round(k.width * sx);
+                k.height = Math.round(k.height * sy);
+            }
             invalidateAllKeys();
         } catch (Exception ignored) { }
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    public void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         fitKeyboardWidth();
     }
