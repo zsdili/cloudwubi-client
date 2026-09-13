@@ -298,25 +298,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         return tv;
     }
 
-    /** v0.5.11 反馈①：信息弹窗（版本/作者/开源链接/微信） */
+    /** v0.5.11 反馈①：信息弹窗（版本/作者/开源链接/微信）——纯文本实现（体积友好，≤100KB 门禁） */
     private void showInfoDialog() {
         try {
             android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
-            SpannableStringBuilder msg = new SpannableStringBuilder();
-            msg.append("当前版本：").append("v0.5.11").append("\n");
-            msg.append("作者：zsdili\n");
-            int s = msg.length();
-            msg.append("开源：github");
-            msg.setSpan(new android.text.style.URLSpan("https://github.com/zsdili"),
-                    s, msg.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            msg.append("\n微信：175571");
-            android.widget.TextView tv = new android.widget.TextView(this);
-            tv.setText(msg);
-            tv.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
-            tv.setPadding(60, 36, 60, 36);
-            tv.setTextSize(15);
             b.setTitle("云五笔");
-            b.setView(tv);
+            b.setMessage("当前版本：v0.5.11\n作者：zsdili\n开源：github.com/zsdili\n微信：175571");
             b.setPositiveButton("好", null);
             b.show();
         } catch (Exception ignored) { }
