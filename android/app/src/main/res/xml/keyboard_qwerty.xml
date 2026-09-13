@@ -49,7 +49,7 @@
         <Key android:codes="98" android:keyLabel="B" />
         <Key android:codes="110" android:keyLabel="N" />
         <Key android:codes="109" android:keyLabel="M" />
-        <Key android:codes="-5" android:keyLabel="⌫" android:keyWidth="14%p" android:isRepeatable="true" />
+        <Key android:codes="-5" android:keyLabel="←" android:keyWidth="14%p" android:isRepeatable="true" />
     </Row>
 
     <!-- 行4：123 | 中/英 | !, | 空格(原🎤，v0.4.8反馈⑤) | ?。 | 符 | ←(回车宽) -->

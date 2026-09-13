@@ -116,16 +116,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private LinearLayout rootView;
     private LinearLayout toolRow;   // v0.5.0 反馈①：工具行（全选/取消↺/重做↻）
     private android.widget.TextView hideBtn;   // v0.5.4 反馈⑨：闲置 2 秒后出现的收起键盘按钮
-    /** v0.5.5：闲置定时器——1 秒清空备选栏（反馈⑧）+ 2 秒出现收起按钮（反馈④，INVISIBLE 占位不跳动） */
+    /** v0.5.5：闲置定时器——2 秒出现收起按钮（反馈④，INVISIBLE 占位不跳动）
+     *  v0.5.8 反馈⑤：取消状态栏/备选栏自动清空（原 1 秒清空候选已移除，候选保留待用户操作） */
     private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    private final Runnable idleClearRunnable = new Runnable() {
-        @Override
-        public void run() {
-            // v0.5.5 反馈⑧：1 秒无输入 → 清空备选栏（正在输入的编码保留，仅清候选）
-            candidates.clear();
-            updateCandidateView();
-        }
-    };
     private final Runnable idleRunnable = new Runnable() {
         @Override
         public void run() {
@@ -151,6 +144,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private String lastSelected = "";       // MRU 置顶
     private String lastCommittedChar = "";  // v0.4.8 最近上屏单字（触发联想）
     private String lastEnHint = "";         // v0.4.8 最近选字英文翻译提示
+    private android.widget.TextView statusInfo;   // v0.5.8 状态栏：编码 + 英文翻译（左侧"云五笔"固定）
+    private boolean calcAuto = false;       // v0.5.8 反馈⑥：续算去重仅用于运算符自动续接（防误伤手动输入）
     private List<String> recentPhrases = new ArrayList<>();  // v0.4.8 最近3个选中词组
     private String calcBuffer = "";         // v0.4.8 数字面板计算表达式
     private String lastCalcResult = "";     // v0.5.3 反馈②：上次计算结果（上屏后接运算符可继续计算）
@@ -204,7 +199,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardView.setKeyboard(keyboardMain);
         keyboardView.setOnKeyboardActionListener(this);
         keyboardView.setPreviewEnabled(false);
-        keyboardView.setHapticFeedbackEnabled(true);
+        keyboardView.setHapticFeedbackEnabled(false);   // v0.5.8 反馈②：去掉击键感应（震动）
         // 反馈④：键盘左右留边（截图约 4.5% 屏宽）
         int dp12 = Math.round(12 * getResources().getDisplayMetrics().density);
         int dp6 = Math.round(6 * getResources().getDisplayMetrics().density);
@@ -212,21 +207,33 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.addView(candidateView);
         // v0.5.0 反馈①：输入状态条工具行（全选 / 取消↺ / 重做↻）+ v0.5.1 反馈⑦：亖剪贴板置前
+        // v0.5.8 反馈①：状态栏左侧"云五笔"固定 + 编码 + 英文翻译；右侧 全选|取消↺|重做↻|亖|下隐
         toolRow = new LinearLayout(this);
         toolRow.setOrientation(LinearLayout.HORIZONTAL);
-        toolRow.setGravity(android.view.Gravity.CENTER);
-        toolRow.setPadding(0, 3, 0, 3);
+        toolRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        toolRow.setPadding(10, 3, 4, 3);
+        android.widget.TextView brand = new android.widget.TextView(this);
+        brand.setText("云五笔");
+        brand.setTextSize(13);
+        brand.setTextColor(dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
+        toolRow.addView(brand);
+        statusInfo = new android.widget.TextView(this);
+        statusInfo.setTextSize(12);
+        statusInfo.setPadding(8, 0, 0, 0);
+        statusInfo.setTextColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
+        toolRow.addView(statusInfo);
+        android.widget.Space spacer = new android.widget.Space(this);
+        toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
+        toolRow.addView(makeToolButton("全选", v -> selectAll()));
+        toolRow.addView(makeToolButton("取消↺", v -> doUndo()));
+        toolRow.addView(makeToolButton("重做↻", v -> doRedo()));
         toolRow.addView(makeToolButton("亖", v -> {
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
             clipMode = true;
             updateCandidateView();
         }));
-        toolRow.addView(makeToolButton("全选", v -> selectAll()));
-        toolRow.addView(makeToolButton("取消↺", v -> doUndo()));
-        toolRow.addView(makeToolButton("重做↻", v -> doRedo()));
         // v0.5.4 反馈⑨ + v0.5.5 反馈④：闲置 2 秒未输入 → 工具行出现收起按钮（INVISIBLE 占位，出现时不跳动）
         hideBtn = makeToolButton("⌄", v -> {
             hideBtn.setVisibility(android.view.View.INVISIBLE);
@@ -234,7 +241,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         });
         hideBtn.setVisibility(android.view.View.INVISIBLE);
         toolRow.addView(hideBtn);
+        // v0.5.8 反馈①：第一行状态栏（云五笔|编码|翻译 | 工具），第二行备选栏，第三行键盘
         root.addView(toolRow);
+        root.addView(candidateView);
         root.addView(keyboardView);
         rootView = root;
         // v0.5.4 反馈③：回车键长按 → 强制换行（单行/多行均生效）
@@ -548,16 +557,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.5.4 反馈⑨ + v0.5.5 反馈④⑧：重置双闲置计时器（每次按键触发；1 秒清空备选栏、2 秒显示收起按钮） */
     private void resetIdleTimers() {
-        idleHandler.removeCallbacks(idleClearRunnable);
         idleHandler.removeCallbacks(idleRunnable);
         if (hideBtn != null) hideBtn.setVisibility(android.view.View.INVISIBLE);
-        idleHandler.postDelayed(idleClearRunnable, 1000);
         idleHandler.postDelayed(idleRunnable, 2000);
     }
 
     @Override
     public void onKey(int primaryCode, int[] keyCodes) {
-        keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
         resetIdleTimers();   // v0.5.4 反馈⑨ + v0.5.5 反馈⑧：任何按键重置双闲置计时
         // 字母键
         if (primaryCode >= 'a' && primaryCode <= 'z') {
@@ -577,6 +583,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (primaryCode >= '0' && primaryCode <= '9') {
             if (panelMode == 1) {
                 calcBuffer += (char) primaryCode;
+                calcAuto = false;   // v0.5.8 反馈⑥：手动输入数字 → 全新表达式（不做续算去重）
                 updateCandidateView();
             } else {
                 commitText(String.valueOf((char) primaryCode));
@@ -978,7 +985,17 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         List<String> merged = new ArrayList<>();
         // v0.5.3 反馈①：只滤"最近一次上屏的同一字/词"（避免重复显示）；MRU 词组保留置顶
         // v0.5.4 反馈②：上次选中的字/词置顶须"编码匹配当前输入"（避免错位霸榜挡住四码词组）
-        // ① 第一位：上次选中的字/词（固化规则）+ MRU 最近上屏词组（编码匹配）
+        // v0.5.8 反馈③⑧：排序硬规则——1 码一级简码字最前、4 码词组最前（先于 MRU）；2/3 码 MRU 置顶
+        if (code.length() == 1 || code.length() == 4) {
+            List<String> pri = WubiDb.query(code);
+            if (pri != null) {
+                for (String c : pri) {
+                    if (code.length() == 4 && c.length() < 2) continue;   // 4 码只置顶词组
+                    if (!isJustCommitted(c) && !merged.contains(c)) merged.add(c);
+                }
+            }
+        }
+        // ① MRU：上次选中的字/词（固化规则）+ 最近上屏词组（编码匹配）
         if (!lastSelected.isEmpty() && !isJustCommitted(lastSelected)) {
             String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
             if (lc != null && lc.startsWith(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
@@ -992,6 +1009,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (local != null) {
             for (String c : local) {
                 if (isJustCommitted(c)) continue;
+                if ((code.length() == 1 || code.length() == 4) && merged.contains(c)) continue;   // 已在优先段
                 if (!merged.contains(c)) merged.add(c);
             }
         }
@@ -1131,11 +1149,54 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** 候选条渲染：空闲态（云五笔 ▾ 剪贴板）/ 剪贴板历史 / 数字计算 / 候选列表 */
     private void updateCandidateView() {
         if (candidateView == null) return;
+        // v0.5.8 反馈⑨：英文模式——候选条渲染字母串 + 自动补全建议（原只显示 EN，用户看不到输入导致"打不上字"）
         if (!chineseMode) {
-            setHintText("EN");
+            String ec = composingCode.toString();
+            if (statusInfo != null) statusInfo.setText(ec);
+            if (!candidates.isEmpty() || !ec.isEmpty()) {
+                int tColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
+                int eColor = dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT;
+                SpannableStringBuilder esb = new SpannableStringBuilder();
+                int es0 = esb.length();
+                esb.append(ec).append("  ");
+                esb.setSpan(new ForegroundColorSpan(eColor), es0, es0 + ec.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                for (int i = 0; i < candidates.size(); i++) {
+                    String c = candidates.get(i);
+                    int s = esb.length();
+                    esb.append(String.valueOf(i + 1)).append(".").append(c).append("  ");
+                    int e = esb.length();
+                    final int idx = i;
+                    ClickableSpan cs = new ClickableSpan() {
+                        @Override
+                        public void onClick(View widget) {
+                            selectCandidate(idx);
+                        }
+                        @Override
+                        public void updateDrawState(android.text.TextPaint ds) {
+                            ds.setColor(tColor);
+                            ds.setUnderlineText(false);
+                        }
+                    };
+                    esb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                candidateView.setText(esb);
+            } else {
+                setHintText("EN");
+                if (statusInfo != null) statusInfo.setText("");
+            }
             return;
         }
         String code = composingCode.toString();
+        // v0.5.8 反馈①：编码实时回显到状态栏（备选栏只显示候选）
+        if (statusInfo != null) {
+            String info = code;
+            if (!lastEnHint.isEmpty()) info += "  EN: " + lastEnHint;
+            statusInfo.setText(info);
+        }
+        // v0.5.8 反馈①：数字面板计算式同步状态栏
+        if (panelMode == 1 && statusInfo != null) {
+            statusInfo.setText(calcBuffer.isEmpty() ? "123" : calcBuffer);
+        }
         // v0.4.8 反馈③：非剪贴板状态恢复默认行距
         candidateView.setLineSpacing(0f, 1.0f);
         // v0.4.8 反馈⑧：数字面板计算状态实时显示（v0.5.1 候选条提供 带式/仅结果 两种上屏）
@@ -1153,15 +1214,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             return;
         }
         if (code.isEmpty()) {
+            // v0.5.8 反馈①：编码清空 → 状态栏同步（空闲时无编码，翻译如存在则上移状态栏）
+            if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : "EN: " + lastEnHint);
             // v0.4.8/0.4.9 反馈⑦①：上屏后显示连续联想词组/英文翻译提示
             if (!lastCommittedText.isEmpty() && (!candidates.isEmpty() || !lastEnHint.isEmpty())) {
                 renderAssociateHint();
                 return;
             }
             // v0.5.3 反馈③④⑦：空闲态仅显示"云五笔"（弱色跟随系统），剪贴板入口已移至工具栏亖
-            SpannableString ss = new SpannableString("云五笔");
-            ss.setSpan(new ForegroundColorSpan(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            candidateView.setText(ss);
+            // v0.5.8 反馈⑤：取消自动清空——编码清空后保留候选/联想，仅状态栏回到空闲态
+            if (candidates.isEmpty()) {
+                SpannableString ss = new SpannableString("云五笔");
+                ss.setSpan(new ForegroundColorSpan(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                candidateView.setText(ss);
+            }
             return;
         }
         renderCandidates();
@@ -1379,12 +1445,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         int from = candPage * CAND_PAGE_SIZE;
         int to = Math.min(total, from + CAND_PAGE_SIZE);
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
-        int encColor = dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        // v0.5.4 反馈④：编码实时回显（弱色小字，删除同步）
-        int encStart = sb.length();
-        sb.append(code).append("  ");
-        sb.setSpan(new ForegroundColorSpan(encColor), encStart, encStart + code.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // v0.5.8 反馈①：编码实时回显已移至状态栏（statusInfo），备选栏仅显示候选
         for (int i = from; i < to; i++) {
             String c = candidates.get(i);
             int s = sb.length();
@@ -1441,8 +1503,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void calcAppendOp(String op) {
         if (calcBuffer.isEmpty() && !lastCalcResult.isEmpty()) {
             calcBuffer = lastCalcResult + op;
+            calcAuto = true;    // v0.5.8 反馈⑥：运算符自动续接上次结果 → 去重合法（8 → +2 → 上屏"+2=10"）
         } else {
             calcBuffer += op;
+            calcAuto = false;   // 手动完整输入 → 不去重（3*2 不以结果 3 开头省略）
         }
         updateCandidateView();
     }
@@ -1460,8 +1524,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitText(calcBuffer);
             } else if (calcFormula) {
                 // v0.5.5 反馈③：续算带式去重——表达式以"上次结果"开头时省略重复结果（2+5=7 上屏后 -4= 上屏"-4=3"）
+                // v0.5.8 反馈⑥：去重仅限"运算符自动续接"（calcAuto=true），手动完整输入 3*2 不受影响
                 String expr = calcBuffer;
-                if (expr.startsWith(lastCalcResult)) {
+                if (calcAuto && expr.startsWith(lastCalcResult)) {
                     expr = expr.substring(lastCalcResult.length());
                     if (expr.isEmpty()) expr = res;
                 }
@@ -1471,6 +1536,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         }
         calcBuffer = "";
+        calcAuto = false;
         // v0.5.4 反馈⑥：结果上屏后保留数字面板——继续按运算符接续计算（2+3=5 → + → 5+）
         panelMode = 1;
         keyboardView.setKeyboard(keyboardNum);
