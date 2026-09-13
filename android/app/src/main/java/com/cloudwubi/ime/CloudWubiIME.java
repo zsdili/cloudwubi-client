@@ -1055,8 +1055,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(2500);
-                conn.setReadTimeout(2500);
+                conn.setConnectTimeout(4000);
+                conn.setReadTimeout(4000);
                 String body = "{\"code\":\"" + code + "\",\"phrase\":true}";
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(body.getBytes("UTF-8"));
@@ -1079,7 +1079,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 if (!code.equals(composingCode.toString())) return;
                 // v0.5.0 反馈②：热点词组插到 MRU 段之后、传统五笔之前（排第二位的五笔不动）
                 // v0.5.2 反馈⑥：云端回填同样过滤已上屏字/词
+                // v0.5.6：整码(4码)且本地候选全是单字 → 云端词组置顶（四码词组优先全局生效，
+                //        解决"常用词组打不出来"——云端 5.7 万词组全量兜底）
                 int pos = Math.min(Math.max(cloudInsertPos, 0), candidates.size());
+                if (code.length() == 4) {
+                    boolean localHasPhrase = false;
+                    for (String c : candidates) {
+                        if (c.length() > 1) { localHasPhrase = true; break; }
+                    }
+                    if (!localHasPhrase) pos = 0;
+                }
                 int inserted = 0;
                 for (String s : result) {
                     if (isJustCommitted(s)) continue;
@@ -1623,8 +1632,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(2500);
-            conn.setReadTimeout(2500);
+            conn.setConnectTimeout(4000);
+            conn.setReadTimeout(4000);
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(body.getBytes("UTF-8"));
             }
@@ -1661,8 +1670,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(2500);
-                conn.setReadTimeout(2500);
+                conn.setConnectTimeout(4000);
+                conn.setReadTimeout(4000);
                 String body = "{\"word\":\"" + word + "\",\"en\":true}";
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(body.getBytes("UTF-8"));
