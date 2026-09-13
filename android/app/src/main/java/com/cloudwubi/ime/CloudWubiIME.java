@@ -1092,6 +1092,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 int inserted = 0;
                 for (String s : result) {
                     if (isJustCommitted(s)) continue;
+                    // v0.5.6 fix：整码置顶时只置顶词组（云端单字本地已全，置顶会挤占词组位）
+                    if (pos == 0 && s.length() < 2) continue;
                     if (!candidates.contains(s)) {
                         candidates.add(pos + inserted, s);
                         inserted++;
