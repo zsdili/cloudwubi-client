@@ -61,9 +61,14 @@ javac -source 1.8 -target 1.8 \
 
 echo "== 4/6 转 dex（R8 混淆+裁剪，v0.5.6 腾体积用于词库扩容）=="
 find "$OUT/classes" -name "*.class" > "$OUT/classes.txt"
-if [ -f "$BT/lib/r8.jar" ]; then
-    echo "   🚀 使用 R8（混淆+裁剪）"
-    java -cp "$BT/lib/r8.jar" com.android.tools.r8.R8 \
+# R8 jar 位置探测：build-tools/lib → cmdline-tools/latest/lib → 任意 cmdline-tools/lib
+R8_JAR=""
+for cand in "$BT/lib/r8.jar" "$SDK/cmdline-tools/latest/lib/r8.jar" "$SDK"/cmdline-tools/*/lib/r8.jar; do
+    if [ -f "$cand" ]; then R8_JAR="$cand"; break; fi
+done
+if [ -n "$R8_JAR" ]; then
+    echo "   🚀 使用 R8（混淆+裁剪）: $R8_JAR"
+    java -cp "$R8_JAR" com.android.tools.r8.R8 \
         --release --min-api 21 \
         --lib "$ANDROID_JAR" \
         --pg-conf "$PROJ_DIR/proguard-rules.pro" \
