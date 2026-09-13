@@ -24,7 +24,7 @@
         <Key android:codes="61" android:keyLabel="=" />
     </Row>
     <Row>
-        <Key android:codes="92" android:keyLabel="\" />
+        <Key android:codes="92" android:keyLabel="\\" />
         <Key android:codes="124" android:keyLabel="|" />
         <Key android:codes="60" android:keyLabel="&lt;" />
         <Key android:codes="62" android:keyLabel="&gt;" />
