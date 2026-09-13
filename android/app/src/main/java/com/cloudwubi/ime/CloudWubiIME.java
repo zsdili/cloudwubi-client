@@ -131,9 +131,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
     private long lastShiftTap = 0L;
 
-    // 双标点循环（v0.4.6：！，/ ？。 键）
-    private static final int KEY_UNDO = -209;     // v0.4.9 取消↺
-
     private ClipboardManager clipManager;
     private SharedPreferences prefs;
     private List<String> clipHistory = new ArrayList<>();
