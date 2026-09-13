@@ -280,6 +280,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         clipMode = false;
         keyboardView.setKeyboard(keyboardMain);
         applyLetterCase();
+        // v0.5.2 反馈⑥：新输入会话重置"已上屏字/词"记录（同框连续输入期间持续过滤）
+        committedChars.clear();
+        committedWords.clear();
         super.onStartInputView(info, restarting);
     }
 
@@ -700,6 +703,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             // v0.4.8 反馈②：全选/部分选中时删除整个选区（此前全选无反应、部分选中只删末字）
             CharSequence sel = null;
             try { sel = ic.getSelectedText(0); } catch (Exception ignored) { }
+            // v0.5.2 反馈⑥：删除刚上屏的字后，允许重新输入该字（从已上屏记录移除）
+            String prev = getCursorPrevChar();
+            if (!prev.isEmpty()) committedChars.remove(prev);
             pushUndo();   // v0.4.9 取消↺ 可恢复删除
             if (sel != null && sel.length() > 0) {
                 ic.commitText("", 0);
@@ -829,13 +835,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             return;
         }
         List<String> merged = new ArrayList<>();
-        // v0.5.1 反馈⑥：已上屏的字/词不再出现在备选栏
-        boolean skipCommitted = !lastCommittedText.isEmpty();
+        // v0.5.2 反馈⑥：已上屏的字/词（单字逐字、词组整词）一律不再出现在备选栏
         // ① 第一位：上次选中的字/词（固化规则：必排最前）+ MRU 最近上屏词组（编码匹配）
-        if (!lastSelected.isEmpty() && !merged.contains(lastSelected)
-                && !(skipCommitted && lastSelected.equals(lastCommittedText))) merged.add(lastSelected);
+        if (!lastSelected.isEmpty() && !isJustCommitted(lastSelected)) merged.add(lastSelected);
         for (String p : recentPhrases) {
-            if (skipCommitted && p.equals(lastCommittedText)) continue;
+            if (isJustCommitted(p)) continue;
             String pc = WubiDb.phraseCode(p);
             if (pc != null && pc.startsWith(code) && !merged.contains(p)) merged.add(p);
         }
@@ -843,7 +847,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         List<String> local = WubiDb.query(code);
         if (local != null) {
             for (String c : local) {
-                if (skipCommitted && c.equals(lastCommittedText)) continue;
+                if (isJustCommitted(c)) continue;
                 if (!merged.contains(c)) merged.add(c);
             }
         }
@@ -852,7 +856,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             List<String> predict = WubiDb.queryPredict(code);
             if (predict != null) {
                 for (String p : predict) {
-                    if (skipCommitted && p.equals(lastCommittedText)) continue;
+                    if (isJustCommitted(p)) continue;
                     if (!merged.contains(p)) merged.add(p);
                 }
             }
@@ -930,11 +934,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 // 仅当编码仍一致时回填，避免过期结果覆盖
                 if (!code.equals(composingCode.toString())) return;
                 // v0.5.0 反馈②：热点词组插到 MRU 段之后、传统五笔之前（排第二位的五笔不动）
-                // v0.5.1 反馈⑥：已上屏串过滤
+                // v0.5.2 反馈⑥：云端回填同样过滤已上屏字/词
                 int pos = Math.min(Math.max(cloudInsertPos, 0), candidates.size());
                 int inserted = 0;
                 for (String s : result) {
-                    if (s.equals(lastCommittedText)) continue;
+                    if (isJustCommitted(s)) continue;
                     if (!candidates.contains(s)) {
                         candidates.add(pos + inserted, s);
                         inserted++;
@@ -1299,6 +1303,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     private boolean associateActive = false;   // v0.4.9 联想态标记（用于连续联想链）
     private int cloudInsertPos = 0;            // v0.5.0 云端热点插入位（MRU 段后）
+    /** v0.5.2 反馈⑥：已上屏字集合（单字逐字累积）与最近上屏词组集合（整词过滤） */
+    private final java.util.Set<String> committedChars = new java.util.HashSet<>();
+    private final java.util.LinkedHashSet<String> committedWords = new java.util.LinkedHashSet<>();
+
+    /** v0.5.2 反馈⑥：候选是否为"刚上屏过"的内容（单字按字、词组按整词） */
+    private boolean isJustCommitted(String c) {
+        if (c == null || c.isEmpty()) return false;
+        if (c.length() == 1) return committedChars.contains(c);
+        return committedWords.contains(c) || c.equals(lastCommittedText);
+    }
 
     private void selectCandidate(int idx) {
         if (idx < 0 || idx >= candidates.size()) return;
@@ -1313,6 +1327,18 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         commitText(text);   // v0.4.9 自动记录 undo 快照
         lastSelected = text;   // MRU 置顶
+        // v0.5.2 反馈⑥：记录已上屏的每个字与最近词组（同框连续输入持续过滤）
+        for (int i = 0; i < text.length(); i++) {
+            committedChars.add(String.valueOf(text.charAt(i)));
+        }
+        if (text.length() >= 2) {
+            committedWords.add(text);
+            while (committedWords.size() > 10) {
+                java.util.Iterator<String> it = committedWords.iterator();
+                it.next();
+                it.remove();
+            }
+        }
         if (GATEWAY_READY) reportSelection(text);
         composingCode.setLength(0);
         candidates.clear();
