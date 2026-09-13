@@ -110,3 +110,17 @@
 | 3 | 下隐功能键常显 + 🔽 图标 + 取消计时 | 闲置 2s 显示逻辑 | hideBtn 常显 VISIBLE + "🔽" + idleRunnable 空实现/计时移除 | ✅ 已发布 v0.5.10 |
 
 > 云端同步：SCF 已通过腾讯云 API 部署新版（UpdateFunctionCode 成功，含 en_dict.json 1055 词），`{"word":"钟","en":true}` → `"en":"bell; clock; time; hour"` 实测通过。
+
+## v0.5.11 反馈核查（2026-09-13）
+
+| # | 反馈要求 | 根因 | 落实 | 状态 |
+|---|---------|------|------|------|
+| 1 | 状态栏增加 ℹ️ 信息按钮→弹窗（云五笔/版本/作者/开源/微信） | 无信息入口 | infoBtn + showInfoDialog（AlertDialog：v0.5.11/zsdili/github.com/zsdili/175571） | ✅ 已发布 v0.5.11 |
+| 2 | 状态栏+备选栏不换行；英文翻译仅第一行 | renderAssociateHint 备选栏追加 EN；TextView 默认多行 | statusInfo 单行省略号；renderAssociateHint 去 EN（翻译只走状态栏点击上屏）；候选/联想/英文态 setSingleLine+ellipsize；剪贴板恢复多行 | ✅ 已发布 v0.5.11 |
+| 3 | 1+2=3 上屏再 *4 出 1+2=33*4=12（多一个 3） | commitCalc 先更新 lastCalcResult=新结果，再去重比较 expr.startsWith(新结果) 恒 false | 先保存 oldResult=旧 lastCalcResult，再更新；expr.startsWith(oldResult) 去重 → 1+2=3*4=12 | ✅ 已发布 v0.5.11 |
+| 4 | 输入 qq 按回车应上屏"qq"却上屏"多"；规则：回车上英文、空格有中文上中文 | commitFirstCandidate 直接 selectCandidate(0)；云端回填把"多"插入第 0 位 | 回车→上屏 composingCode 小写英文并清空；空格→候选首项为中文则上中文、为编码兜底则输出空格 | ✅ 已发布 v0.5.11 |
+| 5 | 光标定位"进"字后应联想"进的/进路/进街/进村/进一步/方向/后退"（锚字开头），而非"共进/驶进" | ②b 用 queryByChar(锚字)=含字词组（X进结尾）；本地词库无"进"字头词组 | ②b 改 queryByPrefix(锚字)（进→进一步/进行/进入…）；云端 SCF prefix 通道改锚字查询（wubi86_phrases 71 个进字头词组） | ✅ 已发布 v0.5.11 |
+| 6 | 英文态剪贴板不可用；全选后退格删的是备选栏 | updateCandidateView 英文分支提前 return 不渲染剪贴板；handleBackspace 编码优先于选区 | clipMode 渲染前置（英文态可用亖）；handleBackspace 选区（getSelectedText 非空）优先 commitText("") 删除 | ✅ 已发布 v0.5.11 |
+
+> 体积攻坚记录：v0.5.11 六项反馈代码使 dex 44932→46172（+1240B），APK 跨 4KB 边界达 104034B 超门禁。破解：成语层 idioms.txt 迁移云端规划（本地移除 -1371B）+ zip -9 -X（-400B）+ 单字重码行修正（-57B）+ 冗余代码删除 → APK 99779B（≤100KB ✓）。
+> 云端待办：成语启发联想层云端化（SCF phrase_engine 增成语通道，本地 queryIdioms 逻辑已保留，恢复时零代码改动）。
