@@ -100,3 +100,13 @@
 | 8 | qkhh 最近上屏"钟"没前移+字频词频调整 | 4 码词组优先段在 MRU 前 | ① MRU 精确匹配(编码==code)最优先 ② lastSelected 持久化(PREFS_LAST_SEL)跨会话 | ✅ |
 | 9 | 剪贴板行距太大/虚横线 | lineSpacing 18f + 虚横线+空行 | 0f,1.3f + 浅色相间背景(隔行着色) | ✅ |
 | 10 | 剪贴板点键自动收回 | 无退出逻辑 | onKey 开头 clipMode=false 再处理按键 | ✅ |
+
+## v0.5.10 反馈核查（2026-09-13）
+
+| # | 反馈要求 | 根因 | 落实 | 状态 |
+|---|---------|------|------|------|
+| 1 | 上档键单击切持续大写；再点恢复中文/英文小写 | 旧 shiftState 单次大写复位逻辑 | handleShift 重写：中文态→英文大写(shiftState=2)+fromChineseShift；再点→回中文；纯英文 0↔2 切换；toggleLang 手动切清标志 | ✅ 已发布 v0.5.10 |
+| 2 | 剪贴板点击任何屏幕部位/键盘后关闭 | 无空白区点击关闭 | candidateView.setOnClickListener 剪贴板态点击空白关闭 | ✅ 已发布 v0.5.10 |
+| 3 | 下隐功能键常显 + 🔽 图标 + 取消计时 | 闲置 2s 显示逻辑 | hideBtn 常显 VISIBLE + "🔽" + idleRunnable 空实现/计时移除 | ✅ 已发布 v0.5.10 |
+
+> 云端同步：SCF 已通过腾讯云 API 部署新版（UpdateFunctionCode 成功，含 en_dict.json 1055 词），`{"word":"钟","en":true}` → `"en":"bell; clock; time; hour"` 实测通过。
