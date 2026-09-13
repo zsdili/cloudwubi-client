@@ -28,15 +28,15 @@ public final class WubiDb {
 
     private WubiDb() { }
 
-    /** 由 IME onCreate 调用一次，加载 raw 词库 */
+    /** 由 IME onCreate 调用一次，加载词库（v0.5.5：词库移至 assets，APK 内文本可压缩省体积） */
     public static synchronized void init(Context ctx) {
         if (singleIndex != null) return;
         singleIndex = new HashMap<>();
         phraseIndex = new HashMap<>();
         phraseCodeIndex = new HashMap<>();
         singleCodeIndex = new HashMap<>();
-        loadRaw(ctx, R.raw.wubi_single, singleIndex);
-        loadRaw(ctx, R.raw.wubi_phrase, phraseIndex);
+        loadAsset(ctx, "wubi_single.txt", singleIndex);
+        loadAsset(ctx, "wubi_phrase.txt", phraseIndex);
         // 词组反向索引（同一词可能多码，保留首条）
         if (phraseIndex != null) {
             for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
@@ -55,9 +55,9 @@ public final class WubiDb {
         }
     }
 
-    private static void loadRaw(Context ctx, int resId, Map<String, List<String>> map) {
+    private static void loadAsset(Context ctx, String name, Map<String, List<String>> map) {
         try (BufferedReader r = new BufferedReader(
-                new InputStreamReader(ctx.getResources().openRawResource(resId), "UTF-8"))) {
+                new InputStreamReader(ctx.getAssets().open(name), "UTF-8"))) {
             String line;
             while ((line = r.readLine()) != null) {
                 line = line.trim();

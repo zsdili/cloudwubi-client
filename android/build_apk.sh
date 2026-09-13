@@ -64,9 +64,15 @@ find "$OUT/classes" -name "*.class" > "$OUT/classes.txt"
     --output "$OUT" \
     $(cat "$OUT/classes.txt")
 
-echo "== 5/6 打包 dex 进 APK =="
+echo "== 5/6 打包 dex + assets 进 APK =="
 cd "$OUT"
 zip -q base.apk classes.dex
+# v0.5.5：词库位于 assets（文本默认压缩，APK 体积更小）；assets 需单独并入 APK
+ASSETS_DIR="$(dirname "$0")/app/src/main/assets"
+if [ -d "$ASSETS_DIR" ]; then
+    OUT_DIR="$(pwd)"
+    (cd "$ASSETS_DIR" && zip -q -r "$OUT_DIR/base.apk" .)
+fi
 
 echo "== 6/6 对齐 + 签名（固定发布签名，保证各版本可覆盖安装）=="
 "$BT/zipalign" -f 4 base.apk aligned.apk
