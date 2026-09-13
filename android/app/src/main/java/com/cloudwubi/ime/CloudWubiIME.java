@@ -321,7 +321,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     @Override
-    @Override
     public void onStartInput(android.view.inputmethod.EditorInfo attribute, boolean restarting) {
         // v0.5.5 反馈①：标准会话入口（密码框/WebView 等必须重写，保证输入可用）
         super.onStartInput(attribute, restarting);
