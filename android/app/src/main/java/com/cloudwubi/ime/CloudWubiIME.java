@@ -303,7 +303,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         try {
             android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
             b.setTitle("云五笔");
-            b.setMessage("当前版本：v0.5.11\n作者：zsdili\n开源：github.com/zsdili\n微信：175571");
+            b.setMessage("当前版本：v0.5.12\n作者：zsdili\n开源：github.com/zsdili\n微信：175571");
             b.setPositiveButton("好", null);
             b.show();
         } catch (Exception ignored) { }
@@ -1640,6 +1640,26 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void selectCandidate(int idx) {
         if (idx < 0 || idx >= candidates.size()) return;
         String text = candidates.get(idx);
+        // v0.5.12 根治（用户已 5-6 次反馈）：前缀去重——候选以"刚上屏内容/上次结果"开头时，
+        //   先删除光标前的旧内容再上屏（所见即所得）：
+        //   · 上屏"宇"后点联想"宇宙" → 得"宇宙"（非"宇宇宙"）
+        //   · 上屏"陈"后点"陈胜" → 得"陈胜"；再点"陈胜吴广" → 得"陈胜吴广"（联想链正常）
+        //   · 计算 8*4=32 后点带式"32/16=2"（若走此路径）→ 得"/16=2"（非"32/16=2"重复）
+        if (chineseMode) {
+            String base = !committedLast.isEmpty() ? committedLast : lastCalcResult;
+            if (!base.isEmpty() && base.length() < text.length() && text.startsWith(base)) {
+                InputConnection ic = getCurrentInputConnection();
+                if (ic != null) {
+                    try {
+                        CharSequence before = ic.getTextBeforeCursor(base.length(), 0);
+                        if (before != null && before.toString().equals(base)) {
+                            pushUndo();
+                            ic.deleteSurroundingText(base.length(), 0);
+                        }
+                    } catch (Exception ignored) { }
+                }
+            }
+        }
         // v0.5.0 反馈⑤：英文补全——直接上屏补全串，不进五笔联想链
         if (!chineseMode) {
             commitText(text);
