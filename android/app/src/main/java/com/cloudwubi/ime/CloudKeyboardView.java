@@ -143,7 +143,7 @@ public class CloudKeyboardView extends KeyboardView {
         return super.onTouchEvent(ev);
     }
 
-    /** v0.4.9：FLAT 全自绘（键帽圆角纯色 + 文字 + 上滑标注），不依赖父类绘制 API */
+    /** v0.4.9 FLAT 全自绘（键帽圆角纯色 + 文字 + 上滑标注），不依赖父类绘制 API */
     @Override
     public void onDraw(Canvas canvas) {
         Keyboard kb = getKeyboard();
@@ -151,7 +151,6 @@ public class CloudKeyboardView extends KeyboardView {
         canvas.drawColor(boardBg);
         int padLeft = getPaddingLeft();
         int padTop = getPaddingTop();
-        boolean shifted = isShifted();
         for (Keyboard.Key key : kb.getKeys()) {
             float x = key.x + padLeft;
             float y = key.y + padTop;
@@ -162,14 +161,13 @@ public class CloudKeyboardView extends KeyboardView {
                                    : (pressed ? 0xFFE5E7EB : keyBgNormal));
             RectF r = new RectF(x + 2, y + 2, x + key.width - 2, y + key.height - 2);
             canvas.drawRoundRect(r, cornerPx, cornerPx, keyPaint);
-            // 2) 键面文字（shiftLabel 大写 / label 小写）
-            String label = getKeyLabel(key, shifted);
-            if (label != null && label.length() > 0) {
+            // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护）
+            if (key.label != null && key.label.length() > 0) {
                 textPaint.setColor(keyTextColor);
                 textPaint.setTextSize(labelSizePx);
                 float cx = x + key.width / 2f;
                 float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
-                canvas.drawText(label, cx, cy, textPaint);
+                canvas.drawText(key.label.toString(), cx, cy, textPaint);
             }
             // 3) 上滑符号标注（左上角）
             int sym = swipeSymbol(key);
@@ -186,20 +184,6 @@ public class CloudKeyboardView extends KeyboardView {
         if (key == null || key.codes == null || key.codes.length == 0) return true;
         int c = key.codes[0];
         return c < 0 || c == 32 || c == 46 || c == 44;   // 功能键/空格/句号/逗号
-    }
-
-    private String getKeyLabel(Keyboard.Key key, boolean shifted) {
-        if (key.label != null && key.label.length() > 0) {
-            // 字母键：shift 时优先 shiftLabel（大写）
-            if (shifted && key.shiftLabel != null && key.shiftLabel.length() > 0) {
-                if (key.codes != null && key.codes.length == 1
-                        && key.codes[0] >= 'a' && key.codes[0] <= 'z') {
-                    return key.shiftLabel.toString();
-                }
-            }
-            return key.label.toString();
-        }
-        return null;
     }
 
     private Keyboard.Key findKey(int x, int y) {
