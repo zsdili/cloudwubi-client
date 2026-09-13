@@ -1788,7 +1788,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             try {
                 // v0.5.11 反馈⑤：前缀通道用"锚字"（光标前一字）查询——进→进一步/进行/进入…
                 // （原用整词链"前进"→返回前进X，偏离"光标前字联想"要求；含字通道已停用）
-                String query = anchor == null || anchor.isEmpty() ? chain : anchor;
+                String query = lastChar == null || lastChar.isEmpty() ? chain : lastChar;
                 List<String> p1 = postGateway("{\"prefix\":\"" + query + "\"}");
                 if (p1 != null) cloud.addAll(p1);
             } catch (Exception ignored) { }
