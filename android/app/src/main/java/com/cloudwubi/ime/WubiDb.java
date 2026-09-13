@@ -23,6 +23,8 @@ public final class WubiDb {
     private static Map<String, List<String>> phraseIndex;
     /** v0.5.0 反馈②：词组→编码 反向索引（MRU 置顶排序用） */
     private static Map<String, String> phraseCodeIndex;
+    /** v0.5.4 反馈②：单字→编码 反向索引（lastSelected 置顶需编码匹配，避免错位霸榜） */
+    private static Map<String, String> singleCodeIndex;
 
     private WubiDb() { }
 
@@ -32,6 +34,7 @@ public final class WubiDb {
         singleIndex = new HashMap<>();
         phraseIndex = new HashMap<>();
         phraseCodeIndex = new HashMap<>();
+        singleCodeIndex = new HashMap<>();
         loadRaw(ctx, R.raw.wubi_single, singleIndex);
         loadRaw(ctx, R.raw.wubi_phrase, phraseIndex);
         // 词组反向索引（同一词可能多码，保留首条）
@@ -39,6 +42,14 @@ public final class WubiDb {
             for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
                 for (String w : e.getValue()) {
                     if (!phraseCodeIndex.containsKey(w)) phraseCodeIndex.put(w, e.getKey());
+                }
+            }
+        }
+        // v0.5.4 反馈②：单字反向索引（保留首条）
+        if (singleIndex != null) {
+            for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+                for (String w : e.getValue()) {
+                    if (w.length() == 1 && !singleCodeIndex.containsKey(w)) singleCodeIndex.put(w, e.getKey());
                 }
             }
         }
@@ -178,5 +189,13 @@ public final class WubiDb {
         ensureIndex();
         if (phraseCodeIndex == null) return null;
         return phraseCodeIndex.get(word);
+    }
+
+    /** v0.5.4 反馈②：取单字的五笔编码（反向索引首条），无则返回 null */
+    public static String singleCode(String ch) {
+        if (ch == null || ch.length() != 1) return null;
+        ensureIndex();
+        if (singleCodeIndex == null) return null;
+        return singleCodeIndex.get(ch);
     }
 }

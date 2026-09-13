@@ -22,11 +22,33 @@ import android.view.MotionEvent;
 public class CloudKeyboardView extends KeyboardView {
 
     private static final int SWIPE_THRESHOLD_DP = 30;
+    private static final int LONG_PRESS_MS = 600;
 
     private int downY = 0;
     private boolean swipeTriggered = false;
     private Keyboard.Key downKey = null;
     private final int thresholdPx;
+    /** v0.5.4 反馈③：长按支持（回车长按→换行） */
+    private boolean longPressTriggered = false;
+    private OnLongPressListener longPressListener;
+    private final Runnable longPressRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (downKey != null && longPressListener != null && !swipeTriggered) {
+                longPressTriggered = true;
+                longPressListener.onLongPress(downKey);
+            }
+        }
+    };
+
+    /** v0.5.4 反馈③：长按回调接口 */
+    public interface OnLongPressListener {
+        void onLongPress(Keyboard.Key key);
+    }
+
+    public void setOnLongPressListener(OnLongPressListener l) {
+        longPressListener = l;
+    }
 
     /** 上滑符号标注画笔 */
     private final Paint hintPaint;
@@ -123,11 +145,17 @@ public class CloudKeyboardView extends KeyboardView {
             case MotionEvent.ACTION_DOWN:
                 downY = y;
                 swipeTriggered = false;
+                longPressTriggered = false;
                 downKey = findKey(x, y);
+                if (downKey != null) {
+                    removeCallbacks(longPressRunnable);
+                    postDelayed(longPressRunnable, LONG_PRESS_MS);
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (!swipeTriggered && downKey != null && (downY - y) > thresholdPx) {
                     swipeTriggered = true;
+                    removeCallbacks(longPressRunnable);
                     int sym = swipeSymbol(downKey);
                     if (sym != 0) {
                         getOnKeyboardActionListener().onKey(sym, new int[]{sym});
@@ -136,7 +164,17 @@ public class CloudKeyboardView extends KeyboardView {
                 }
                 break;
             case MotionEvent.ACTION_UP:
+                removeCallbacks(longPressRunnable);
+                if (longPressTriggered) {
+                    // v0.5.4 反馈③：长按已处理，吞掉本次点击避免触发普通键
+                    longPressTriggered = false;
+                    downKey = null;
+                    return true;
+                }
+                downKey = null;
+                break;
             case MotionEvent.ACTION_CANCEL:
+                removeCallbacks(longPressRunnable);
                 downKey = null;
                 break;
         }
@@ -203,7 +241,8 @@ public class CloudKeyboardView extends KeyboardView {
                                    : (pressed ? 0xFFE5E7EB : keyBgNormal));
             RectF r = new RectF(x + 2, y + 2, x + key.width - 2, y + key.height - 2);
             canvas.drawRoundRect(r, cornerPx, cornerPx, keyPaint);
-            // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护；v0.5.1 支持上下两行：上行上滑符号小字、下行默认字符）
+            // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护；v0.5.1 支持上下两行；v0.5.4 反馈①：全部水平居中，布局统一）
+            float cx = x + key.width / 2f;
             if (key.label != null && key.label.length() > 0) {
                 String lab = key.label.toString();
                 int nl = lab.indexOf('\n');
@@ -213,28 +252,25 @@ public class CloudKeyboardView extends KeyboardView {
                     if (up.length() > 0) {
                         textPaint.setColor(keyTextColor);
                         textPaint.setTextSize(labelSizePx * 0.60f);
-                        canvas.drawText(up, x + key.width / 2f, y + key.height * 0.38f, textPaint);
+                        canvas.drawText(up, cx, y + key.height * 0.36f, textPaint);
                     }
                     if (down.length() > 0) {
                         textPaint.setColor(keyTextColor);
                         textPaint.setTextSize(labelSizePx);
-                        canvas.drawText(down, x + key.width / 2f, y + key.height * 0.74f, textPaint);
+                        canvas.drawText(down, cx, y + key.height * 0.72f, textPaint);
                     }
                 } else {
                     textPaint.setColor(keyTextColor);
                     textPaint.setTextSize(labelSizePx);
-                    float cx = x + key.width / 2f;
                     float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
                     canvas.drawText(lab, cx, cy, textPaint);
                 }
             }
-            // 3) 上滑符号标注（左上角）
+            // 3) 上滑符号标注（v0.5.4 反馈①：水平居中 + 键面上部小字，与主文字同一中轴）
             int sym = swipeSymbol(key);
             if (sym != 0) {
                 String s = String.valueOf((char) sym);
-                float sx = x + key.width * 0.30f;
-                float sy = y + key.height * 0.30f + 4;
-                canvas.drawText(s, sx, sy, hintPaint);
+                canvas.drawText(s, cx, y + key.height * 0.28f, hintPaint);
             }
         }
     }

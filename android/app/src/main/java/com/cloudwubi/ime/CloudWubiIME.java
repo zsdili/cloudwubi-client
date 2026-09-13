@@ -60,6 +60,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int KEY_LANG = -102;     // 中/英
     private static final int KEY_SYMBOL = -103;   // 面板返回主键盘
     private static final int KEY_SYM_IN = -104;   // 符号面板
+    private static final int KEY_SYM_PREV = -112;  // v0.5.4 反馈⑤：符号面板"上一页"
     private static final int KEY_SHIFT = -105;    // ↑ Shift（单击切换/双击锁定大写）
     private static final int KEY_PUNCT_BANG = -106; // !，双标点循环
     private static final int KEY_MIC = -107;      // v0.4.8: 空格键（原🎤语音占位已移除）
@@ -114,6 +115,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private CloudKeyboardView keyboardView;
     private LinearLayout rootView;
     private LinearLayout toolRow;   // v0.5.0 反馈①：工具行（全选/取消↺/重做↻）
+    private android.widget.TextView hideBtn;   // v0.5.4 反馈⑨：闲置 2 秒后出现的收起键盘按钮
+    private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable idleRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (hideBtn != null && hideBtn.getVisibility() != android.view.View.VISIBLE) {
+                hideBtn.setVisibility(android.view.View.VISIBLE);
+            }
+        }
+    };
     private Keyboard keyboardMain;
     private Keyboard keyboardNum;
     private Keyboard keyboardSymbols;
@@ -199,9 +210,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(makeToolButton("全选", v -> selectAll()));
         toolRow.addView(makeToolButton("取消↺", v -> doUndo()));
         toolRow.addView(makeToolButton("重做↻", v -> doRedo()));
+        // v0.5.4 反馈⑨：闲置 2 秒未输入 → 工具行出现收起键盘按钮
+        hideBtn = makeToolButton("⌄", v -> {
+            hideBtn.setVisibility(android.view.View.GONE);
+            try { requestHideSelf(0); } catch (Exception ignored) { }
+        });
+        hideBtn.setVisibility(android.view.View.GONE);
+        toolRow.addView(hideBtn);
         root.addView(toolRow);
         root.addView(keyboardView);
         rootView = root;
+        // v0.5.4 反馈③：回车键长按 → 强制换行（单行/多行均生效）
+        keyboardView.setOnLongPressListener(key -> {
+            if (key != null && key.codes != null && key.codes.length > 0 && key.codes[0] == KB_ENTER) {
+                commitText("\n");
+            }
+        });
+        resetIdleTimer();
         applyTheme();   // v0.4.9 反馈③：FLAT + 跟随系统深浅色
         applyLangLabels();
         applyLetterCase();   // 中文模式默认大写显示
@@ -287,6 +312,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         applyLetterCase();
         // v0.5.3 反馈①：新输入会话重置"最近上屏"记录
         committedLast = "";
+        // v0.5.4 反馈⑨：新会话隐藏收起按钮并重启闲置计时
+        if (hideBtn != null) hideBtn.setVisibility(android.view.View.GONE);
+        resetIdleTimer();
         super.onStartInputView(info, restarting);
     }
 
@@ -461,9 +489,17 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     // ===== KeyboardView.OnKeyboardActionListener =====
 
+    /** v0.5.4 反馈⑨：重置闲置计时器（每次按键触发；2 秒无输入显示收起按钮） */
+    private void resetIdleTimer() {
+        idleHandler.removeCallbacks(idleRunnable);
+        if (hideBtn != null) hideBtn.setVisibility(android.view.View.GONE);
+        idleHandler.postDelayed(idleRunnable, 2000);
+    }
+
     @Override
     public void onKey(int primaryCode, int[] keyCodes) {
         keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
+        resetIdleTimer();   // v0.5.4 反馈⑨：任何按键重置闲置计时
         // 字母键
         if (primaryCode >= 'a' && primaryCode <= 'z') {
             if (chineseMode) {
@@ -496,7 +532,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 updateCandidateView();
                 return;
             case KEY_SYM_IN:
-                // v0.5.0：数字面板"符号"→进符号面板；v0.5.3 反馈⑩：符号面板"更多"→完整符号面板（sym2→sym3，末页"完成"回主键盘）
+                // v0.5.0：数字面板"符号"→进符号面板；v0.5.3 反馈⑩ + v0.5.4 反馈⑤：符号面板"下一页 ›"（sym1→sym2→sym3→sym1 循环）
                 if (panelMode == 2) {
                     panelMode = 3;
                     keyboardView.setKeyboard(keyboardSymbols2);
@@ -504,12 +540,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     panelMode = 4;
                     keyboardView.setKeyboard(keyboardSymbols3);
                 } else if (panelMode == 4) {
-                    panelMode = 0;
-                    keyboardView.setKeyboard(keyboardMain);
-                    updateCandidateView();
+                    panelMode = 2;
+                    keyboardView.setKeyboard(keyboardSymbols);
                 } else {
                     panelMode = 2;
                     keyboardView.setKeyboard(keyboardSymbols);
+                }
+                return;
+            case KEY_SYM_PREV:   // v0.5.4 反馈⑤：符号面板"上一页 ‹"（sym1←sym2←sym3 循环）
+                if (panelMode == 3) {
+                    panelMode = 2;
+                    keyboardView.setKeyboard(keyboardSymbols);
+                } else if (panelMode == 4) {
+                    panelMode = 3;
+                    keyboardView.setKeyboard(keyboardSymbols2);
+                } else {
+                    panelMode = 4;
+                    keyboardView.setKeyboard(keyboardSymbols3);
                 }
                 return;
             case KEY_SYMBOL:   // 面板返回主键盘（数字面板有表达式时先带式上屏）
@@ -537,9 +584,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             case KEY_PUNCT_QM:     // v0.5.1：点击默认"。" / "."（英文态），上滑"？"
                 commitText(chineseMode ? "。" : ".");
                 return;
-            case KEY_MIC:          // 兼容：旧语音键占位（v0.5.1 所有键盘已移除 🎤）
-                commitText(" ");
-                return;
+            case KEY_MIC:          // v0.5.4 反馈⑦：空格键——备选栏有候选则上屏首选，否则输出空格
             case KEY_SPACE:
                 commitSpaceOrFirst();
                 return;
@@ -846,8 +891,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         List<String> merged = new ArrayList<>();
         // v0.5.3 反馈①：只滤"最近一次上屏的同一字/词"（避免重复显示）；MRU 词组保留置顶
-        // ① 第一位：上次选中的字/词（固化规则：必排最前；刚上屏的除外）+ MRU 最近上屏词组（编码匹配）
-        if (!lastSelected.isEmpty() && !isJustCommitted(lastSelected)) merged.add(lastSelected);
+        // v0.5.4 反馈②：上次选中的字/词置顶须"编码匹配当前输入"（避免错位霸榜挡住四码词组）
+        // ① 第一位：上次选中的字/词（固化规则）+ MRU 最近上屏词组（编码匹配）
+        if (!lastSelected.isEmpty() && !isJustCommitted(lastSelected)) {
+            String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
+            if (lc != null && lc.startsWith(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
+        }
         for (String p : recentPhrases) {
             String pc = WubiDb.phraseCode(p);
             if (pc != null && pc.startsWith(code) && !merged.contains(p)) merged.add(p);
@@ -1223,7 +1272,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setText(css);
     }
 
-    /** 候选列表：v0.5.3 反馈③⑦——纯候选（去编码括号提示、去橙色首条），跟随系统色 */
+    /** 候选列表：v0.5.3 反馈③⑦——纯候选（去杂项）；v0.5.4 反馈④：编码前缀实时显示（含删除时同步） */
     private void renderCandidates() {
         candidateView.setLineSpacing(0f, 1.0f);
         String code = composingCode.toString();
@@ -1233,7 +1282,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         int from = candPage * CAND_PAGE_SIZE;
         int to = Math.min(total, from + CAND_PAGE_SIZE);
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
+        int encColor = dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
+        // v0.5.4 反馈④：编码实时回显（弱色小字，删除同步）
+        int encStart = sb.length();
+        sb.append(code).append("  ");
+        sb.setSpan(new ForegroundColorSpan(encColor), encStart, encStart + code.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         for (int i = from; i < to; i++) {
             String c = candidates.get(i);
             int s = sb.length();
@@ -1314,8 +1368,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         }
         calcBuffer = "";
-        panelMode = 0;
-        keyboardView.setKeyboard(keyboardMain);
+        // v0.5.4 反馈⑥：结果上屏后保留数字面板——继续按运算符接续计算（2+3=5 → + → 5+）
+        panelMode = 1;
+        keyboardView.setKeyboard(keyboardNum);
         updateCandidateView();
     }
 
@@ -1386,6 +1441,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             List<String> prefix = WubiDb.queryByPrefix(chain);
             if (prefix != null) {
                 for (String p : prefix) if (!merged.contains(p)) merged.add(p);
+            }
+        }
+        // ②b v0.5.4 反馈⑧：锚字含字词组兜底（我们→你们/他们/咱们；陈胜→陈胜吴广）
+        if (merged.size() < 12 && !anchor.isEmpty()) {
+            List<String> byChar = WubiDb.queryByChar(anchor);
+            if (byChar != null) {
+                for (String p : byChar) {
+                    if (!merged.contains(p)) merged.add(p);
+                    if (merged.size() >= 12) break;
+                }
             }
         }
         candidates.clear();

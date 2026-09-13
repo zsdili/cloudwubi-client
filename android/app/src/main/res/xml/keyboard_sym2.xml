@@ -61,10 +61,10 @@
         <Key android:codes="8225" android:keyLabel="‡" />
     </Row>
     <Row android:keyWidth="19.2%p">
-        <Key android:codes="-103" android:keyLabel="返回" />
-        <Key android:codes="-104" android:keyLabel="更多" />
-        <Key android:codes="12298" android:keyLabel="《" />
-        <Key android:codes="12299" android:keyLabel="》" />
-        <Key android:codes="8230" android:keyLabel="…" />
+        <Key android:codes="-103" android:keyLabel="⌨" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:isRepeatable="true" />
+        <Key android:codes="-112" android:keyLabel="‹" />
+        <Key android:codes="-104" android:keyLabel="›" />
+        <Key android:codes="-4" android:keyLabel="↵" />
     </Row>
 </Keyboard>
