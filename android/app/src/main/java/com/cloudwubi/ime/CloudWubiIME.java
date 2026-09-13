@@ -123,9 +123,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private final Runnable idleRunnable = new Runnable() {
         @Override
         public void run() {
-            if (hideBtn != null && hideBtn.getVisibility() != android.view.View.VISIBLE) {
-                hideBtn.setVisibility(android.view.View.VISIBLE);
-            }
+            // v0.5.10 反馈③：下隐常显，不再计时显示
         }
     };
     /** v0.5.5 反馈①：密码框模式（禁用联想/剪贴板/翻译，保证可输入） */
@@ -140,6 +138,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private Keyboard keyboardSymbols2;   // v0.5.3 反馈⑩：更多符号面板1
     private Keyboard keyboardSymbols3;   // v0.5.3 反馈⑩：更多符号面板2（末页）
     private boolean chineseMode = true;
+    private boolean fromChineseShift = false;   // v0.5.10 反馈①：记录 shift 是否从中文切入英文大写
     private int panelMode = 0;              // 0=主键盘 1=数字 2=符号
     private boolean clipMode = false;       // 候选条是否显示剪贴板历史
     private String lastSelected = "";       // MRU 置顶
@@ -192,6 +191,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setPadding(14, 12, 14, 12);
         candidateView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         candidateView.setHighlightColor(0x00000000);
+        // v0.5.10 反馈②：点击候选区空白（非条目/非返回）→ 关闭剪贴板回正常输入
+        candidateView.setOnClickListener(v -> {
+            if (clipMode) {
+                clipMode = false;
+                updateCandidateView();
+            }
+        });
 
         keyboardMain = new Keyboard(this, R.xml.keyboard_qwerty);
         keyboardNum = new Keyboard(this, R.xml.keyboard_num);
@@ -245,12 +251,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             clipMode = true;
             updateCandidateView();
         }));
-        // v0.5.4 反馈⑨ + v0.5.5 反馈④：闲置 2 秒未输入 → 工具行出现收起按钮（INVISIBLE 占位，出现时不跳动）
-        hideBtn = makeToolButton("⌄", v -> {
-            hideBtn.setVisibility(android.view.View.INVISIBLE);
+        // v0.5.10 反馈③：下隐功能键常显（取消闲置计时），图标 🔽
+        hideBtn = makeToolButton("🔽", v -> {
             try { requestHideSelf(0); } catch (Exception ignored) { }
         });
-        hideBtn.setVisibility(android.view.View.INVISIBLE);
+        hideBtn.setVisibility(android.view.View.VISIBLE);
         toolRow.addView(hideBtn);
         // v0.5.8 反馈①：第一行状态栏（云五笔|编码|翻译 | 工具），第二行备选栏，第三行键盘
         root.addView(toolRow);
@@ -554,23 +559,40 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     // ===== Shift / Caps 逻辑（反馈③） =====
 
     private void handleShift() {
-        long now = System.currentTimeMillis();
-        if (now - lastShiftTap < 350) {
-            shiftState = 2;                    // 双击：锁定大写
+        // v0.5.10 反馈①：单击切换"持续大写"模式（Caps 锁定式，非单次复位）
+        // 中文 → 英文大写；从中文切来的英文大写 → 回中文；纯英文 → 大写/小写切换
+        if (chineseMode) {
+            chineseMode = false;
+            composingCode.setLength(0);
+            candidates.clear();
+            shiftState = 2;                 // 英文大写模式
+            fromChineseShift = true;        // 记录"从中文切来"，再单击回中文
+            lastCommittedChar = "";
+            lastCommittedText = "";
+            lastEnHint = "";
+            associateActive = false;
+            candPage = 0;
+        } else if (fromChineseShift) {
+            chineseMode = true;             // 恢复中文输入
+            shiftState = 0;
+            fromChineseShift = false;
+        } else if (shiftState == 0) {
+            shiftState = 2;                 // 英文小写 → 持续大写
         } else {
-            shiftState = (shiftState == 0) ? 1 : 0;
+            shiftState = 0;                 // 英文大写 → 恢复小写
         }
-        lastShiftTap = now;
+        lastShiftTap = System.currentTimeMillis();
         applyLetterCase();
+        applyLangLabels();
+        updateCandidateView();
     }
 
     // ===== KeyboardView.OnKeyboardActionListener =====
 
     /** v0.5.4 反馈⑨ + v0.5.5 反馈④⑧：重置双闲置计时器（每次按键触发；1 秒清空备选栏、2 秒显示收起按钮） */
     private void resetIdleTimers() {
+        // v0.5.10 反馈③：下隐常显，取消闲置计时
         idleHandler.removeCallbacks(idleRunnable);
-        if (hideBtn != null) hideBtn.setVisibility(android.view.View.INVISIBLE);
-        idleHandler.postDelayed(idleRunnable, 2000);
     }
 
     @Override
@@ -588,10 +610,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             } else {
                 // v0.5.0 反馈⑤：英文输入进编码 → 自动补全候选（@邮箱、ht→https:// 等）
                 appendEnglishCode((char) primaryCode);
-                if (shiftState == 1) {          // 单次大写后复位
-                    shiftState = 0;
-                    applyLetterCase();
-                }
             }
             return;
         }
@@ -818,6 +836,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     // ===== 核心逻辑 =====
 
     private void toggleLang() {
+        fromChineseShift = false;   // v0.5.10：手动中英键切换非 shift 切入
         chineseMode = !chineseMode;
         if (!chineseMode) {
             composingCode.setLength(0);
