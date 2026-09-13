@@ -25,8 +25,14 @@ public class CloudKeyboardView extends KeyboardView {
     private Keyboard.Key downKey = null;
     private final int thresholdPx;
 
-    // 上滑符号标注画笔
+    /** 上滑符号标注画笔 */
     private final Paint hintPaint;
+
+    /** v0.4.9：深浅色主题切换（上滑符号标注颜色） */
+    public void setHintColor(int color) {
+        hintPaint.setColor(color);
+        invalidate();
+    }
 
     public CloudKeyboardView(Context context, AttributeSet attrs) {
         super(context, attrs);

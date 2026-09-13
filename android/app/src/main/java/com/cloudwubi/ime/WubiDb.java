@@ -40,17 +40,30 @@ public final class WubiDb {
             while ((line = r.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty()) continue;
-                int sp = line.indexOf(' ');
-                if (sp <= 0) continue;
-                String code = line.substring(0, sp);
-                String w = line.substring(sp + 1).trim();
-                if (code.isEmpty() || w.isEmpty()) continue;
-                List<String> list = map.get(code);
-                if (list == null) {
-                    list = new ArrayList<>();
-                    map.put(code, list);
+                // v0.4.9 紧凑格式：前缀连续 a-y 字母为编码，其余为候选（多候选空格分隔）
+                int i = 0;
+                int len = line.length();
+                while (i < len) {
+                    char c = line.charAt(i);
+                    if (c >= 'a' && c <= 'y') {
+                        i++;
+                    } else {
+                        break;
+                    }
                 }
-                list.add(w);
+                if (i <= 0 || i >= len) continue;
+                String code = line.substring(0, i);
+                String rest = line.substring(i).trim();
+                if (code.length() > 4 || rest.isEmpty()) continue;
+                for (String w : rest.split("\\s+")) {
+                    if (w.isEmpty()) continue;
+                    List<String> list = map.get(code);
+                    if (list == null) {
+                        list = new ArrayList<>();
+                        map.put(code, list);
+                    }
+                    list.add(w);
+                }
             }
         } catch (Exception ignored) { }
     }
@@ -93,6 +106,28 @@ public final class WubiDb {
                     if (w.indexOf(ch) >= 0 && !result.contains(w)) {
                         result.add(w);
                         if (result.size() >= 12) return result;
+                    }
+                }
+            }
+        }
+        return result.isEmpty() ? null : result;
+    }
+
+    /**
+     * 前缀联想（v0.4.9 连续联想）：上屏"陈胜"后，返回本地词库中以该串开头的词组
+     * （如"陈胜"→"陈胜吴广"），实现历史事件/顺承式联想。
+     */
+    public static List<String> queryByPrefix(String prefix) {
+        if (prefix == null || prefix.isEmpty() || prefix.length() > 4) return null;
+        ensureIndex();
+        List<String> result = new ArrayList<>();
+        if (phraseIndex != null) {
+            for (List<String> list : phraseIndex.values()) {
+                if (list == null) continue;
+                for (String w : list) {
+                    if (w.startsWith(prefix) && !result.contains(w)) {
+                        result.add(w);
+                        if (result.size() >= 10) return result;
                     }
                 }
             }

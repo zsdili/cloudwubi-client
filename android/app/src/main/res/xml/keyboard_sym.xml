@@ -8,23 +8,28 @@
     android:keyBackground="@drawable/key_bg">
 
     <Row>
-        <Key android:codes="44" android:keyLabel="，" android:keyTextColor="#1F2937" />
-        <Key android:codes="46" android:keyLabel="。" android:keyTextColor="#1F2937" />
-        <Key android:codes="63" android:keyLabel="？" android:keyTextColor="#1F2937" />
+        <Key android:codes="44" android:keyLabel="，" />
+        <Key android:codes="46" android:keyLabel="。" />
+        <Key android:codes="63" android:keyLabel="？" />
     </Row>
     <Row>
-        <Key android:codes="33" android:keyLabel="！" android:keyTextColor="#1F2937" />
-        <Key android:codes="58" android:keyLabel="：" android:keyTextColor="#1F2937" />
-        <Key android:codes="59" android:keyLabel="；" android:keyTextColor="#1F2937" />
+        <Key android:codes="33" android:keyLabel="！" />
+        <Key android:codes="58" android:keyLabel="：" />
+        <Key android:codes="59" android:keyLabel="；" />
     </Row>
     <Row>
-        <Key android:codes="40" android:keyLabel="（" android:keyTextColor="#1F2937" />
-        <Key android:codes="41" android:keyLabel="）" android:keyTextColor="#1F2937" />
-        <Key android:codes="183" android:keyLabel="·" android:keyTextColor="#1F2937" />
+        <Key android:codes="40" android:keyLabel="（" />
+        <Key android:codes="41" android:keyLabel="）" />
+        <Key android:codes="183" android:keyLabel="·" />
     </Row>
     <Row android:keyHeight="46dp">
-        <Key android:codes="-103" android:keyLabel="返回" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
-        <Key android:codes="32" android:keyLabel="空格" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" />
-        <Key android:codes="-5" android:keyLabel="⌫" android:keyTextColor="#3E3F47" android:keyBackground="@drawable/key_func_bg" android:isRepeatable="true" />
+        <Key android:codes="-101" android:keyLabel="123" />
+        <Key android:codes="32" android:keyLabel="空格" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:isRepeatable="true" />
+    </Row>
+    <Row android:keyHeight="46dp">
+        <Key android:codes="-209" android:keyLabel="取消↺" />
+        <Key android:codes="-210" android:keyLabel="重做↻" />
+        <Key android:codes="-103" android:keyLabel="返回" />
     </Row>
 </Keyboard>

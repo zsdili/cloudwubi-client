@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔 v0.4.9 FLAT 键帽（浅色）：纯白平铺，无立体/渐变 -->
+<!-- 云五笔 v0.4.9 FLAT 功能键（深色） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#E2E5EA" />
+            <solid android:color="#454B54" />
             <corners android:radius="14dp" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#FFFFFF" />
+            <solid android:color="#373C44" />
             <corners android:radius="14dp" />
         </shape>
     </item>
