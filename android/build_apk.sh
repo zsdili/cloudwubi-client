@@ -68,11 +68,16 @@ find "$OUT/classes" -name "*.class" > "$OUT/classes.txt"
 echo "== 5/6 打包 dex + assets 进 APK =="
 cd "$OUT"
 zip -q base.apk classes.dex
-# v0.5.5：词库位于 assets（文本默认压缩，APK 体积更小）；assets 需单独并入 APK
-ASSETS_DIR="$(dirname "$0")/app/src/main/assets"
+# v0.5.5 fix：词库位于 assets（文本压缩省体积）。必须用 PROJ_DIR 绝对路径定位
+# （此处已在 build-apk 目录内，$(dirname "$0") 解析会错，曾导致词库静默丢失）
+ASSETS_DIR="$PROJ_DIR/app/src/main/assets"
 if [ -d "$ASSETS_DIR" ]; then
     OUT_DIR="$(pwd)"
     (cd "$ASSETS_DIR" && zip -q -r "$OUT_DIR/base.apk" .)
+    echo "   ✅ 已并入 assets: $(ls "$ASSETS_DIR" | tr '\n' ' ')"
+else
+    echo "   ❌ assets 目录不存在: $ASSETS_DIR"
+    exit 1
 fi
 
 echo "== 6/6 对齐 + 签名（固定发布签名，保证各版本可覆盖安装）=="
@@ -108,8 +113,17 @@ echo ""
 echo "== 构建完成 =="
 SIZE=$(stat -c %s CloudWubi.apk 2>/dev/null || stat -f %z CloudWubi.apk)
 echo "✅ CloudWubi.apk: $SIZE 字节（$(du -h CloudWubi.apk | cut -f1)）"
-if [ "$SIZE" -gt 819200 ]; then
-    echo "❌ 超过 800KB 上限！"
+if [ "$SIZE" -gt 102400 ]; then
+    echo "❌ 超过 100KB 上限！（固化要求：安装包 ≤100KB）"
     exit 1
 fi
-echo "✅ 体积达标（< 800KB）"
+echo "✅ 体积达标（≤ 100KB）"
+
+echo "== 自检：APK 内必须包含词库 assets（缺则构建失败）=="
+if unzip -l CloudWubi.apk | grep -q "assets/wubi_single.txt" && unzip -l CloudWubi.apk | grep -q "assets/wubi_phrase.txt"; then
+    echo "✅ 词库已打包（wubi_single.txt + wubi_phrase.txt）"
+else
+    echo "❌ APK 缺少词库 assets！"
+    unzip -l CloudWubi.apk | head -30
+    exit 1
+fi
