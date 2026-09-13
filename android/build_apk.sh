@@ -68,17 +68,36 @@ echo "== 5/6 打包 dex 进 APK =="
 cd "$OUT"
 zip -q base.apk classes.dex
 
-echo "== 6/6 对齐 + 签名（debug key）=="
+echo "== 6/6 对齐 + 签名（固定发布签名，保证各版本可覆盖安装）=="
 "$BT/zipalign" -f 4 base.apk aligned.apk
-# debug keystore（首次生成）
-KEYSTORE=debug.keystore
-if [ ! -f "$KEYSTORE" ]; then
-    keytool -genkeypair -v -keystore "$KEYSTORE" \
-        -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
-        -storepass android -keypass android \
-        -dname "CN=CloudWubi, OU=OSS, O=CloudWubi, L=SZ, ST=GD, C=CN" 2>/dev/null
+# v0.5.5 反馈②：优先使用固定签名 keystore（android/keystore/cloudwubi.jks，公开开源），
+# 保证每个版本签名一致 → 用户可直接覆盖安装，无需卸载；无固定 keystore 时回退 debug key
+KEYSTORE=""
+STORE_PASS=""
+KEY_PASS=""
+if [ -f "keystore/cloudwubi.jks" ]; then
+    KEYSTORE="keystore/cloudwubi.jks"
+    STORE_PASS="cloudwubi2026"
+    KEY_PASS="cloudwubi2026"
+elif [ -f "$(dirname "$0")/keystore/cloudwubi.jks" ]; then
+    KEYSTORE="$(dirname "$0")/keystore/cloudwubi.jks"
+    STORE_PASS="cloudwubi2026"
+    KEY_PASS="cloudwubi2026"
 fi
-"$BT/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android \
+if [ -z "$KEYSTORE" ]; then
+    # debug keystore（首次生成，仅本地临时构建回退）
+    KEYSTORE=debug.keystore
+    STORE_PASS=android
+    KEY_PASS=android
+    if [ ! -f "$KEYSTORE" ]; then
+        keytool -genkeypair -v -keystore "$KEYSTORE" \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=CloudWubi, OU=OSS, O=CloudWubi, L=SZ, ST=GD, C=CN" 2>/dev/null
+    fi
+fi
+"$BT/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:"$STORE_PASS" \
+    --key-pass pass:"$KEY_PASS" \
     --out CloudWubi.apk aligned.apk
 
 echo ""

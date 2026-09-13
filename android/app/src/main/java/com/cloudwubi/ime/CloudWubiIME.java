@@ -116,7 +116,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private LinearLayout rootView;
     private LinearLayout toolRow;   // v0.5.0 反馈①：工具行（全选/取消↺/重做↻）
     private android.widget.TextView hideBtn;   // v0.5.4 反馈⑨：闲置 2 秒后出现的收起键盘按钮
+    /** v0.5.5：闲置定时器——1 秒清空备选栏（反馈⑧）+ 2 秒出现收起按钮（反馈④，INVISIBLE 占位不跳动） */
     private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable idleClearRunnable = new Runnable() {
+        @Override
+        public void run() {
+            // v0.5.5 反馈⑧：1 秒无输入 → 清空备选栏（正在输入的编码保留，仅清候选）
+            candidates.clear();
+            updateCandidateView();
+        }
+    };
     private final Runnable idleRunnable = new Runnable() {
         @Override
         public void run() {
@@ -125,6 +134,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         }
     };
+    /** v0.5.5 反馈①：密码框模式（禁用联想/剪贴板/翻译，保证可输入） */
+    private boolean isPassword = false;
+    /** v0.5.5 反馈⑤：符号面板来源面板（0=主键盘，1=数字面板），用于"返回"逐层回退 */
+    private int prevPanel = 0;
+    /** v0.5.5 反馈⑦：进入输入状态时联想基准字（光标前一字），云端回填校验用 */
+    private String enterAssociateChar = "";
     private Keyboard keyboardMain;
     private Keyboard keyboardNum;
     private Keyboard keyboardSymbols;
@@ -204,18 +219,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.setGravity(android.view.Gravity.CENTER);
         toolRow.setPadding(0, 3, 0, 3);
         toolRow.addView(makeToolButton("亖", v -> {
+            // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
+            if (isPassword) return;
             clipMode = true;
             updateCandidateView();
         }));
         toolRow.addView(makeToolButton("全选", v -> selectAll()));
         toolRow.addView(makeToolButton("取消↺", v -> doUndo()));
         toolRow.addView(makeToolButton("重做↻", v -> doRedo()));
-        // v0.5.4 反馈⑨：闲置 2 秒未输入 → 工具行出现收起键盘按钮
+        // v0.5.4 反馈⑨ + v0.5.5 反馈④：闲置 2 秒未输入 → 工具行出现收起按钮（INVISIBLE 占位，出现时不跳动）
         hideBtn = makeToolButton("⌄", v -> {
-            hideBtn.setVisibility(android.view.View.GONE);
+            hideBtn.setVisibility(android.view.View.INVISIBLE);
             try { requestHideSelf(0); } catch (Exception ignored) { }
         });
-        hideBtn.setVisibility(android.view.View.GONE);
+        hideBtn.setVisibility(android.view.View.INVISIBLE);
         toolRow.addView(hideBtn);
         root.addView(toolRow);
         root.addView(keyboardView);
@@ -226,7 +243,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitText("\n");
             }
         });
-        resetIdleTimer();
+        resetIdleTimers();
         applyTheme();   // v0.4.9 反馈③：FLAT + 跟随系统深浅色
         applyLangLabels();
         applyLetterCase();   // 中文模式默认大写显示
@@ -304,18 +321,59 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     @Override
+    @Override
+    public void onStartInput(android.view.inputmethod.EditorInfo attribute, boolean restarting) {
+        // v0.5.5 反馈①：标准会话入口（密码框/WebView 等必须重写，保证输入可用）
+        super.onStartInput(attribute, restarting);
+    }
+
     public void onStartInputView(EditorInfo info, boolean restarting) {
         resetComposing();
         panelMode = 0;
         clipMode = false;
+        prevPanel = 0;
         keyboardView.setKeyboard(keyboardMain);
         applyLetterCase();
         // v0.5.3 反馈①：新输入会话重置"最近上屏"记录
         committedLast = "";
-        // v0.5.4 反馈⑨：新会话隐藏收起按钮并重启闲置计时
-        if (hideBtn != null) hideBtn.setVisibility(android.view.View.GONE);
-        resetIdleTimer();
+        // v0.5.5 反馈①：密码框检测（密码/网络密码）——禁联想/剪贴板/翻译，保证可输入
+        isPassword = (info.inputType & android.text.InputType.TYPE_MASK_VARIATION)
+                == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                || (info.inputType & android.text.InputType.TYPE_MASK_VARIATION)
+                == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD;
+        // v0.5.5 反馈④⑧：新会话隐藏收起按钮（INVISIBLE 占位）+ 重启双闲置计时
+        if (hideBtn != null) hideBtn.setVisibility(android.view.View.INVISIBLE);
+        resetIdleTimers();
+        // v0.5.5 反馈⑦：进入输入状态时，识别光标前一字进行联想（不自动上屏）
+        enterAssociateChar = "";
+        if (chineseMode && !isPassword) {
+            String prev = getCursorPrevChar();
+            if (!prev.isEmpty()) {
+                enterAssociateChar = prev;
+                showAssociateForChar(prev);
+            }
+        }
         super.onStartInputView(info, restarting);
+    }
+
+    /** v0.5.5 反馈⑦：进入输入状态/光标前字联想（本地 MRU + 含字词组 + 云端前缀） */
+    private void showAssociateForChar(String ch) {
+        candidates.clear();
+        List<String> merged = new ArrayList<>();
+        for (String p : recentPhrases) {
+            if (p.startsWith(ch) && !merged.contains(p)) merged.add(p);
+        }
+        List<String> byChar = WubiDb.queryByChar(ch);
+        if (byChar != null) {
+            for (String p : byChar) {
+                if (!merged.contains(p)) merged.add(p);
+                if (merged.size() >= 12) break;
+            }
+        }
+        candidates.addAll(merged);
+        candPage = 0;
+        updateCandidateView();
+        if (GATEWAY_READY && !merged.isEmpty()) queryAssociateAsync(ch, ch);
     }
 
     private void resetComposing() {
@@ -489,17 +547,19 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     // ===== KeyboardView.OnKeyboardActionListener =====
 
-    /** v0.5.4 反馈⑨：重置闲置计时器（每次按键触发；2 秒无输入显示收起按钮） */
-    private void resetIdleTimer() {
+    /** v0.5.4 反馈⑨ + v0.5.5 反馈④⑧：重置双闲置计时器（每次按键触发；1 秒清空备选栏、2 秒显示收起按钮） */
+    private void resetIdleTimers() {
+        idleHandler.removeCallbacks(idleClearRunnable);
         idleHandler.removeCallbacks(idleRunnable);
-        if (hideBtn != null) hideBtn.setVisibility(android.view.View.GONE);
+        if (hideBtn != null) hideBtn.setVisibility(android.view.View.INVISIBLE);
+        idleHandler.postDelayed(idleClearRunnable, 1000);
         idleHandler.postDelayed(idleRunnable, 2000);
     }
 
     @Override
     public void onKey(int primaryCode, int[] keyCodes) {
         keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
-        resetIdleTimer();   // v0.5.4 反馈⑨：任何按键重置闲置计时
+        resetIdleTimers();   // v0.5.4 反馈⑨ + v0.5.5 反馈⑧：任何按键重置双闲置计时
         // 字母键
         if (primaryCode >= 'a' && primaryCode <= 'z') {
             if (chineseMode) {
@@ -533,6 +593,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 return;
             case KEY_SYM_IN:
                 // v0.5.0：数字面板"符号"→进符号面板；v0.5.3 反馈⑩ + v0.5.4 反馈⑤：符号面板"下一页 ›"（sym1→sym2→sym3→sym1 循环）
+                // v0.5.5 反馈⑤：从主键盘/数字面板进入符号面板时记录来源（prevPanel），供"返回"逐层回退
                 if (panelMode == 2) {
                     panelMode = 3;
                     keyboardView.setKeyboard(keyboardSymbols2);
@@ -543,6 +604,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     panelMode = 2;
                     keyboardView.setKeyboard(keyboardSymbols);
                 } else {
+                    prevPanel = panelMode;
                     panelMode = 2;
                     keyboardView.setKeyboard(keyboardSymbols);
                 }
@@ -559,7 +621,28 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     keyboardView.setKeyboard(keyboardSymbols3);
                 }
                 return;
-            case KEY_SYMBOL:   // 面板返回主键盘（数字面板有表达式时先带式上屏）
+            case KEY_SYMBOL:   // v0.5.5 反馈⑤：返回键逐层回退（sym3→sym2→sym1→来源面板→主键盘），数字面板有表达式先带式上屏
+                if (panelMode == 4) {
+                    panelMode = 3;
+                    keyboardView.setKeyboard(keyboardSymbols2);
+                    return;
+                }
+                if (panelMode == 3) {
+                    panelMode = 2;
+                    keyboardView.setKeyboard(keyboardSymbols);
+                    return;
+                }
+                if (panelMode == 2) {
+                    if (prevPanel == 1) {
+                        panelMode = 1;
+                        keyboardView.setKeyboard(keyboardNum);
+                    } else {
+                        panelMode = 0;
+                        keyboardView.setKeyboard(keyboardMain);
+                    }
+                    updateCandidateView();
+                    return;
+                }
                 if (panelMode == 1 && !calcBuffer.isEmpty()) commitCalc(true);
                 panelMode = 0;
                 calcBuffer = "";
@@ -774,7 +857,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void commitText(String s) {
         pushUndo();
         InputConnection ic = getCurrentInputConnection();
-        if (ic != null) ic.commitText(s, 1);
+        if (ic != null) {
+            // v0.5.5 反馈①：先结束组合态再提交（密码框/WebView 兼容，避免吞字）
+            try { ic.finishComposingText(); } catch (Exception ignored) { }
+            ic.commitText(s, 1);
+        }
     }
 
     // ===== v0.4.9 取消↺ / 重做↻（编辑快照栈，双向 30 层） =====
@@ -1362,7 +1449,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             if (calcBuffer.matches("^[0-9.]+$")) {
                 commitText(calcBuffer);
             } else if (calcFormula) {
-                commitText(calcBuffer + "=" + res);
+                // v0.5.5 反馈③：续算带式去重——表达式以"上次结果"开头时省略重复结果（2+5=7 上屏后 -4= 上屏"-4=3"）
+                String expr = calcBuffer;
+                if (expr.startsWith(lastCalcResult)) {
+                    expr = expr.substring(lastCalcResult.length());
+                    if (expr.isEmpty()) expr = res;
+                }
+                commitText(expr + "=" + res);
             } else {
                 commitText(res);
             }
@@ -1410,6 +1503,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         if (text.length() >= 2) rememberPhrase(text);   // MRU（最近 3 词组）
         lastEnHint = "";
+        // v0.5.5 反馈①：密码框禁联想/翻译（隐私 + 避免干扰输入）
+        if (isPassword) {
+            associateActive = false;
+            updateCandidateView();
+            return;
+        }
         String lastChar = lastCommittedText.isEmpty() ? "" : lastCommittedText.substring(lastCommittedText.length() - 1);
         if (!lastChar.isEmpty()) {
             associateActive = true;
@@ -1504,7 +1603,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             } catch (Exception ignored) { }
             final List<String> result = cloud;
             handler.post(() -> {
-                if (!chain.equals(lastCommittedText)) return;
+                // v0.5.5 反馈⑦：联想基准=上屏链 或 进入输入状态的光标前字，两者一致才回填
+                if (!chain.equals(lastCommittedText) && !chain.equals(enterAssociateChar)) return;
                 boolean changed = false;
                 for (String s : result) {
                     if (!candidates.contains(s)) { candidates.add(s); changed = true; }
