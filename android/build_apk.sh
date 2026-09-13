@@ -32,7 +32,8 @@ PLAT_VER=$(ls "$PLATFORM" 2>/dev/null | grep -E "^android-[0-9]+$" | sort -V | t
 ANDROID_JAR="$PLATFORM/$PLAT_VER/android.jar"
 echo "✅ build-tools: $BT_VER | platform: $PLAT_VER"
 
-cd "$(dirname "$0")"
+PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$PROJ_DIR"
 OUT=build-apk
 rm -rf "$OUT" && mkdir -p "$OUT/classes" "$OUT/gen"
 
@@ -81,12 +82,9 @@ echo "== 6/6 对齐 + 签名（固定发布签名，保证各版本可覆盖安�
 KEYSTORE=""
 STORE_PASS=""
 KEY_PASS=""
-if [ -f "keystore/cloudwubi.jks" ]; then
-    KEYSTORE="keystore/cloudwubi.jks"
-    STORE_PASS="cloudwubi2026"
-    KEY_PASS="cloudwubi2026"
-elif [ -f "$(dirname "$0")/keystore/cloudwubi.jks" ]; then
-    KEYSTORE="$(dirname "$0")/keystore/cloudwubi.jks"
+# v0.5.5 fix：签名段可能已 cd 到 build-apk，必须用绝对路径定位 keystore
+if [ -f "$PROJ_DIR/keystore/cloudwubi.jks" ]; then
+    KEYSTORE="$PROJ_DIR/keystore/cloudwubi.jks"
     STORE_PASS="cloudwubi2026"
     KEY_PASS="cloudwubi2026"
 fi
