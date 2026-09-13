@@ -59,11 +59,22 @@ javac -source 1.8 -target 1.8 \
     -d "$OUT/classes" \
     @"$OUT/sources.txt"
 
-echo "== 4/6 转 dex（d8）=="
+echo "== 4/6 转 dex（R8 混淆+裁剪，v0.5.6 腾体积用于词库扩容）=="
 find "$OUT/classes" -name "*.class" > "$OUT/classes.txt"
-"$BT/d8" --release --lib "$ANDROID_JAR" \
-    --output "$OUT" \
-    $(cat "$OUT/classes.txt")
+if [ -f "$BT/lib/r8.jar" ]; then
+    echo "   🚀 使用 R8（混淆+裁剪）"
+    java -cp "$BT/lib/r8.jar" com.android.tools.r8.R8 \
+        --release --min-api 21 \
+        --lib "$ANDROID_JAR" \
+        --pg-conf "$PROJ_DIR/proguard-rules.pro" \
+        --output "$OUT" \
+        $(cat "$OUT/classes.txt")
+else
+    echo "   ⚠️ 未找到 r8.jar，回退 d8"
+    "$BT/d8" --release --lib "$ANDROID_JAR" \
+        --output "$OUT" \
+        $(cat "$OUT/classes.txt")
+fi
 
 echo "== 5/6 打包 dex + assets 进 APK =="
 cd "$OUT"
