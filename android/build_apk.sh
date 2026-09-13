@@ -68,12 +68,12 @@ find "$OUT/classes" -name "*.class" > "$OUT/classes.txt"
 echo "== 5/6 打包 dex + assets 进 APK =="
 cd "$OUT"
 zip -q base.apk classes.dex
-# v0.5.5 fix：词库位于 assets（文本压缩省体积）。必须用 PROJ_DIR 绝对路径定位
-# （此处已在 build-apk 目录内，$(dirname "$0") 解析会错，曾导致词库静默丢失）
+# v0.5.5 fix：词库位于 assets。zip 必须带 assets/ 前缀（AssetManager 按 assets/<name> 读取），
+# 且用 PROJ_DIR 绝对路径定位（此处已在 build-apk 内，$(dirname "$0") 解析会错）
 ASSETS_DIR="$PROJ_DIR/app/src/main/assets"
 if [ -d "$ASSETS_DIR" ]; then
     OUT_DIR="$(pwd)"
-    (cd "$ASSETS_DIR" && zip -q -r "$OUT_DIR/base.apk" .)
+    (cd "$(dirname "$ASSETS_DIR")" && zip -q -r "$OUT_DIR/base.apk" assets)
     echo "   ✅ 已并入 assets: $(ls "$ASSETS_DIR" | tr '\n' ' ')"
 else
     echo "   ❌ assets 目录不存在: $ASSETS_DIR"
