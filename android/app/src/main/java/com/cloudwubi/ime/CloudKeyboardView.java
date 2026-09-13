@@ -3,18 +3,21 @@ package com.cloudwubi.ime;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
 /**
- * CloudKeyboardView - 云五笔软键盘视图（v0.4.5）
+ * CloudKeyboardView - 云五笔软键盘视图（v0.4.5 → v0.4.9）
  *
  * 功能：
  *  1. 字母键上滑输入数字/标点（Q→1 … P→0，A→@ … L→!，Z→- … M→;）
  *  2. 键帽左上角标注上滑符号（反馈⑦：键盘上能看到上滑可输入的数字/符号）
- *  3. 字母大小写显示支持（label 小写 + shiftLabel 大写，由 IME 控制 setShifted）
+ *  3. 字母大小写显示支持（label 小写 + shiftLabel 大写）
+ *  4. v0.4.9 反馈③：完全自绘 FLAT 纯色键帽（无渐变/立体），深浅色主题四件套实时切换
+ *     ——同时规避高版本 Android SDK 移除 KeyboardView.setKeyBackground 等 API 的兼容问题
  */
 public class CloudKeyboardView extends KeyboardView {
 
@@ -28,7 +31,35 @@ public class CloudKeyboardView extends KeyboardView {
     /** 上滑符号标注画笔 */
     private final Paint hintPaint;
 
-    /** v0.4.9：深浅色主题切换（上滑符号标注颜色） */
+    // ===== v0.4.9 FLAT 自绘主题 =====
+    private int boardBg = 0xFFF3F4F6;       // 键盘底板
+    private int keyBgNormal = 0xFFFFFFFF;   // 普通键面
+    private int keyBgFunc = 0xFFE5E7EB;     // 功能键面
+    private int keyTextColor = 0xFF1F2937;  // 键面文字
+    private final float cornerPx;           // 键帽圆角
+    private final float labelSizePx;
+    private final Paint keyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    /** v0.4.9：深浅色主题切换（键帽/底板/文字/上滑标注四件套） */
+    public void applyTheme(boolean dark) {
+        if (dark) {
+            boardBg = 0xFF111827;
+            keyBgNormal = 0xFF1F2937;
+            keyBgFunc = 0xFF374151;
+            keyTextColor = 0xFFF9FAFB;
+            hintPaint.setColor(0xFF6B7280);
+        } else {
+            boardBg = 0xFFF3F4F6;
+            keyBgNormal = 0xFFFFFFFF;
+            keyBgFunc = 0xFFE5E7EB;
+            keyTextColor = 0xFF1F2937;
+            hintPaint.setColor(0xFF9CA3AF);
+        }
+        invalidate();
+    }
+
+    /** v0.4.9：上滑符号标注颜色（跟随主题） */
     public void setHintColor(int color) {
         hintPaint.setColor(color);
         invalidate();
@@ -42,6 +73,9 @@ public class CloudKeyboardView extends KeyboardView {
         hintPaint.setColor(0xFF9CA3AF);
         float density = context.getResources().getDisplayMetrics().density;
         hintPaint.setTextSize(10 * density);
+        cornerPx = 6 * density;
+        labelSizePx = 20 * density;
+        textPaint.setTextAlign(Paint.Align.CENTER);
     }
 
     /** 上滑符号映射（v0.4.6 严格对齐参考截图）：
@@ -109,22 +143,63 @@ public class CloudKeyboardView extends KeyboardView {
         return super.onTouchEvent(ev);
     }
 
-    /** 绘制：键盘主体 + 键帽左上角上滑符号标注（反馈⑦） */
+    /** v0.4.9：FLAT 全自绘（键帽圆角纯色 + 文字 + 上滑标注），不依赖父类绘制 API */
     @Override
     public void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
         Keyboard kb = getKeyboard();
         if (kb == null) return;
+        canvas.drawColor(boardBg);
         int padLeft = getPaddingLeft();
         int padTop = getPaddingTop();
+        boolean shifted = isShifted();
         for (Keyboard.Key key : kb.getKeys()) {
+            float x = key.x + padLeft;
+            float y = key.y + padTop;
+            // 1) 键帽底色（功能键深一档）
+            boolean pressed = (downKey == key);
+            boolean func = isFuncKey(key);
+            keyPaint.setColor(func ? (pressed ? 0xFFD1D5DB : keyBgFunc)
+                                   : (pressed ? 0xFFE5E7EB : keyBgNormal));
+            RectF r = new RectF(x + 2, y + 2, x + key.width - 2, y + key.height - 2);
+            canvas.drawRoundRect(r, cornerPx, cornerPx, keyPaint);
+            // 2) 键面文字（shiftLabel 大写 / label 小写）
+            String label = getKeyLabel(key, shifted);
+            if (label != null && label.length() > 0) {
+                textPaint.setColor(keyTextColor);
+                textPaint.setTextSize(labelSizePx);
+                float cx = x + key.width / 2f;
+                float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
+                canvas.drawText(label, cx, cy, textPaint);
+            }
+            // 3) 上滑符号标注（左上角）
             int sym = swipeSymbol(key);
-            if (sym == 0) continue;
-            String s = String.valueOf((char) sym);
-            float cx = key.x + padLeft + key.width * 0.28f;
-            float cy = key.y + padTop + key.height * 0.28f;
-            canvas.drawText(s, cx, cy, hintPaint);
+            if (sym != 0) {
+                String s = String.valueOf((char) sym);
+                float sx = x + key.width * 0.30f;
+                float sy = y + key.height * 0.30f + 4;
+                canvas.drawText(s, sx, sy, hintPaint);
+            }
         }
+    }
+
+    private boolean isFuncKey(Keyboard.Key key) {
+        if (key == null || key.codes == null || key.codes.length == 0) return true;
+        int c = key.codes[0];
+        return c < 0 || c == 32 || c == 46 || c == 44;   // 功能键/空格/句号/逗号
+    }
+
+    private String getKeyLabel(Keyboard.Key key, boolean shifted) {
+        if (key.label != null && key.label.length() > 0) {
+            // 字母键：shift 时优先 shiftLabel（大写）
+            if (shifted && key.shiftLabel != null && key.shiftLabel.length() > 0) {
+                if (key.codes != null && key.codes.length == 1
+                        && key.codes[0] >= 'a' && key.codes[0] <= 'z') {
+                    return key.shiftLabel.toString();
+                }
+            }
+            return key.label.toString();
+        }
+        return null;
     }
 
     private Keyboard.Key findKey(int x, int y) {

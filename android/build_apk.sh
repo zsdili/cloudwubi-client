@@ -28,7 +28,7 @@ if [ -z "$BT_VER" ]; then
 fi
 BT="$BUILD_TOOLS/$BT_VER"
 PLATFORM="$SDK/platforms"
-PLAT_VER=$(ls "$PLATFORM" 2>/dev/null | sort -V | tail -1)
+PLAT_VER=$(ls "$PLATFORM" 2>/dev/null | grep -E "^android-[0-9]+$" | sort -V | tail -1)
 ANDROID_JAR="$PLATFORM/$PLAT_VER/android.jar"
 echo "✅ build-tools: $BT_VER | platform: $PLAT_VER"
 

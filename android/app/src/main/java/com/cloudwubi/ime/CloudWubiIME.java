@@ -206,9 +206,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 == android.content.res.Configuration.UI_MODE_NIGHT_YES;
         theme = dark ? THEME_DARK : THEME_LIGHT;
         if (keyboardView == null || candidateView == null) return;
-        // 键帽：纯色 FLAT（无立体/渐变），深浅两套
-        keyboardView.setKeyBackground(getDrawableCompat(dark ? R.drawable.key_bg_dark : R.drawable.key_bg));
-        keyboardView.setKeyTextColor(dark ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
+        // 键帽：v0.4.9 纯色 FLAT 全自绘（无立体/渐变），深浅两套实时切换
+        keyboardView.applyTheme(dark);
         keyboardView.setBackgroundColor(dark ? THEME_DARK_KB_BG : THEME_LIGHT_KB_BG);
         keyboardView.setHintColor(dark ? THEME_DARK_HINT : THEME_LIGHT_HINT);
         // 候选条
