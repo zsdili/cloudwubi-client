@@ -1354,8 +1354,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.4.8 反馈①⑦：上屏单字后的联想词组（MRU 置顶 + 本地锚字前缀词组 + 云端热点）
      *  v0.5.11 反馈②：英文翻译不在此显示（仅第一行状态栏），且单行不换行 */
     private void renderAssociateHint() {
-        candidateView.setSingleLine(true);
-        candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(lastCommittedText).append(" ▸ ");
         if (!candidates.isEmpty()) {

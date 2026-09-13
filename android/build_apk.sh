@@ -83,15 +83,15 @@ fi
 
 echo "== 5/6 打包 dex + assets 进 APK =="
 cd "$OUT"
-# v0.5.11：zip -9 最优压缩腾体积（保证 ≤100KB 硬门禁）
+# v0.5.11：zip -9 最优压缩 + -X 去 extra field（腾体积，保证 ≤100KB 硬门禁）
 echo "   dex bytes: $(stat -c%s classes.dex)"
-zip -q -9 base.apk classes.dex
+zip -q -9 -X base.apk classes.dex
 # v0.5.5 fix：词库位于 assets。zip 必须带 assets/ 前缀（AssetManager 按 assets/<name> 读取），
 # 且用 PROJ_DIR 绝对路径定位（此处已在 build-apk 内，$(dirname "$0") 解析会错）
 ASSETS_DIR="$PROJ_DIR/app/src/main/assets"
 if [ -d "$ASSETS_DIR" ]; then
     OUT_DIR="$(pwd)"
-    (cd "$(dirname "$ASSETS_DIR")" && zip -q -9 -r "$OUT_DIR/base.apk" assets)
+    (cd "$(dirname "$ASSETS_DIR")" && zip -q -9 -X -r "$OUT_DIR/base.apk" assets)
     echo "   ✅ 已并入 assets: $(ls "$ASSETS_DIR" | tr '\n' ' ')"
 else
     echo "   ❌ assets 目录不存在: $ASSETS_DIR"

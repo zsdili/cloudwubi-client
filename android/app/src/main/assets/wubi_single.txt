@@ -62,17 +62,17 @@ adi藉
 adij藉
 adiy藕
 adj菲
-adjd菲匪
+adjd菲
 adk若
 adkf若
 adkn惹
 adm项
 admy项
 adn茂
-adnt藏茂
-adw基期其
+adnt藏
+adw基期
 adwe期
-adwf基斟
+adwf基
 adwl勘
 adwn甚
 adwr斯
@@ -147,7 +147,7 @@ ahkf苫
 ahkm颐
 ahko熙
 ahn臣
-ahnh卧臣
+ahnh卧
 aht牙
 ahtb邪
 ahte牙
@@ -350,8 +350,8 @@ awgd葵
 awj芥
 awjj芥
 awn巷
-awnb巷孽
-awnu薛恭
+awnb巷
+awnu薛
 aws茶
 awsk荷
 awsu茶
@@ -864,7 +864,7 @@ dsk厅
 dskf奇
 dt帮
 dtb邦
-dtbh帮邦
+dtbh帮
 dtf寿
 dtfu寿
 dty故
@@ -916,7 +916,7 @@ dxye袭
 dy太
 dyc硫
 dycq硫
-dyi态太丈
+dyi态太
 dyiu态
 dyn态
 dynt戍
@@ -1137,7 +1137,7 @@ fc云支
 fcb却
 fcbh却
 fcl动
-fcln动劫
+fcln动
 fcn翅
 fcnd翅
 fcp运
@@ -1146,7 +1146,7 @@ fcr魂
 fcrc魂
 fct埃
 fctd埃
-fcu云去支
+fcu云去
 fd城
 fdf震
 fdfe震
@@ -1180,7 +1180,7 @@ fgg二
 fggh干
 fgh十
 fghg士
-fghy雨寸
+fghy雨
 fgi坏
 fgig坯
 fgii坏
@@ -1257,7 +1257,7 @@ fkhk露
 fku喜
 fkuc鼓
 fkue彭
-fkuk嘉喜
+fkuk嘉
 fl协
 flf雷
 flw协
@@ -1411,7 +1411,7 @@ gc到
 gcf到至
 gcff至
 gcfj到
-gcft致臻
+gcft致
 gcg玛
 gd天
 gde瑚
@@ -1897,7 +1897,7 @@ ihg泪
 ihi涉
 ihic淑
 ihim濒
-ihit涉渺
+ihit涉
 ihj淖
 ihjh淖
 ihk沾
@@ -2101,7 +2101,7 @@ iud洋
 iudh洋
 iug润泣
 iugg润
-iugi漾澜
+iugi漾
 iuj漳
 iujg涧
 iujh漳
@@ -2154,7 +2154,7 @@ iwwk浴
 iwx沦
 iwxn沦
 iwy淮
-iwyf誉雀
+iwyf誉
 iwyg淮
 ix涨
 ixj沸
@@ -2325,7 +2325,7 @@ jq晚
 jqb昂
 jqbj昂
 jqk晚
-jqkq晚冕
+jqkq晚
 jqr易
 jqrj剔
 jqrr易
@@ -2362,7 +2362,7 @@ jtxu晦
 jty临
 jtyj临
 jtyl监
-jtyq览鉴
+jtyq览
 ju暗
 juj暗
 jujf蝉
@@ -2400,7 +2400,7 @@ kaht呀
 kaj噶
 kajn噶
 kaq哎
-kaqy哎呕
+kaqy哎
 kaw哄
 kawy哄
 kb啊
@@ -2441,7 +2441,7 @@ kelf嚼
 keq鹃
 keqg鹃
 key吸
-keyy吸啄
+keyy吸
 kf叶
 kfa喷
 kfam喷
@@ -2505,7 +2505,7 @@ khes踩
 khev蹈
 khg践
 khgm贵
-khgp遗遣
+khgp遗
 khgt践
 khh趾
 khhg趾
@@ -2567,7 +2567,7 @@ kk吕
 kkc骂
 kkcf骂
 kkd器
-kkdk器嚣
+kkdk器
 kkdu哭
 kkf吕
 kkfb鄂
@@ -2769,7 +2769,7 @@ lgb囤
 lgbn囤
 lge畏
 lgeu畏
-lgey辅圃
+lgey辅
 lgk辐
 lgkl辐
 lgm辆
@@ -2782,7 +2782,7 @@ lh四
 lhj罩
 lhjj罩
 lhn皿
-lhng四皿
+lhng四
 lhnh甲
 lj辊
 ljx辊
@@ -2963,7 +2963,7 @@ ml崭
 mlr崭
 mlrj崭
 mm册
-mmgd册凹
+mmgd册
 mmgj删
 mmm山
 mmmm山
@@ -3171,7 +3171,7 @@ nmh刷
 nmhj刷
 nn忆
 nng己
-nngn己巳
+nngn己
 nngt尸
 nnh书
 nnhy书
@@ -3450,7 +3450,7 @@ pde寡
 pdev寡
 pdh害
 pdhj割
-pdhk害豁
+pdhk害
 pds寄
 pdsk寄
 pdx宠
@@ -3717,7 +3717,7 @@ qgf鱼
 qgh钙
 qghn钙
 qgj鲁
-qgjf鲁鲤
+qgjf鲁
 qgl鳃
 qgln鳃
 qgo鳞
@@ -3909,7 +3909,7 @@ qtmy狈
 qtn儿
 qtny夕
 qto锹
-qtoy狄锹
+qtoy狄
 qtp狞
 qtps狞
 qtq狗
@@ -4059,7 +4059,7 @@ rdf振翱
 rdfe振
 rdfh拜
 rdfj皋
-rdfn挎翱
+rdfn挎
 rdg拓
 rdgn撼
 rdj排
@@ -4217,7 +4217,7 @@ rmd揣
 rmdj揣
 rmg抽
 rmh制帛
-rmhj制帛
+rmhj制
 rmhr掣
 rmn缺
 rmnn皑
@@ -4261,7 +4261,7 @@ rnwy抉
 rnx氟
 rnxj氟
 rny拟
-rnyw拟氦
+rnyw拟
 ro搂
 rov搂
 rovg搂
@@ -4362,10 +4362,10 @@ ruda搓
 rudb掷
 ruf拦
 rufg拦
-rufh拌抖
+rufh拌
 rug拉
 ruj撞
-rujf撞掸
+rujf撞
 rum摘
 rumd摘
 rumt撇
@@ -4409,7 +4409,7 @@ rwwf挫
 rwx抡
 rwxn抡
 rwy扒
-rwyc拎擒
+rwyc拎
 rwye携
 rwyg推
 rwyn捻
@@ -4520,7 +4520,7 @@ sfhg植
 sfi标
 sfiq飘
 sfiu票
-sfiy标瓢
+sfiy标
 sfk桔
 sfkg桔
 sft材
@@ -4546,7 +4546,7 @@ sghg西
 sgi杯
 sgiy杯
 sgj醒
-sgjg醒桓
+sgjg醒
 sgjq梗
 sgk梧
 sgkg梧
@@ -4555,14 +4555,14 @@ sgmj槽
 sgmk酮
 sgmw柄
 sgn配
-sgnn配朽
+sgnn配
 sgo醚
 sgop醚
 sgq酌
 sgqb酗
 sgqy酌
 sgt栈
-sgtk酷酪
+sgtk酷
 sgtu酶
 sgty酥
 sgw酚
@@ -4847,7 +4847,7 @@ tfh秆
 tfhh行
 tfhy徒
 tfj午竿
-tfk造靠千
+tfk造靠
 tfkd靠
 tfkf告
 tfkg秸
@@ -4980,7 +4980,7 @@ tmf笛
 tmfk稠
 tmg微
 tmgk筒
-tmgt微徽
+tmgt微
 tmh币
 tmhk币
 tmk向
@@ -5006,7 +5006,7 @@ toln翻
 tom釉
 tomg釉
 ton悉
-tonu愁悉
+tonu愁
 tov篓
 tovf篓
 toy秋
@@ -5018,7 +5018,7 @@ tpn管
 tpnn管
 tq称
 tqd稀
-tqdh稀衡
+tqdh稀
 tqf衔
 tqfh衔
 tqi称
@@ -5125,7 +5125,7 @@ tyg往
 tygg往
 tyi入
 tym稿
-tymk稿篙
+tymk稿
 tyna篇
 tyt簇
 tytd簇
@@ -5171,7 +5171,7 @@ udeu豢
 udg减
 udgt减
 udh着
-udhf着眷
+udhf着
 udi头
 udj羊
 udjh判
@@ -5290,7 +5290,7 @@ ukkm癌
 ukn总
 uknu总
 ukq况
-ukqb竞兑
+ukqb竞
 ukqn况
 ul曾
 ulg兽
@@ -5371,7 +5371,7 @@ urcu瓣
 us新亲
 usg尊
 usgd奠
-usgf尊酋
+usgf尊
 usgp遵
 usi闲
 usr新
@@ -5603,7 +5603,7 @@ vthg臼
 vthn媳
 vtk群
 vtkb郡
-vtkd群君
+vtkd群
 vtn九
 vtr娥
 vtrt娥
@@ -5867,7 +5867,7 @@ wtdj侨
 wtf任
 wtfg任
 wtfh仟
-wtfm凭赁
+wtfm凭
 wthf作
 wtj俐
 wtjh俐
@@ -6136,7 +6136,7 @@ xt张
 xta张
 xtay张
 xtd颖
-xtdh疑肄
+xtdh疑
 xtdm颖
 xtdp缝
 xte乡
@@ -6389,8 +6389,8 @@ ynty废
 ynv亡
 ynvf妄
 ynw廖
-ynwe廖谬
-ynwy雇诀
+ynwe廖
+ynwy雇
 yny房
 ynyv房
 yo变
@@ -6451,7 +6451,7 @@ ysj谭
 ysjh谭
 yss麻
 yssc魔
-yssd磨靡
+yssd磨
 yssi麻
 ysso糜
 yssr摩
@@ -6496,7 +6496,7 @@ yupy谤
 yut谚
 yute谚
 yuv谦
-yuvo廉谦
+yuvo廉
 yv良
 yvc朗
 yvcb郎
@@ -6523,10 +6523,10 @@ ywke褒
 ywt夜
 ywty夜
 yww座
-ywwf座卒
+ywwf座
 ywwg鹰
 ywx论
-ywxn论讹
+ywxn论
 ywy认
 ywyg谁
 yx率
