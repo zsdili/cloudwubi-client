@@ -122,5 +122,7 @@
 | 5 | 光标定位"进"字后应联想"进的/进路/进街/进村/进一步/方向/后退"（锚字开头），而非"共进/驶进" | ②b 用 queryByChar(锚字)=含字词组（X进结尾）；本地词库无"进"字头词组 | ②b 改 queryByPrefix(锚字)（进→进一步/进行/进入…）；云端 SCF prefix 通道改锚字查询（wubi86_phrases 71 个进字头词组） | ✅ 已发布 v0.5.12 |
 | 6 | 英文态剪贴板不可用；全选后退格删的是备选栏 | updateCandidateView 英文分支提前 return 不渲染剪贴板；handleBackspace 编码优先于选区 | clipMode 渲染前置（英文态可用亖）；handleBackspace 选区（getSelectedText 非空）优先 commitText("") 删除 | ✅ 已发布 v0.5.12 |
 
+> **v0.5.12 根治专项（第 6 次复报，2026-09-13）**：①"宇宇宙"——selectCandidate 追加上屏，未识别"宇宙"是"宇"的联想扩展 → 前缀去重：候选以刚上屏内容(committedLast)/上次结果(lastCalcResult)开头且更长时，先删光标前旧内容再上屏（所见即所得：宇→宇宙、陈→陈胜→陈胜吴广 联想链正常、手动重打"宇宇"不误删）。②"8*4=3232/16=2"——v0.5.10 及更早 commitCalc 先覆盖 lastCalcResult 再去重 → 恒 false 不去重（用户实测版本）；v0.5.11 已修 oldResult 顺序（= 键/带式路径），v0.5.12 再给 selectCandidate 统一前缀去重兜底 → 双保险。发布 99779B、CI 三线全绿、versionCode 62。
+
 > 体积攻坚记录：v0.5.12 六项反馈代码使 dex 44932→46172（+1240B），APK 跨 4KB 边界达 104034B 超门禁。破解：成语层 idioms.txt 迁移云端规划（本地移除 -1371B）+ zip -9 -X（-400B）+ 单字重码行修正（-57B）+ 冗余代码删除 → APK 99779B（≤100KB ✓）。
 > 云端待办：成语启发联想层云端化（SCF phrase_engine 增成语通道，本地 queryIdioms 逻辑已保留，恢复时零代码改动）。
