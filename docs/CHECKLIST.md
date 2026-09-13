@@ -51,6 +51,7 @@
 3. **新问题分类**：每轮新问题必须标注「回归 / 新增 / 衍生」，回归问题数计入不合格
 4. **F-1 优先**：凡用户明确给出判断的，直接作为验收标准写进版本目标，先做该项再做其他
 5. **双平台发布（v0.5.1 固化）**：每个版本必须同时发布 GitHub Release + Gitee Release（tag 与 APK 资产双端齐全），GitHub 用 Actions 产物，Gitee 用 API 上传（token：Gitee 个人访问令牌）；Gitee 服务器匿名访问有 IP 风控（403），用户端浏览器登录后下载不受影响；发布检查单：GitHub tag ✓ GitHub APK ✓ Gitee tag ✓ Gitee APK ✓
+6. **Gitee 仓库必须公开（v0.5.2 固化）**：Sync to Gitee 工作流建的镜像仓可能默认为私有（private=True），导致匿名/开源共建者无法访问——任何仓库（client/gateway/rules/ai）在 Gitee 上必须为公开；发布检查单追加：Gitee private=False ✓（API 验证：GET /repos/{owner}/{repo} 的 private 字段）；改公开命令：PATCH /repos/{owner}/{repo}?access_token=…&name={repo}&private=false
 
 ---
 
