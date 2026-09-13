@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 云五笔更多符号面板2 v0.5.3：完整符号末页（"完成"回主键盘）
+     行1: ①②③④⑤⑥⑦⑧⑨⑩
+     行2: ☆★○●◎◇◆□■△
+     行3: αβγδεζηθλπ
+     行4: ♡♥♠♣♦♪♫☺✉☎
+     行5: 返回 | 完成 | · | ， | 。  -->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="9.1%p"
+    android:keyHeight="46dp"
+    android:horizontalGap="1%p"
+    android:verticalGap="5dp"
+    android:keyBackground="@drawable/key_bg">
+
+    <Row>
+        <Key android:codes="9312" android:keyLabel="①" />
+        <Key android:codes="9313" android:keyLabel="②" />
+        <Key android:codes="9314" android:keyLabel="③" />
+        <Key android:codes="9315" android:keyLabel="④" />
+        <Key android:codes="9316" android:keyLabel="⑤" />
+        <Key android:codes="9317" android:keyLabel="⑥" />
+        <Key android:codes="9318" android:keyLabel="⑦" />
+        <Key android:codes="9319" android:keyLabel="⑧" />
+        <Key android:codes="9320" android:keyLabel="⑨" />
+        <Key android:codes="9321" android:keyLabel="⑩" />
+    </Row>
+    <Row>
+        <Key android:codes="9734" android:keyLabel="☆" />
+        <Key android:codes="9733" android:keyLabel="★" />
+        <Key android:codes="9675" android:keyLabel="○" />
+        <Key android:codes="9679" android:keyLabel="●" />
+        <Key android:codes="9670" android:keyLabel="◎" />
+        <Key android:codes="9671" android:keyLabel="◇" />
+        <Key android:codes="9678" android:keyLabel="◆" />
+        <Key android:codes="9633" android:keyLabel="□" />
+        <Key android:codes="9635" android:keyLabel="■" />
+        <Key android:codes="9651" android:keyLabel="△" />
+    </Row>
+    <Row>
+        <Key android:codes="945" android:keyLabel="α" />
+        <Key android:codes="946" android:keyLabel="β" />
+        <Key android:codes="947" android:keyLabel="γ" />
+        <Key android:codes="948" android:keyLabel="δ" />
+        <Key android:codes="949" android:keyLabel="ε" />
+        <Key android:codes="950" android:keyLabel="ζ" />
+        <Key android:codes="951" android:keyLabel="η" />
+        <Key android:codes="952" android:keyLabel="θ" />
+        <Key android:codes="955" android:keyLabel="λ" />
+        <Key android:codes="960" android:keyLabel="π" />
+    </Row>
+    <Row>
+        <Key android:codes="9825" android:keyLabel="♡" />
+        <Key android:codes="9829" android:keyLabel="♥" />
+        <Key android:codes="9824" android:keyLabel="♠" />
+        <Key android:codes="9827" android:keyLabel="♣" />
+        <Key android:codes="9830" android:keyLabel="♦" />
+        <Key android:codes="9834" android:keyLabel="♪" />
+        <Key android:codes="9835" android:keyLabel="♫" />
+        <Key android:codes="9786" android:keyLabel="☺" />
+        <Key android:codes="9993" android:keyLabel="✉" />
+        <Key android:codes="9742" android:keyLabel="☎" />
+    </Row>
+    <Row android:keyWidth="19.2%p">
+        <Key android:codes="-103" android:keyLabel="返回" />
+        <Key android:codes="-104" android:keyLabel="完成" />
+        <Key android:codes="183" android:keyLabel="·" />
+        <Key android:codes="44" android:keyLabel="，" />
+        <Key android:codes="46" android:keyLabel="。" />
+    </Row>
+</Keyboard>

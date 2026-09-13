@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 云五笔更多符号面板1 v0.5.3：点符号面板"更多"进入（完整符号可继续翻页）
+     行1: ± ÷ × ≈ ≠ ≤ ≥ ∞ ℃ ℉
+     行2: → ← ↑ ↓ ↖ ↗ ↘ ↙ ⇒ ⇔
+     行3: ¥ € £ ¢ $ ¤ ₹ ₩ ￥ ₽
+     行4: % ‰ ° ′ ″ № § ¶ † ‡
+     行5: 返回 | 更多 | 《 | 》 | …  -->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="9.1%p"
+    android:keyHeight="46dp"
+    android:horizontalGap="1%p"
+    android:verticalGap="5dp"
+    android:keyBackground="@drawable/key_bg">
+
+    <Row>
+        <Key android:codes="177" android:keyLabel="±" />
+        <Key android:codes="247" android:keyLabel="÷" />
+        <Key android:codes="215" android:keyLabel="×" />
+        <Key android:codes="8776" android:keyLabel="≈" />
+        <Key android:codes="8800" android:keyLabel="≠" />
+        <Key android:codes="8804" android:keyLabel="≤" />
+        <Key android:codes="8805" android:keyLabel="≥" />
+        <Key android:codes="8734" android:keyLabel="∞" />
+        <Key android:codes="8451" android:keyLabel="℃" />
+        <Key android:codes="8457" android:keyLabel="℉" />
+    </Row>
+    <Row>
+        <Key android:codes="8594" android:keyLabel="→" />
+        <Key android:codes="8592" android:keyLabel="←" />
+        <Key android:codes="8593" android:keyLabel="↑" />
+        <Key android:codes="8595" android:keyLabel="↓" />
+        <Key android:codes="8598" android:keyLabel="↖" />
+        <Key android:codes="8599" android:keyLabel="↗" />
+        <Key android:codes="8600" android:keyLabel="↘" />
+        <Key android:codes="8601" android:keyLabel="↙" />
+        <Key android:codes="8658" android:keyLabel="⇒" />
+        <Key android:codes="8660" android:keyLabel="⇔" />
+    </Row>
+    <Row>
+        <Key android:codes="165" android:keyLabel="¥" />
+        <Key android:codes="8364" android:keyLabel="€" />
+        <Key android:codes="163" android:keyLabel="£" />
+        <Key android:codes="162" android:keyLabel="¢" />
+        <Key android:codes="36" android:keyLabel="$" />
+        <Key android:codes="164" android:keyLabel="¤" />
+        <Key android:codes="8377" android:keyLabel="₹" />
+        <Key android:codes="8361" android:keyLabel="₩" />
+        <Key android:codes="65509" android:keyLabel="￥" />
+        <Key android:codes="8380" android:keyLabel="₽" />
+    </Row>
+    <Row>
+        <Key android:codes="37" android:keyLabel="%" />
+        <Key android:codes="8240" android:keyLabel="‰" />
+        <Key android:codes="176" android:keyLabel="°" />
+        <Key android:codes="8242" android:keyLabel="′" />
+        <Key android:codes="8243" android:keyLabel="″" />
+        <Key android:codes="8470" android:keyLabel="№" />
+        <Key android:codes="167" android:keyLabel="§" />
+        <Key android:codes="182" android:keyLabel="¶" />
+        <Key android:codes="8224" android:keyLabel="†" />
+        <Key android:codes="8225" android:keyLabel="‡" />
+    </Row>
+    <Row android:keyWidth="19.2%p">
+        <Key android:codes="-103" android:keyLabel="返回" />
+        <Key android:codes="-104" android:keyLabel="更多" />
+        <Key android:codes="12298" android:keyLabel="《" />
+        <Key android:codes="12299" android:keyLabel="》" />
+        <Key android:codes="8230" android:keyLabel="…" />
+    </Row>
+</Keyboard>

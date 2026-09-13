@@ -143,6 +143,33 @@ public class CloudKeyboardView extends KeyboardView {
         return super.onTouchEvent(ev);
     }
 
+    /** v0.5.3 反馈⑨：数字/符号面板满宽居中——键盘按当前视图可用宽高重排（%p 以屏幕宽为基准，窗口变窄会偏左/截断） */
+    private void fitKeyboardWidth() {
+        Keyboard kb = getKeyboard();
+        int w = getWidth();
+        int h = getHeight();
+        if (kb == null || w <= 0 || h <= 0) return;
+        int availW = w - getPaddingLeft() - getPaddingRight();
+        int availH = h - getPaddingTop() - getPaddingBottom();
+        if (availW <= 0 || availH <= 0) return;
+        try {
+            kb.resize(availW, availH, 0, 0);
+            invalidateAllKeys();
+        } catch (Exception ignored) { }
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        fitKeyboardWidth();
+    }
+
+    @Override
+    public void setKeyboard(Keyboard kb) {
+        super.setKeyboard(kb);
+        fitKeyboardWidth();
+    }
+
     /** v0.4.9 FLAT 全自绘（键帽圆角纯色 + 文字 + 上滑标注），不依赖父类绘制 API */
     @Override
     public void onDraw(Canvas canvas) {
