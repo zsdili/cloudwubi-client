@@ -267,9 +267,11 @@ public final class WubiDb {
                 if (!out.contains(w)) out.add(w);
             }
         }
-        // 2+2 二字词
-        List<String> a2 = prefixIndex == null ? null : prefixIndex.get(code.substring(0, 2));
-        List<String> b2 = prefixIndex == null ? null : prefixIndex.get(code.substring(2, 4));
+        // v0.5.24 修复①：拼词桶按字频排序——常用全码字（意/以等）不被同前缀生僻字挤掉（乐意 qiuj / 可以 skny）
+        List<String> a2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(0, 2)));
+        List<String> b2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(2, 4)));
+        if (a2 != null) sortByFreq(a2);
+        if (b2 != null) sortByFreq(b2);
         if (a2 != null && b2 != null) {
             int la = Math.min(a2.size(), 4), lb = Math.min(b2.size(), 4);
             for (int i = 0; i < la; i++) {
@@ -280,9 +282,12 @@ public final class WubiDb {
             }
         }
         // 1+1+2 三字词
-        List<String> c1 = prefixIndex == null ? null : prefixIndex.get(code.substring(0, 1));
-        List<String> c2 = prefixIndex == null ? null : prefixIndex.get(code.substring(1, 2));
-        List<String> c3 = prefixIndex == null ? null : prefixIndex.get(code.substring(2, 4));
+        List<String> c1 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(0, 1)));
+        List<String> c2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(1, 2)));
+        List<String> c3 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(2, 4)));
+        if (c1 != null) sortByFreq(c1);
+        if (c2 != null) sortByFreq(c2);
+        if (c3 != null) sortByFreq(c3);
         if (c1 != null && c2 != null && c3 != null) {
             int l1 = Math.min(c1.size(), 3), l2 = Math.min(c2.size(), 3), l3 = Math.min(c3.size(), 3);
             for (int i = 0; i < l1; i++) {
@@ -295,10 +300,14 @@ public final class WubiDb {
             }
         }
         // 1+1+1+1 四字词（限流 2×2×2×2=16，排序后截断）
-        List<String> d1 = prefixIndex == null ? null : prefixIndex.get(code.substring(0, 1));
-        List<String> d2 = prefixIndex == null ? null : prefixIndex.get(code.substring(1, 2));
-        List<String> d3 = prefixIndex == null ? null : prefixIndex.get(code.substring(2, 3));
-        List<String> d4 = prefixIndex == null ? null : prefixIndex.get(code.substring(3, 4));
+        List<String> d1 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(0, 1)));
+        List<String> d2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(1, 2)));
+        List<String> d3 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(2, 3)));
+        List<String> d4 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(3, 4)));
+        if (d1 != null) sortByFreq(d1);
+        if (d2 != null) sortByFreq(d2);
+        if (d3 != null) sortByFreq(d3);
+        if (d4 != null) sortByFreq(d4);
         if (d1 != null && d2 != null && d3 != null && d4 != null) {
             int l1 = Math.min(d1.size(), 2), l2 = Math.min(d2.size(), 2), l3 = Math.min(d3.size(), 2), l4 = Math.min(d4.size(), 2);
             for (int i = 0; i < l1; i++) {

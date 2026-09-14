@@ -671,8 +671,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitText("="); return;
             } else if (primaryCode == 43 || primaryCode == 45 || primaryCode == 42) {
                 commitText(String.valueOf((char) primaryCode)); return;
+            } else if (primaryCode >= 32 && primaryCode <= 126) {
+                // v0.5.24 修复③：密码框 ASCII 可见字符兜底直通（特殊字符在密码模式直接上屏）
+                commitText(String.valueOf((char) primaryCode)); return;
             }
-            // 其余键（Shift/123/符号/退格/中英/返回/标点）→ 不拦截，走正常逻辑
+            // 其余键（Shift/123/符号/退格/中英/返回）→ 不拦截，走正常逻辑（面板切换/大小写/删除可用）
         }
         // 字母键
         if (primaryCode >= 'a' && primaryCode <= 'z') {
@@ -848,8 +851,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitText("？");
                 return;
             default:
+                // v0.5.24 修复②：符号键兜底——symbolToText 未覆盖的 ASCII 可见字符直接上屏
+                //   （91[]/93]/123{/125}/35#/37%/94^/61= 等特殊字符，密码框与常规模式通用）
                 String s = symbolToText(primaryCode);
-                if (s != null) commitText(s);
+                if (s != null) {
+                    commitText(s);
+                } else if (primaryCode >= 32 && primaryCode <= 126) {
+                    commitText(String.valueOf((char) primaryCode));
+                }
         }
     }
 
