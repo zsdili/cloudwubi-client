@@ -141,6 +141,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private boolean fromChineseShift = false;   // v0.5.10 反馈①：记录 shift 是否从中文切入英文大写
     private int panelMode = 0;              // 0=主键盘 1=数字 2=符号
     private boolean clipMode = false;       // 候选条是否显示剪贴板历史
+    private boolean infoPanelMode = false;  // v0.5.13 反馈①：候选条是否显示 app 信息面板
     private String lastSelected = "";       // MRU 置顶
     private String lastCommittedChar = "";  // v0.4.8 最近上屏单字（触发联想）
     private String lastEnHint = "";         // v0.4.8 最近选字英文翻译提示
@@ -226,11 +227,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         brand.setText("云五笔");
         brand.setTextSize(13);
         brand.setTextColor(dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
+        // v0.5.13 反馈①：去掉 ⓘ 按钮（AlertDialog 在 IME 服务 Context 无法显示）→ 点"云五笔"文字打开 app 信息面板
+        brand.setPadding(6, 6, 6, 6);
+        brand.setOnClickListener(v -> showInfoPanel());
         toolRow.addView(brand);
-        // v0.5.11 反馈①：信息按钮 ℹ️ → 弹窗（版本/作者/开源/微信）
-        android.widget.TextView infoBtn = makeToolButton("ℹ️", v -> showInfoDialog());
-        infoBtn.setPadding(8, 6, 8, 6);
-        toolRow.addView(infoBtn);
         statusInfo = new android.widget.TextView(this);
         statusInfo.setTextSize(12);
         statusInfo.setPadding(8, 0, 0, 0);
@@ -254,6 +254,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(makeToolButton("亖", v -> {
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
+            infoPanelMode = false;   // v0.5.13：切剪贴板时关闭信息面板
             clipMode = true;
             updateCandidateView();
         }));
@@ -298,15 +299,24 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         return tv;
     }
 
-    /** v0.5.11 反馈①：信息弹窗（版本/作者/开源链接/微信）——纯文本实现（体积友好，≤100KB 门禁） */
-    private void showInfoDialog() {
-        try {
-            android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
-            b.setTitle("云五笔");
-            b.setMessage("当前版本：v0.5.12\n作者：zsdili\n开源：github.com/zsdili\n微信：175571");
-            b.setPositiveButton("好", null);
-            b.show();
-        } catch (Exception ignored) { }
+    /** v0.5.13 反馈①：app 信息面板（IME 内嵌，候选条区域渲染，点任意键关闭）
+     *  原因：AlertDialog 在 InputMethodService Context 下被系统拦截无法显示（v0.5.11 弹窗未出现的根因） */
+    private void showInfoPanel() {
+        infoPanelMode = true;
+        clipMode = false;
+        updateCandidateView();
+    }
+
+    private void renderInfoPanel() {
+        int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
+        SpannableStringBuilder sb = new SpannableStringBuilder();
+        sb.append("云五笔 v0.5.13");
+        int s0 = sb.length();
+        sb.append("  作者：zsdili  开源：github.com/zsdili  微信：175571");
+        sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        candidateView.setSingleLine(false);
+        candidateView.setLineSpacing(0f, 1.25f);
+        candidateView.setText(sb);
     }
 
     /** v0.5.0 反馈①：全选当前文本框内容 */
@@ -613,6 +623,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     @Override
     public void onKey(int primaryCode, int[] keyCodes) {
         resetIdleTimers();   // v0.5.4 反馈⑨ + v0.5.5 反馈⑧：任何按键重置双闲置计时
+        // v0.5.13 反馈①：信息面板点任意键关闭
+        if (infoPanelMode) {
+            infoPanelMode = false;
+            updateCandidateView();
+        }
         // v0.5.9 反馈⑩：剪贴板界面有键盘点击 → 自动收回剪贴板到正常输入界面
         if (clipMode) {
             clipMode = false;
@@ -1140,8 +1155,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(4000);
-                conn.setReadTimeout(4000);
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
                 String body = "{\"code\":\"" + code + "\",\"phrase\":true}";
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(body.getBytes("UTF-8"));
@@ -1216,6 +1231,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** 候选条渲染：空闲态（云五笔 ▾ 剪贴板）/ 剪贴板历史 / 数字计算 / 候选列表 */
     private void updateCandidateView() {
         if (candidateView == null) return;
+        // v0.5.13 反馈①：app 信息面板优先渲染
+        if (infoPanelMode) {
+            renderInfoPanel();
+            return;
+        }
         // v0.5.11 反馈⑥：剪贴板态优先渲染（英文输入态也可用剪贴板，原英文分支提前 return 导致不可用）
         if (clipMode) {
             renderClipboardList();
@@ -1296,14 +1316,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 renderAssociateHint();
                 return;
             }
-            // v0.5.3 反馈③④⑦：空闲态仅显示"云五笔"（弱色跟随系统），剪贴板入口已移至工具栏亖
-            // v0.5.8 反馈⑤：取消自动清空——编码清空后保留候选/联想，仅状态栏回到空闲态
+            // v0.5.13 反馈①：空闲态备选栏不再显示"云五笔"占位文字（用户质疑违背科学合理）→ 清空
             if (candidates.isEmpty()) {
-                SpannableString ss = new SpannableString("云五笔");
-                ss.setSpan(new ForegroundColorSpan(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                candidateView.setSingleLine(true);
-                candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                candidateView.setText(ss);
+                candidateView.setText("");
             }
             return;
         }
@@ -1816,8 +1831,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(4000);
-            conn.setReadTimeout(4000);
+            conn.setConnectTimeout(6000);
+            conn.setReadTimeout(6000);
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(body.getBytes("UTF-8"));
             }
@@ -1854,8 +1869,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(4000);
-                conn.setReadTimeout(4000);
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
                 String body = "{\"word\":\"" + word + "\",\"en\":true}";
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(body.getBytes("UTF-8"));

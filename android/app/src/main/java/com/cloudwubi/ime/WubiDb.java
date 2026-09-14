@@ -39,6 +39,8 @@ public final class WubiDb {
         singleCodeIndex = new HashMap<>();
         loadAsset(ctx, "wubi_single.txt", singleIndex);
         loadAsset(ctx, "wubi_phrase.txt", phraseIndex);
+        // v0.5.13 反馈②：高频搭配联想词表（纯文本，补字头缺口——宇/进/好/民/吴等，queryByPrefix 即时命中）
+        loadAssetText(ctx, "associate.txt", phraseIndex);
         loadIdioms(ctx);
         // 词组反向索引（同一词可能多码，保留首条）
         if (phraseIndex != null) {
@@ -77,6 +79,20 @@ public final class WubiDb {
             if (idm.indexOf(ch) >= 0) out.add(idm);
         }
         return out;
+    }
+
+    /** v0.5.13：纯文本搭配词表加载（每行一个词组，无编码——进 phraseIndex 特殊键供前缀遍历命中） */
+    private static void loadAssetText(Context ctx, String name, Map<String, List<String>> map) {
+        try (BufferedReader r = new BufferedReader(
+                new InputStreamReader(ctx.getAssets().open(name), "UTF-8"))) {
+            String line;
+            List<String> list = new ArrayList<>();
+            while ((line = r.readLine()) != null) {
+                line = line.trim();
+                if (!line.isEmpty()) list.add(line);
+            }
+            if (!list.isEmpty()) map.put("zzzz", list);
+        } catch (Exception ignored) { }
     }
 
     private static void loadAsset(Context ctx, String name, Map<String, List<String>> map) {
