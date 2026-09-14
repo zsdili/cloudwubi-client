@@ -732,6 +732,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             if (c >= 'a' && c <= 'z') {
                 k.label = upper ? String.valueOf(Character.toUpperCase((char) c))
                                 : String.valueOf((char) c);
+            } else if (c == KEY_SHIFT) {
+                // v0.5.41 反馈③：shift 激活视觉——大写模式显示实心 ⇧（明确"已切换"），否则 ↑
+                k.label = shiftState > 0 ? "⇧" : "↑";
             }
         }
         keyboardView.invalidateAllKeys();
@@ -835,6 +838,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // 数字（v0.5.35 反馈①：纯数字直接上屏——只有表达式已含运算符时才进缓冲，根治"打5出1.5=5 2.5"）
         if (primaryCode >= '0' && primaryCode <= '9') {
+            // v0.5.41 反馈⑤：数字键即时触感（消除"粘粘"卡顿感——按键即有反馈）
+            performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
             if (panelMode == 1 && hasCalcOp(calcBuffer)) {
                 calcBuffer += (char) primaryCode;
                 updateCandidateView();
@@ -1399,6 +1404,39 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.0 反馈⑤：英文/HTML 自动补全（输入 ht→https://、@→邮箱后缀、.→域名后缀） */
+    // v0.5.41 反馈④：英文常用词表（真实常用英文单词，前缀匹配自动补全）
+    private static final String[] EN_WORDS = {
+        "the", "and", "you", "hello", "world", "help", "home", "hope", "here", "have", "has",
+        "how", "what", "when", "where", "who", "why", "which", "work", "with", "well", "will",
+        "good", "great", "get", "go", "going", "come", "coming", "can", "could", "should",
+        "would", "please", "thank", "thanks", "this", "that", "these", "those", "there",
+        "their", "they", "them", "we", "our", "ours", "your", "yours", "my", "mine", "his",
+        "her", "its", "not", "no", "yes", "ok", "okay", "sure", "sorry", "welcome", "friend",
+        "family", "love", "like", "life", "time", "today", "tomorrow", "yesterday", "morning",
+        "afternoon", "evening", "night", "week", "month", "year", "day", "date", "new", "old",
+        "big", "small", "fast", "slow", "happy", "sad", "good", "bad", "best", "better",
+        "more", "most", "less", "little", "many", "much", "some", "any", "all", "every",
+        "each", "other", "another", "one", "two", "three", "four", "five", "six", "seven",
+        "eight", "nine", "ten", "first", "second", "third", "last", "next", "last", "back",
+        "front", "left", "right", "up", "down", "open", "close", "start", "stop", "begin",
+        "end", "make", "made", "take", "took", "give", "gave", "send", "sent", "get", "got",
+        "see", "saw", "look", "find", "found", "keep", "kept", "know", "knew", "think",
+        "thought", "want", "need", "call", "called", "email", "mail", "phone", "number",
+        "name", "address", "city", "country", "china", "chinese", "english", "language",
+        "computer", "phone", "mobile", "message", "text", "write", "read", "book", "page",
+        "file", "data", "code", "web", "site", "link", "url", "www", "http", "https", "com",
+        "net", "org", "cn", "io", "app", "android", "ios", "mac", "windows", "linux",
+        "github", "google", "baidu", "wechat", "weixin", "qq", "alipay", "pay", "money",
+        "price", "cost", "buy", "sell", "shop", "store", "market", "business", "company",
+        "work", "job", "office", "meeting", "team", "manager", "leader", "project", "plan",
+        "idea", "problem", "question", "answer", "example", "important", "possible",
+        "different", "together", "sometimes", "always", "never", "usually", "really",
+        "very", "quite", "about", "after", "before", "between", "during", "without",
+        "because", "but", "so", "then", "than", "or", "for", "from", "into", "onto",
+        "under", "over", "through", "around", "again", "also", "already", "although",
+        "though", "until", "while", "if", "when", "where", "whether"
+    };
+
     private void checkEnglishCompletion(String code) {
         String lower = code.toLowerCase();
         if (lower.startsWith("ht") && lower.length() <= 5) {
@@ -1418,9 +1456,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             candidates.add(".io");
         } else if (code.endsWith("/")) {
             candidates.add("www.");
-        } else if (code.length() >= 2 && code.length() <= 4) {
-            String[] common = {"the", "and", "com", "org", "net", "http", "www", "www."};
-            for (String w : common) {
+        } else if (code.length() >= 2 && code.length() <= 6) {
+            // v0.5.41 反馈④：英文常用词表前缀补全（备选栏显示，点击上屏）
+            for (String w : EN_WORDS) {
                 if (w.startsWith(lower) && !candidates.contains(w)) candidates.add(w);
             }
         }

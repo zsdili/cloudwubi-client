@@ -149,6 +149,7 @@ public class CloudKeyboardView extends KeyboardView {
                 swipeTriggered = false;
                 longPressTriggered = false;
                 downKey = findKey(x, y);
+                invalidate();   // v0.5.41 反馈⑤：按下立即重绘 pressed 高亮（消除"变色慢"卡顿感）
                 if (downKey != null) {
                     removeCallbacks(longPressRunnable);
                     postDelayed(longPressRunnable, LONG_PRESS_MS);
