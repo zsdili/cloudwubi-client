@@ -16,12 +16,12 @@ CloudWubi 云五笔，面向 5G/6G 的轻量五笔输入法。**端侧只带精�
 | 规则 | 五笔86（一级/二级简码、词组、光标前字联想、MRU 置顶） |
 | 平台 | Android 7+（Android 主线已发布；macOS 已声明放弃，见 docs/PLATFORM-STATUS.md） |
 
-## 下载（最新 v0.5.12，97.5KB）
+## 下载（最新 v0.5.13，97.5KB）
 
-- GitHub：https://github.com/zsdili/cloudwubi-client/releases/download/v0.5.12/CloudWubi.apk
-- Gitee：https://gitee.com/zsdili/cloudwubi-client/releases/download/v0.5.12/CloudWubi.apk
+- GitHub：https://github.com/zsdili/cloudwubi-client/releases/download/v0.5.13/CloudWubi.apk
+- Gitee：https://gitee.com/zsdili/cloudwubi-client/releases/download/v0.5.13/CloudWubi.apk
 - **固定签名**：使用公开固定签名（android/keystore/cloudwubi.jks），各版本可直接覆盖安装，无需卸载
-- v0.5.12 更新：信息按钮弹窗、状态栏/备选栏单行（翻译仅第一行）、计算续算去重根修（1+2=3*4=12）、回车上屏英文/空格上中文、锚字前缀联想（进→进一步/进行/进入）、英文态剪贴板可用、退格优先删除文本框选区
+- v0.5.13 更新：信息按钮弹窗、状态栏/备选栏单行（翻译仅第一行）、计算续算去重根修（1+2=3*4=12）、回车上屏英文/空格上中文、锚字前缀联想（进→进一步/进行/进入）、英文态剪贴板可用、退格优先删除文本框选区
 
 ## 架构
 
