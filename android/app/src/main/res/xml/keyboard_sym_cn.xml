@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔符号面板 v0.5.34：分类式（中文）-- 左栏分类 + 右栏符号 + 底部导航 -->
+<!-- 云五笔符号面板 v0.5.34 分类式: 中文 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyHeight="44dp"
     android:horizontalGap="0.5%p"
@@ -17,7 +17,7 @@
         <Key android:codes="65306" android:keyLabel="：" android:keyWidth="21.5%p" />
         <Key android:codes="12289" android:keyLabel="、" android:keyWidth="21.5%p" />
         <Key android:codes="64" android:keyLabel="@" android:keyWidth="21.5%p" />
-        <Key android:codes="8230" android:keyLabel="……" android:keyWidth="21.5%p" />
+        <Key android:codes="8230" android:keyLabel="…" android:keyWidth="21.5%p" />
     </Row>
     <Row>
         <Key android:codes="-313" android:keyLabel="英文" android:keyWidth="12%p" />
