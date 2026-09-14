@@ -30,7 +30,7 @@
         <Key android:codes="-314" android:keyLabel="表情" android:keyWidth="12%p" />
         <Key android:codes="65288" android:keyLabel="（" android:keyWidth="21.5%p" />
         <Key android:codes="65289" android:keyLabel="）" android:keyWidth="21.5%p" />
-        <Key android:codes="60" android:keyLabel="<" android:keyWidth="21.5%p" />
+        <Key android:codes="60" android:keyLabel="&lt;" android:keyWidth="21.5%p" />
         <Key android:codes="62" android:keyLabel=">" android:keyWidth="21.5%p" />
     </Row>
     <Row>
