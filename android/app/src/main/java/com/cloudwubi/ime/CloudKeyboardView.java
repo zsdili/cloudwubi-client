@@ -133,6 +133,8 @@ public class CloudKeyboardView extends KeyboardView {
             case 98: return ':';   // B
             case 110: return ';';  // N
             case 109: return '`';  // M
+            case -106: return 0xFF01;  // v0.5.17 修复回归：！，键上滑 → ！（原设计走 IME.swipeUp 但 onTouchEvent 重写后死代码）
+            case -108: return 0xFF1F;  // v0.5.17 修复回归：？。键上滑 → ？
             default: return 0;
         }
     }

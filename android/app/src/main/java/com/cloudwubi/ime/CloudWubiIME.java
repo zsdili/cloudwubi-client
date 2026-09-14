@@ -324,7 +324,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.17");
+        sb.append("云五笔 v0.5.18");
         sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
@@ -832,6 +832,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             case 46:
                 if (panelMode == 1) { calcBuffer += "."; updateCandidateView(); return; }
                 commitText(chineseMode ? "。" : ".");
+                return;
+            case 0xFF01:   // v0.5.17 修复回归：！，键上滑 → ！（CloudKeyboardView.swipeSymbol 直达）
+                commitText("！");
+                return;
+            case 0xFF1F:   // v0.5.17 修复回归：？。键上滑 → ？
+                commitText("？");
                 return;
             default:
                 String s = symbolToText(primaryCode);

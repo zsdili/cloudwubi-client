@@ -37,6 +37,10 @@ jobs:
           cd android
           bash build_apk.sh
 
+      - name: 回归自检（机器级自我记忆：历史出错点锚点核查）
+        run: |
+          bash scripts/regression_check.sh android/build-apk/CloudWubi.apk
+
       - name: 上传 APK 工件
         uses: actions/upload-artifact@v4
         with:
