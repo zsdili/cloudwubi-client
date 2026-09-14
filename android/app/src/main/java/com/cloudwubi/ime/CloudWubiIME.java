@@ -211,6 +211,17 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 updateCandidateView();
             }
         });
+        // v0.5.28 反馈②：长按候选条 = 删除剪贴板内容（剪贴板项删除功能）
+        candidateView.setOnLongClickListener(v -> {
+            if (clipManager != null) {
+                try {
+                    clipManager.setPrimaryClip(android.content.ClipData.newPlainText("", ""));
+                } catch (Exception ignored) { }
+                updateCandidateView();
+                return true;
+            }
+            return false;
+        });
 
         keyboardMain = new Keyboard(this, R.xml.keyboard_qwerty);
         keyboardNum = new Keyboard(this, R.xml.keyboard_num);
@@ -316,15 +327,31 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.13 反馈①：app 信息面板（IME 内嵌，候选条区域渲染，点任意键关闭）
      *  原因：AlertDialog 在 InputMethodService Context 下被系统拦截无法显示（v0.5.11 弹窗未出现的根因） */
     private void showInfoPanel() {
-        infoPanelMode = true;
+        // v0.5.28 反馈①：点一次显示 app 信息，再点消失（toggle）
+        infoPanelMode = !infoPanelMode;
+        if (!infoPanelMode) {
+            candidateView.setSingleLine(true);
+            candidateView.setMaxLines(1);
+            candidateView.setMinHeight(candViewH);
+            candidateView.setMaxHeight(candViewH);
+        }
         clipMode = false;
         updateCandidateView();
+    }
+
+    private String currentVersion() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            return "0.5.28";
+        }
     }
 
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.21");
+        // v0.5.28 反馈①：版本号前去掉"云五笔"三个字，动态读安装包真实版本号（不再硬编码）
+        sb.append("v").append(currentVersion());
         sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
@@ -429,11 +456,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 if (!merged.contains(p)) merged.add(p);
                 if (merged.size() >= 12) break;
             }
-        }
-        // v0.5.27 反馈②：复制的文本显示在备选栏末尾供点选（只显示复制文本，不上屏历史）
-        String clipTxt = getClipboardText();
-        if (!clipTxt.isEmpty() && !merged.contains(clipTxt)) {
-            merged.add(clipTxt.length() > 10 ? clipTxt.substring(0, 10) + "…" : clipTxt);
         }
         candidates.addAll(merged);
         candPage = 0;
@@ -1215,11 +1237,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             }
         }
-        // v0.5.27 反馈②：复制的文本显示在备选栏末尾供点选（只显示复制文本，不上屏历史）
-        String clipTxt = getClipboardText();
-        if (!clipTxt.isEmpty() && !merged.contains(clipTxt)) {
-            merged.add(clipTxt.length() > 10 ? clipTxt.substring(0, 10) + "…" : clipTxt);
-        }
         candidates.addAll(merged);
         candPage = 0;
         if (candidates.isEmpty()) candidates.add(code);
@@ -1442,7 +1459,31 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : "EN: " + lastEnHint);
             // v0.5.20：联想已去除——上屏后不显示"最近上屏 ▸ 联想词"（renderAssociateHint 不再调用）
             if (candidates.isEmpty()) {
-                candidateView.setText("");
+                // v0.5.28 反馈⑥：空闲态也显示剪贴板项（复制后打开输入法立即可见，点选上屏）
+                String clipTxt = getClipboardText();
+                if (!clipTxt.isEmpty()) {
+                    String disp = clipTxt.length() > 4 ? clipTxt.substring(0, 4) + "…" : clipTxt;
+                    SpannableStringBuilder csb = new SpannableStringBuilder();
+                    int cs0 = csb.length();
+                    csb.append("📋").append(disp);
+                    int cs1 = csb.length();
+                    final String clipFinal = clipTxt;
+                    ClickableSpan clipCs = new ClickableSpan() {
+                        @Override
+                        public void onClick(View widget) {
+                            commitText(clipFinal);
+                        }
+                        @Override
+                        public void updateDrawState(android.text.TextPaint ds) {
+                            ds.setColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
+                            ds.setUnderlineText(false);
+                        }
+                    };
+                    csb.setSpan(clipCs, cs0, cs1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    candidateView.setText(csb);
+                } else {
+                    candidateView.setText("");
+                }
             }
             return;
         }
@@ -1662,6 +1703,27 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.4.9 翻页指示（跟随系统色）
         appendPager(sb, pages);
+        // v0.5.28 反馈⑥：复制的文本固定显示在备选栏末尾（不参与翻页、持续可见，点选上屏；长按候选条=删除）
+        String clipTxt = getClipboardText();
+        if (!clipTxt.isEmpty()) {
+            String disp = clipTxt.length() > 4 ? clipTxt.substring(0, 4) + "…" : clipTxt;
+            int cs0 = sb.length();
+            sb.append("  📋").append(disp);
+            int cs1 = sb.length();
+            final String clipFinal = clipTxt;
+            ClickableSpan clipCs = new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    commitText(clipFinal);
+                }
+                @Override
+                public void updateDrawState(android.text.TextPaint ds) {
+                    ds.setColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
+                    ds.setUnderlineText(false);
+                }
+            };
+            sb.setSpan(clipCs, cs0, cs1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
         candidateView.setText(sb);
     }
 

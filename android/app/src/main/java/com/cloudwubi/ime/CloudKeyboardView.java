@@ -173,6 +173,12 @@ public class CloudKeyboardView extends KeyboardView {
                     downKey = null;
                     return true;
                 }
+                // v0.5.28 反馈④：上滑已触发过（符号已上屏）→ 吞掉本次点击，避免字母一并上屏
+                if (swipeTriggered) {
+                    swipeTriggered = false;
+                    downKey = null;
+                    return true;
+                }
                 downKey = null;
                 break;
             case MotionEvent.ACTION_CANCEL:
