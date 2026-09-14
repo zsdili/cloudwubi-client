@@ -959,25 +959,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     // ===== v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录，联想排序权重） =====
 
     private void loadFreq() {
+        String j = prefs.getString(PREFS_FREQ, "");
+        if (j.isEmpty()) return;
         try {
-            String j = prefs.getString(PREFS_FREQ, "");
-            if (!j.isEmpty()) {
-                JSONObject o = new JSONObject(j);
-                java.util.Iterator<String> it = o.keys();
-                while (it.hasNext()) {
-                    String k = it.next();
-                    freqMap.put(k, o.optInt(k, 1));
-                }
+            for (String kv : j.split(",")) {
+                int i = kv.indexOf(':');
+                if (i > 0) freqMap.put(kv.substring(0, i), Integer.parseInt(kv.substring(i + 1)));
             }
         } catch (Exception ignored) { }
     }
 
     private void saveFreq() {
-        try {
-            JSONObject o = new JSONObject();
-            for (Map.Entry<String, Integer> e : freqMap.entrySet()) o.put(e.getKey(), e.getValue());
-            prefs.edit().putString(PREFS_FREQ, o.toString()).apply();
-        } catch (Exception ignored) { }
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Integer> e : freqMap.entrySet()) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(e.getKey()).append(':').append(e.getValue());
+        }
+        prefs.edit().putString(PREFS_FREQ, sb.toString()).apply();
     }
 
     private void bumpFreq(String text) {
@@ -1915,13 +1913,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.6 反馈①：读取光标前 n 字（上下文连续联想输入） */
     private String getContextBefore(int n) {
-        InputConnection ic = getCurrentInputConnection();
-        if (ic == null) return "";
         try {
-            CharSequence cb = ic.getTextBeforeCursor(n, 0);
+            InputConnection ic = getCurrentInputConnection();
+            CharSequence cb = ic == null ? null : ic.getTextBeforeCursor(n, 0);
             return cb == null ? "" : cb.toString();
-        } catch (Exception ignored) { }
-        return "";
+        } catch (Exception e) { return ""; }
     }
 
     /** v0.6：JSON 字符串转义（上文可能含引号/反斜杠） */
