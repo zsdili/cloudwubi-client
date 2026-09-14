@@ -230,7 +230,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.35 反馈③：候选条左右滑动翻页（替代点击翻页）
         candFlingDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            public boolean onFling(android.view.MotionEvent e1, android.view.MotionEvent e2, float velocityX, float velocityY) {
                 if (Math.abs(velocityX) > Math.abs(velocityY) && Math.abs(velocityX) > 200) {
                     if (velocityX < 0) { nextCandidatePage(); return true; }
                     prevCandidatePage(); return true;
