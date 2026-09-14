@@ -324,7 +324,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.15");
+        sb.append("云五笔 v0.5.16");
         sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
@@ -905,11 +905,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         queryCandidates();
     }
 
-    /** v0.5.0 反馈⑤：英文输入进编码（放宽到 24 字符，触发补全候选） */
+    /** v0.5.0 反馈⑤：英文输入进编码（放宽到 24 字符，触发补全候选）
+     *  v0.5.16 反馈②：shift 大写生效——shiftState>0（大写锁定/中文切英文大写）时存大写，否则小写 */
     private void appendEnglishCode(char c) {
         if (composingCode.length() >= 24) return;
         candPage = 0;
-        composingCode.append(Character.toLowerCase(c));
+        boolean upper = shiftState > 0;
+        composingCode.append(upper ? Character.toUpperCase(c) : Character.toLowerCase(c));
         queryCandidates();
     }
 
@@ -1257,18 +1259,19 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         List<String> list = new ArrayList<>();
         try {
             JSONObject obj = new JSONObject(json);
-            JSONArray cps = obj.optJSONArray("candidates");
-            if (cps != null) {
-                for (int i = 0; i < cps.length(); i++) {
-                    int cp = cps.getInt(i);
-                    if (cp > 0) list.add(new String(Character.toChars(cp)));
-                }
-            }
+            // v0.5.16 反馈①：词组（phrases）优先于单字（candidates）——四码"dgqe"的感触/三角不被截断
             JSONArray phrases = obj.optJSONArray("phrases");
             if (phrases != null) {
                 for (int i = 0; i < phrases.length(); i++) {
                     String p = phrases.getString(i);
                     if (p != null && p.length() >= 2) list.add(p);
+                }
+            }
+            JSONArray cps = obj.optJSONArray("candidates");
+            if (cps != null) {
+                for (int i = 0; i < cps.length(); i++) {
+                    int cp = cps.getInt(i);
+                    if (cp > 0) list.add(new String(Character.toChars(cp)));
                 }
             }
         } catch (Exception ignored) { }

@@ -193,6 +193,25 @@ public final class WubiDb {
      *   1码 → 单字；2码 → 单字在前、二字词在后；3码 → 单字；
      *   4码 → 词组优先、单字殿后
      */
+    // v0.5.16 反馈③：常用字频序（高频在前；近似《现代汉语常用字表》高频字序，模拟数据，后续用真实语料替换）
+    private static final String COMMON_FREQ =
+            "的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回则任取据处队南给色光门即保治北造百规热领七海口东导器压志世金增争济阶油思术极交受联什认六共权收证改清己美再采转更单风切打白教速花带安场身车例真务具万每目至达走积示议声报斗完类八离华名确才科张信马节话米整空元况今集温传土许步群广石记需段研界拉林律叫且究观越织装影算低持音众书布复容儿须际商非验连断深难近矿千周委素技备半办青省列习响约支般史感劳便团往酸历市克何除消构府称太准精值号率族维划选标写存候毛亲快效斯院查江型眼王按格养易置派层片始却专状育厂京识适属圆包火住调满县局照参红细引听该铁价严龙飞";
+
+    /** v0.5.16 反馈③：同码常用字按频序稳定排序（如 dg 研厂三 → 三 在前；不在频序的保持原序靠后） */
+    private static void sortByFreq(List<String> list) {
+        for (int i = 1; i < list.size(); i++) {
+            String k = list.get(i);
+            int j = i - 1;
+            int fk = COMMON_FREQ.indexOf(k);
+            while (j >= 0 && COMMON_FREQ.indexOf(list.get(j)) > fk) {
+                list.set(j + 1, list.get(j));
+                j--;
+            }
+            list.set(j + 1, k);
+        }
+    }
+
+    /** v0.4.8 反馈①②③：查候选（1 码简码单字 / 2 码先单后词 / 3 码单字+预测 / 4 码词组优先） */
     public static List<String> query(String code) {
         if (code == null || code.isEmpty()) return null;
         ensureIndex();
@@ -200,6 +219,8 @@ public final class WubiDb {
         List<String> singles = singleIndex == null ? null : singleIndex.get(code);
         List<String> phr = phraseIndex == null ? null : phraseIndex.get(code);
         int len = code.length();
+        // v0.5.16 反馈③：2/3/4 码单字按常用字频序重排（高频字自动前移，先科学后先进）
+        if (len >= 2 && singles != null && singles.size() > 1) sortByFreq(singles);
         if (len == 1) {
             if (singles != null) result.addAll(singles);
         } else if (len == 2) {
