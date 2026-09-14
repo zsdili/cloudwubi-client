@@ -137,11 +137,11 @@ if [ "$SIZE" -gt 102400 ]; then
 fi
 echo "✅ 体积达标（≤ 100KB）"
 
-echo "== 自检：APK 内必须包含词库 assets（缺则构建失败）=="
-if unzip -l CloudWubi.apk | grep -q "assets/wubi_single.txt" && unzip -l CloudWubi.apk | grep -q "assets/wubi_phrase.txt"; then
-    echo "✅ 词库已打包（wubi_single.txt + wubi_phrase.txt）"
+echo "== 自检：APK 内必须包含基础库 assets（v0.5.23：动态拼词仅需 wubi_single.txt）=="
+if unzip -l CloudWubi.apk | grep -q "assets/wubi_single.txt"; then
+    echo "✅ 基础库已打包（wubi_single.txt，动态拼词引擎替代词组库）"
 else
-    echo "❌ APK 缺少词库 assets！"
+    echo "❌ APK 缺少基础库 assets！"
     unzip -l CloudWubi.apk | head -30
     exit 1
 fi
