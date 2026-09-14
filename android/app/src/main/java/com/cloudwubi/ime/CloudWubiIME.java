@@ -1703,27 +1703,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.4.9 翻页指示（跟随系统色）
         appendPager(sb, pages);
-        // v0.5.28 反馈⑥：复制的文本固定显示在备选栏末尾（不参与翻页、持续可见，点选上屏；长按候选条=删除）
-        String clipTxt = getClipboardText();
-        if (!clipTxt.isEmpty()) {
-            String disp = clipTxt.length() > 4 ? clipTxt.substring(0, 4) + "…" : clipTxt;
-            int cs0 = sb.length();
-            sb.append("  📋").append(disp);
-            int cs1 = sb.length();
-            final String clipFinal = clipTxt;
-            ClickableSpan clipCs = new ClickableSpan() {
-                @Override
-                public void onClick(View widget) {
-                    commitText(clipFinal);
-                }
-                @Override
-                public void updateDrawState(android.text.TextPaint ds) {
-                    ds.setColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
-                    ds.setUnderlineText(false);
-                }
-            };
-            sb.setSpan(clipCs, cs0, cs1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
         candidateView.setText(sb);
     }
 

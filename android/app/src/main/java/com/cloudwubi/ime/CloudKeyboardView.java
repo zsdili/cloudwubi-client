@@ -21,7 +21,7 @@ import android.view.MotionEvent;
  */
 public class CloudKeyboardView extends KeyboardView {
 
-    private static final int SWIPE_THRESHOLD_DP = 30;
+    private static final int SWIPE_THRESHOLD_DP = 18;   // v0.5.29 反馈①：减小阈值，上滑更灵敏
     private static final int LONG_PRESS_MS = 600;
 
     private int downY = 0;
@@ -179,6 +179,16 @@ public class CloudKeyboardView extends KeyboardView {
                     downKey = null;
                     return true;
                 }
+                // v0.5.29 反馈①：UP 兜底——快速上滑（MOVE 未及检测）在抬手时触发上滑符号并吞掉主键
+                if (downKey != null && (downY - y) > thresholdPx) {
+                    int sym = swipeSymbol(downKey);
+                    if (sym != 0) {
+                        swipeTriggered = false;
+                        downKey = null;
+                        getOnKeyboardActionListener().onKey(sym, new int[]{sym});
+                        return true;
+                    }
+                }
                 downKey = null;
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -274,7 +284,15 @@ public class CloudKeyboardView extends KeyboardView {
                     canvas.drawText(lab, cx, cy, textPaint);
                 }
             }
-            // v0.5.27 反馈⑤：去掉键帽上滑灰色标注（"！，"与"？。"各多一个灰色！？）——上滑功能保留，键面只显示主文字
+            // v0.5.29 反馈①：恢复上滑符号标注（去重版——主文字已含该符号则不重复绘制）
+            int sym = swipeSymbol(key);
+            if (sym != 0) {
+                String symS = String.valueOf((char) sym);
+                String main = (lab == null ? "" : lab);
+                if (main.indexOf(symS) < 0 && !isFuncKey(key)) {
+                    canvas.drawText(symS, cx, y + key.height * 0.28f, hintPaint);
+                }
+            }
         }
     }
 
