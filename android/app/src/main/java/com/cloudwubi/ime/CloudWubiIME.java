@@ -324,7 +324,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.20");
+        sb.append("云五笔 v0.5.21");
         sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
@@ -645,20 +645,34 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
         }
         // v0.5.17 反馈①（举一反三：InputType 完整感知）：密码框直通模式——
-        //   字母/数字/空格/回车全部直接上屏，不进编码缓冲/候选/联想（密码可见性 + 输入体验根本保障）
+        //   字母/数字/空格/回车/运算符直接上屏，不进编码缓冲/候选/联想（密码可见性 + 输入体验根本保障）
+        //   v0.5.21 修复：Shift/面板切换/退格/中英/标点等控制键不再被吞——只对已直通键 return，
+        //   其余继续走正常逻辑（否则密码框无法切换大小写、无法进数字/符号面板）
         if (isPassword) {
             if (primaryCode >= 'a' && primaryCode <= 'z') {
                 boolean upper = shiftState > 0;
                 commitText(String.valueOf(upper ? Character.toUpperCase((char) primaryCode)
                                                  : (char) primaryCode));
+                return;
             } else if (primaryCode >= '0' && primaryCode <= '9') {
                 commitText(String.valueOf((char) primaryCode));
+                return;
             } else if (primaryCode == KEY_SPACE || primaryCode == KEY_MIC) {
                 commitText(" ");
+                return;
             } else if (primaryCode == KB_ENTER) {
                 sendDefaultEditorAction(true);   // 执行输入框的"完成/搜索/前往"等动作
+                return;
+            } else if (primaryCode == KEY_CALC_DIV) {
+                commitText("÷"); return;
+            } else if (primaryCode == KEY_CALC_MUL) {
+                commitText("×"); return;
+            } else if (primaryCode == KEY_CALC_EQ) {
+                commitText("="); return;
+            } else if (primaryCode == 43 || primaryCode == 45 || primaryCode == 42) {
+                commitText(String.valueOf((char) primaryCode)); return;
             }
-            return;
+            // 其余键（Shift/123/符号/退格/中英/返回/标点）→ 不拦截，走正常逻辑
         }
         // 字母键
         if (primaryCode >= 'a' && primaryCode <= 'z') {

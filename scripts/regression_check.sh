@@ -46,6 +46,8 @@ chk_not "MRU 段无 isJustCommitted 过滤（会吃掉最近字）" "$IME" "!las
 # 6) 密码框直通——v0.5.5/v0.5.17
 chk "密码框检测" "$IME" "TYPE_TEXT_VARIATION_PASSWORD"
 chk "密码框直通块" "$IME" "if \(isPassword\) \{"
+chk "密码框 shift 放行（v0.5.21）" "$IME" "v0.5.21 修复"
+chk "密码框运算符直通" "$IME" "KEY_CALC_DIV"
 # 7) shift 大小写——v0.5.16
 chk "shift 大小写" "$IME" "Character\.toUpperCase"
 # 8) 词库：没办法（ilif）——v0.5.17
