@@ -273,10 +273,28 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             return false;
         });
         // v0.5.34 反馈⑧：记录触摸坐标（长按定位用）+ v0.5.35 反馈③：左右滑动翻页
+        // v0.5.39 反馈②⑤⑥：点候选条任何部位——若为 app 信息面板则关闭；若为剪贴板且点非列表项则关闭
         candidateView.setOnTouchListener((v, ev) -> {
             if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
                 lastTouchX = ev.getX();
                 lastTouchY = ev.getY();
+                if (infoPanelMode) {
+                    infoPanelMode = false;
+                    updateCandidateView();
+                } else if (clipMode) {
+                    try {
+                        int off = candidateView.getOffsetForPosition(lastTouchX, lastTouchY);
+                        ClipTagSpan[] tags = candidateView.getText() == null ? null
+                                : (ClipTagSpan[]) ((android.text.Spanned) candidateView.getText()).getSpans(off, off, ClipTagSpan.class);
+                        if (tags == null || tags.length == 0) {
+                            clipMode = false;
+                            updateCandidateView();
+                        }
+                    } catch (Exception ignored) {
+                        clipMode = false;
+                        updateCandidateView();
+                    }
+                }
             }
             candFlingDetector.onTouchEvent(ev);
             return false;   // 不消费：让 LinkMovementMethod 处理点击/长按
@@ -1683,42 +1701,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setText(sb);
     }
 
-    /** v0.4.9 候选翻页指示 ◀ N/M ▶（点击翻页；v0.5.3 反馈⑦：颜色跟随系统） */
+    /** v0.5.39 反馈①③：翻页按钮去掉——纯滑动翻页（左右/上下），指示改为"左右滑动查看"文本 */
     private void appendPager(SpannableStringBuilder sb, int pages) {
         if (pages <= 1) return;
         int pagerColor = dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT;
         int pStart = sb.length();
-        sb.append("  ◀ ").append(String.valueOf(candPage + 1)).append("/").append(String.valueOf(pages)).append(" ▶");
-        int prevStart = pStart + 2;
-        int prevEnd = prevStart + 1;
-        int nextStart = sb.length() - 2;
-        int nextEnd = nextStart + 1;
-        ClickableSpan prevCs = new ClickableSpan() {
-            @Override
-            public void onClick(View widget) {
-                if (candPage > 0) candPage--;
-                updateCandidateView();
-            }
-            @Override
-            public void updateDrawState(android.text.TextPaint ds) {
-                ds.setColor(pagerColor);
-                ds.setUnderlineText(false);
-            }
-        };
-        ClickableSpan nextCs = new ClickableSpan() {
-            @Override
-            public void onClick(View widget) {
-                candPage++;
-                updateCandidateView();
-            }
-            @Override
-            public void updateDrawState(android.text.TextPaint ds) {
-                ds.setColor(pagerColor);
-                ds.setUnderlineText(false);
-            }
-        };
-        sb.setSpan(prevCs, prevStart, prevEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sb.setSpan(nextCs, nextStart, nextEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.append("  ").append(String.valueOf(candPage + 1)).append("/").append(String.valueOf(pages)).append(" · 左右滑动查看");
         sb.setSpan(new ForegroundColorSpan(pagerColor), pStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
