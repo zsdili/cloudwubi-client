@@ -316,6 +316,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         int dp12 = Math.round(12 * getResources().getDisplayMetrics().density);
         int dp6 = Math.round(6 * getResources().getDisplayMetrics().density);
         keyboardView.setPadding(dp12, dp6, dp12, dp6);
+        // v0.5.44 反馈⑦：固定键盘高度（主键盘 4 行 × 56dp + padding 12dp ≈ 236dp）——切数字/符号面板不跳动
+        keyboardView.setMinimumHeight(Math.round(236 * getResources().getDisplayMetrics().density));
+        keyboardView.setMinimumWidth(Math.round(340 * getResources().getDisplayMetrics().density));
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -782,6 +785,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     @Override
     public void onKey(int primaryCode, int[] keyCodes) {
+        // v0.5.44 反馈①：任何按键（打字/符号/删除）→ 关闭剪贴板面板（点选或点其他部位即消失）
+        if (clipMode) {
+            clipMode = false;
+            updateCandidateView();
+        }
         resetIdleTimers();   // v0.5.4 反馈⑨ + v0.5.5 反馈⑧：任何按键重置双闲置计时
         // v0.5.13 反馈①：信息面板点任意键关闭
         if (infoPanelMode) {
@@ -1350,8 +1358,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             }
         }
-        // ① MRU：上次选中的字/词（编码前缀匹配）+ 最近上屏词组（编码匹配）
-        if (!lastSelected.isEmpty()) {
+        // ① MRU：上次选中的字/词（编码前缀匹配，v0.5.44 反馈⑤：1 码只精确匹配——打 r 不提示"白"rrrr）+ 最近上屏词组
+        if (!lastSelected.isEmpty() && code.length() >= 2) {
             String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
             if (lc != null && lc.startsWith(code) && !lc.equals(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
         }
@@ -1361,15 +1369,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.5.23 动态拼词（钟总核心思路）：基础库+86规则 → 4 码词组无限，
         //   保障词置顶 + 2+2/1+1+2/1+1+1+1 动态组合（词组在前、单字殿后）
-        if (code.length() == 4) {
-            List<String> dyn = WubiDb.buildDynamicWords(code);
-            if (dyn != null) {
-                for (String c : dyn) {
-                    if (isJustCommitted(c)) continue;
-                    if (!merged.contains(c)) merged.add(c);
-                }
-            }
-        }
+        // v0.5.44 反馈④：禁用前端动态拼词（"战行/点行"类 2+2 噪声组合）
+        //   云端真词库 64,935 条覆盖；动态拼词噪声大且非词典词——回归"先科学后先进"
         // ② 第二位：传统五笔（高频字/字根/一至四码简码词组，优先照顾老用户习惯）
         List<String> local = WubiDb.query(code);
         if (local != null) {
@@ -1488,6 +1489,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                         if (c.length() > 1) { localHasPhrase = true; break; }
                     }
                     if (!localHasPhrase) pos = 0;
+                    // v0.5.44 反馈③：MRU 置顶最优先——云端词组不挤掉最近上屏字/词
+                    if (!candidates.isEmpty() && candidates.get(0).equals(lastSelected)) pos = 1;
                 }
                 int inserted = 0;
                 for (String s : result) {
