@@ -1169,6 +1169,17 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             String pc = WubiDb.phraseCode(p);
             if (pc != null && pc.startsWith(code) && !pc.equals(code) && !merged.contains(p)) merged.add(p);
         }
+        // v0.5.23 动态拼词（钟总核心思路）：基础库+86规则 → 4 码词组无限，
+        //   保障词置顶 + 2+2/1+1+2/1+1+1+1 动态组合（词组在前、单字殿后）
+        if (code.length() == 4) {
+            List<String> dyn = WubiDb.buildDynamicWords(code);
+            if (dyn != null) {
+                for (String c : dyn) {
+                    if (isJustCommitted(c)) continue;
+                    if (!merged.contains(c)) merged.add(c);
+                }
+            }
+        }
         // ② 第二位：传统五笔（高频字/字根/一至四码简码词组，优先照顾老用户习惯）
         List<String> local = WubiDb.query(code);
         if (local != null) {

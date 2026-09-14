@@ -50,14 +50,23 @@ chk "密码框 shift 放行（v0.5.21）" "$IME" "v0.5.21 修复"
 chk "密码框运算符直通" "$IME" "KEY_CALC_DIV"
 # 7) shift 大小写——v0.5.16
 chk "shift 大小写" "$IME" "Character\.toUpperCase"
-# 8) 词库：没办法（ilif）——v0.5.17
-chk "词库 ilif 没办法" "android/app/src/main/assets/wubi_phrase.txt" "^ilif没办法"
-# 8b) 词库：三层排序（86→极点→日常）——v0.5.19/v0.5.20
-chk "词库 uefj 前进（86层）" "android/app/src/main/assets/wubi_phrase.txt" "^uefj前进"
-chk "词库 dgqe 三角（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^dgqe三角"
-chk "词库 dgqe 感触（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^dgqe感触"
-chk "词库 uabn 辛苦了（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^uabn辛苦了"
-chk "词库 wqvb 你好（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^wqvb你好"
+# 8) v0.5.23 动态拼词：基础库全码锚点（拼词源：工作=aaaa+wthf、你好=wqiy+vbg、前进=uejj+fjpk）
+chk "动态拼词引擎：buildDynamicWords" "android/app/src/main/java/com/cloudwubi/ime/WubiDb.java" "buildDynamicWords"
+chk "动态词组编码：dynamicPhraseCode" "android/app/src/main/java/com/cloudwubi/ime/WubiDb.java" "dynamicPhraseCode"
+chk "保障词数组 GUARANTEED" "android/app/src/main/java/com/cloudwubi/ime/WubiDb.java" "GUARANTEED = "
+chk "基础库 全码：工=aaaa（拼工作）" "android/app/src/main/assets/wubi_single.txt" "^aaaa工$"
+chk "基础库 全码：作=wthf（拼工作）" "android/app/src/main/assets/wubi_single.txt" "^wthf作$"
+chk "基础库 全码：你=wqiy（拼你好）" "android/app/src/main/assets/wubi_single.txt" "^wqiy你$"
+chk "基础库 全码：好=vbg（拼你好）" "android/app/src/main/assets/wubi_single.txt" "^vb好$"
+chk "基础库 全码：前=uejj（拼前进）" "android/app/src/main/assets/wubi_single.txt" "^uejj前$"
+chk "基础库 全码：进=fjpk（拼前进）" "android/app/src/main/assets/wubi_single.txt" "^fjpk进$"
+chk "基础库 全码：科=tufh（拼科学）" "android/app/src/main/assets/wubi_single.txt" "^tufh科$"
+chk "基础库 全码：学=ipbf（拼科学）" "android/app/src/main/assets/wubi_single.txt" "^ipbf学$"
+chk "基础库 全码：钟=qkhh" "android/app/src/main/assets/wubi_single.txt" "^qkhh钟$"
+chk "基础库 全码：的=rqyy（拼好的）" "android/app/src/main/assets/wubi_single.txt" "^rqyy的$"
+chk "基础库 全码：理=gjf（拼大理）" "android/app/src/main/assets/wubi_single.txt" "^gjfg理$"
+chk "基础库 全码：我=trnt（拼我们）" "android/app/src/main/assets/wubi_single.txt" "^trnt我$"
+chk "基础库 简码：你=wq（二级简码）" "android/app/src/main/assets/wubi_single.txt" "^wq你$"
 # 9) 一级简码高频字（的在前）——v0.5.7 反馈⑧/v0.5.17（词库分行格式：a工…r的…y主）
 chk "一级简码高频：的" "android/app/src/main/assets/wubi_single.txt" "^r的$"
 # 10) 体积门禁

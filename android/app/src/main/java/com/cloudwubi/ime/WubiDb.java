@@ -27,6 +27,19 @@ public final class WubiDb {
     private static Map<String, String> singleCodeIndex;
     /** v0.5.13 反馈②：高频搭配+积极成语联想表键（associate.txt 纯文本，前缀匹配 + 含字启发双用） */
     private static final String ASSOC_KEY = "zzzz";
+    // ==================== v0.5.23 动态拼词引擎（钟总核心思路） ====================
+    // 基础库（字根/一级/二级/三级简码单字全码）+ 86 版词组编码规则 → 动态生成词组
+    // 不用大词库：体积小、速度快、词组无限（排列组合即创新）
+    // 86 规则：2字词=前字前2码+后字前2码；3字词=前2字各1码+末字前2码；4字词=前3字各1码+末字1码
+    /** 前缀索引：编码前缀(1-3码) -> 字列表（简码精确 + 全码前缀匹配，遍历序保证精确在前） */
+    private static Map<String, List<String>> prefixIndex;
+    /** 单字全码索引：字 -> 全码（拼词取码用；构建时 4 码/最长优先） */
+    private static Map<String, String> fullCodeIndex;
+    /** 保障词（特例置顶）：动态规则易错或用户必查的常用词，按编码精确置顶 */
+    private static final String[] GUARANTEED = {
+        "dgqe三角", "dgqe感触", "ilif没办法", "imlf没办法", "uabn辛苦了", "ytyt谢谢",
+        "trwu我们", "vbrq好的", "ddgj大理", "uefj前进", "wqvb你好", "aawt工作"
+    };
 
     private WubiDb() { }
 
@@ -49,10 +62,38 @@ public final class WubiDb {
             }
         }
         // v0.5.4 反馈②：单字反向索引（保留首条）
+        // v0.5.23 改造：单字全码索引（4码/最长优先——拼词取前2码与 MRU 编码匹配需全码）
         if (singleIndex != null) {
             for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+                String code = e.getKey();
                 for (String w : e.getValue()) {
-                    if (w.length() == 1 && !singleCodeIndex.containsKey(w)) singleCodeIndex.put(w, e.getKey());
+                    if (w.length() == 1) {
+                        String old = singleCodeIndex.get(w);
+                        if (old == null || code.length() >= old.length()) singleCodeIndex.put(w, code);
+                    }
+                }
+            }
+        }
+        // v0.5.23 动态拼词：前缀索引 + 全码索引（基础库=全码+简码行）
+        if (singleIndex != null && prefixIndex == null) {
+            prefixIndex = new HashMap<>();
+            fullCodeIndex = new HashMap<>();
+            for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+                String code = e.getKey();
+                int clen = code.length();
+                // 前缀桶（1-3码；遍历序=编码序，精确码先入桶自然靠前）
+                for (int p = 1; p <= clen && p <= 3; p++) {
+                    String pre = code.substring(0, p);
+                    List<String> list = prefixIndex.get(pre);
+                    if (list == null) { list = new ArrayList<>(); prefixIndex.put(pre, list); }
+                    for (String w : e.getValue()) {
+                        if (!list.contains(w)) list.add(w);
+                    }
+                }
+                // 全码索引（最长优先）
+                for (String w : e.getValue()) {
+                    String old = fullCodeIndex.get(w);
+                    if (old == null || clen >= old.length()) fullCodeIndex.put(w, code);
                 }
             }
         }
@@ -208,6 +249,116 @@ public final class WubiDb {
             }
             list.set(j + 1, k);
         }
+    }
+
+    /**
+     * v0.5.23 动态拼词（钟总核心思路）：基础库 + 86 规则 → 词组无限
+     * 输入 4 码 → 2+2 二字词 / 1+1+2 三字词 / 1+1+1+1 四字词 拆码反查组合
+     * 保障词置顶；候选按字频（COMMON_FREQ）稳定排序，最多 15 条
+     */
+    public static List<String> buildDynamicWords(String code) {
+        if (code == null || code.length() != 4) return null;
+        ensureIndex();
+        List<String> out = new ArrayList<>();
+        // 保障词精确置顶
+        for (String g : GUARANTEED) {
+            if (g.length() == 6 && g.startsWith(code)) {
+                String w = g.substring(4);
+                if (!out.contains(w)) out.add(w);
+            }
+        }
+        // 2+2 二字词
+        List<String> a2 = prefixIndex == null ? null : prefixIndex.get(code.substring(0, 2));
+        List<String> b2 = prefixIndex == null ? null : prefixIndex.get(code.substring(2, 4));
+        if (a2 != null && b2 != null) {
+            int la = Math.min(a2.size(), 4), lb = Math.min(b2.size(), 4);
+            for (int i = 0; i < la; i++) {
+                for (int j = 0; j < lb; j++) {
+                    String w = a2.get(i) + b2.get(j);
+                    if (!out.contains(w)) out.add(w);
+                }
+            }
+        }
+        // 1+1+2 三字词
+        List<String> c1 = prefixIndex == null ? null : prefixIndex.get(code.substring(0, 1));
+        List<String> c2 = prefixIndex == null ? null : prefixIndex.get(code.substring(1, 2));
+        List<String> c3 = prefixIndex == null ? null : prefixIndex.get(code.substring(2, 4));
+        if (c1 != null && c2 != null && c3 != null) {
+            int l1 = Math.min(c1.size(), 3), l2 = Math.min(c2.size(), 3), l3 = Math.min(c3.size(), 3);
+            for (int i = 0; i < l1; i++) {
+                for (int j = 0; j < l2; j++) {
+                    for (int k = 0; k < l3; k++) {
+                        String w = c1.get(i) + c2.get(j) + c3.get(k);
+                        if (!out.contains(w)) out.add(w);
+                    }
+                }
+            }
+        }
+        // 1+1+1+1 四字词（限流 2×2×2×2=16，排序后截断）
+        List<String> d1 = prefixIndex == null ? null : prefixIndex.get(code.substring(0, 1));
+        List<String> d2 = prefixIndex == null ? null : prefixIndex.get(code.substring(1, 2));
+        List<String> d3 = prefixIndex == null ? null : prefixIndex.get(code.substring(2, 3));
+        List<String> d4 = prefixIndex == null ? null : prefixIndex.get(code.substring(3, 4));
+        if (d1 != null && d2 != null && d3 != null && d4 != null) {
+            int l1 = Math.min(d1.size(), 2), l2 = Math.min(d2.size(), 2), l3 = Math.min(d3.size(), 2), l4 = Math.min(d4.size(), 2);
+            for (int i = 0; i < l1; i++) {
+                for (int j = 0; j < l2; j++) {
+                    for (int k = 0; k < l3; k++) {
+                        for (int m = 0; m < l4; m++) {
+                            String w = d1.get(i) + d2.get(j) + d3.get(k) + d4.get(m);
+                            if (!out.contains(w)) out.add(w);
+                        }
+                    }
+                }
+            }
+        }
+        // 字频稳定排序（保障词已在最前；同码重排用 COMMON_FREQ）
+        if (out.size() > GUARANTEED.length) {
+            List<String> head = new ArrayList<>(out.subList(0, Math.min(GUARANTEED.length, out.size())));
+            List<String> tail = new ArrayList<>(out.subList(Math.min(GUARANTEED.length, out.size()), out.size()));
+            sortByFreq(tail);
+            out = new ArrayList<>(head);
+            out.addAll(tail);
+        }
+        if (out.size() > 15) out = new ArrayList<>(out.subList(0, 15));
+        return out;
+    }
+
+    /**
+     * v0.5.23 动态词组编码（MRU 置顶用）：按 86 规则从单字全码反算词编码
+     * 2字=前2+前2；3字=1+1+2；4字=1+1+1+1；仅支持 2-4 字
+     */
+    public static String dynamicPhraseCode(String word) {
+        if (word == null) return null;
+        int n = word.length();
+        if (n < 2 || n > 4) return null;
+        ensureIndex();
+        StringBuilder sb = new StringBuilder();
+        try {
+            if (n == 2) {
+                for (int i = 0; i < 2; i++) {
+                    String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(i)));
+                    if (fc == null) return null;
+                    sb.append(fc, 0, Math.min(2, fc.length()));
+                }
+            } else if (n == 3) {
+                for (int i = 0; i < 2; i++) {
+                    String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(i)));
+                    if (fc == null) return null;
+                    sb.append(fc.charAt(0));
+                }
+                String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(2)));
+                if (fc == null) return null;
+                sb.append(fc, 0, Math.min(2, fc.length()));
+            } else {
+                for (int i = 0; i < 4; i++) {
+                    String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(i)));
+                    if (fc == null) return null;
+                    sb.append(fc.charAt(0));
+                }
+            }
+        } catch (Exception ex) { return null; }
+        return sb.length() == 4 ? sb.toString() : null;
     }
 
     /** v0.4.8 反馈①②③：查候选（1 码简码单字 / 2 码先单后词 / 3 码单字+预测 / 4 码词组优先） */
