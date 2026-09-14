@@ -39,7 +39,7 @@ def main():
         for w in words:
             if w in jw:
                 layer86.append(c + w); in_layers.add(c + w)
-    # 层2：jidian Top450（去重，按权重降序）
+    # 层2：jidian Top200（去重，按权重降序；86∩高频已覆盖常用，200 补 86 之外高频）
     jd_order = []
     for c, l in jd_w.items():
         for w, wt in l:
@@ -47,7 +47,7 @@ def main():
                 jd_order.append((c, w, wt))
     jd_order.sort(key=lambda x: -x[2])
     layer_jd = []
-    for c, w, wt in jd_order[:450]:
+    for c, w, wt in jd_order[:200]:
         cw = c + w
         in_layers.add(cw); layer_jd.append(cw)
     # 层3：日常清单 + 保障词
