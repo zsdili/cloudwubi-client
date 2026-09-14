@@ -324,7 +324,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.19");
+        sb.append("云五笔 v0.5.20");
         sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
@@ -411,14 +411,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (hideBtn != null) hideBtn.setVisibility(android.view.View.INVISIBLE);
         resetIdleTimers();
         // v0.5.5 反馈⑦：进入输入状态时，识别光标前一字进行联想（不自动上屏）
+        // v0.5.20（用户指令）：联想已去除——不再做"进入输入状态时光标前字联想"
         enterAssociateChar = "";
-        if (chineseMode && !isPassword) {
-            String prev = getCursorPrevChar();
-            if (!prev.isEmpty()) {
-                enterAssociateChar = prev;
-                showAssociateForChar(prev);
-            }
-        }
         super.onStartInputView(info, restarting);
     }
 
@@ -1400,12 +1394,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (code.isEmpty()) {
             // v0.5.8 反馈①：编码清空 → 状态栏同步（空闲时无编码，翻译如存在则上移状态栏）
             if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : "EN: " + lastEnHint);
-            // v0.4.8/0.4.9 反馈⑦①：上屏后显示连续联想词组（英文翻译不在此显示，仅状态栏）
-            if (!lastCommittedText.isEmpty() && (!candidates.isEmpty() || !lastEnHint.isEmpty())) {
-                renderAssociateHint();
-                return;
-            }
-            // v0.5.13 反馈①：空闲态备选栏不再显示"云五笔"占位文字（用户质疑违背科学合理）→ 清空
+            // v0.5.20：联想已去除——上屏后不显示"最近上屏 ▸ 联想词"（renderAssociateHint 不再调用）
             if (candidates.isEmpty()) {
                 candidateView.setText("");
             }
@@ -1763,27 +1752,18 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (GATEWAY_READY) reportSelection(text);
         composingCode.setLength(0);
         candidates.clear();
-        // v0.4.9 反馈①：连续联想——联想态选词拼接成链（陈+胜=陈胜），普通输入重置
-        if (associateActive) {
-            lastCommittedText += text;
-        } else {
-            lastCommittedText = text;
-        }
-        if (text.length() >= 2) rememberPhrase(text);   // MRU（最近 3 词组）
+        // v0.5.20（用户指令）：联想功能暂时全部去除——不拼接联想链、不触发字后/连续/云端联想
+        lastCommittedText = text;
+        if (text.length() >= 2) rememberPhrase(text);   // MRU（最近 3 词组）保留（记忆，非联想）
         lastEnHint = "";
-        // v0.5.5 反馈①：密码框禁联想/翻译（隐私 + 避免干扰输入）
+        // v0.5.5 反馈①：密码框禁翻译（隐私）
         if (isPassword) {
-            associateActive = false;
             updateCandidateView();
             return;
         }
         String lastChar = lastCommittedText.isEmpty() ? "" : lastCommittedText.substring(lastCommittedText.length() - 1);
         if (!lastChar.isEmpty()) {
-            associateActive = true;
-            triggerAssociate();
-            queryTranslation(lastChar);
-        } else {
-            associateActive = false;
+            queryTranslation(lastChar);   // 仅保留状态栏英文翻译（v0.5.13 要求，非联想）
         }
         updateCandidateView();
     }

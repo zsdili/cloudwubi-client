@@ -50,10 +50,12 @@ chk "密码框直通块" "$IME" "if \(isPassword\) \{"
 chk "shift 大小写" "$IME" "Character\.toUpperCase"
 # 8) 词库：没办法（ilif）——v0.5.17
 chk "词库 ilif 没办法" "android/app/src/main/assets/wubi_phrase.txt" "^ilif没办法"
-# 8b) 词库：极点五笔86（jidian）方案——v0.5.19
-chk "词库 uefj 前进（jidian）" "android/app/src/main/assets/wubi_phrase.txt" "^uefj前进"
-chk "词库 dgqe 三角（jidian）" "android/app/src/main/assets/wubi_phrase.txt" "^dgqe三角"
-chk "词库 dgqe 感触（jidian）" "android/app/src/main/assets/wubi_phrase.txt" "^dgqe感触"
+# 8b) 词库：三层排序（86→极点→日常）——v0.5.19/v0.5.20
+chk "词库 uefj 前进（86层）" "android/app/src/main/assets/wubi_phrase.txt" "^uefj前进"
+chk "词库 dgqe 三角（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^dgqe三角"
+chk "词库 dgqe 感触（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^dgqe感触"
+chk "词库 uabn 辛苦了（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^uabn辛苦了"
+chk "词库 wqvb 你好（日常层）" "android/app/src/main/assets/wubi_phrase.txt" "^wqvb你好"
 # 9) 一级简码高频字（的在前）——v0.5.7 反馈⑧/v0.5.17（词库分行格式：a工…r的…y主）
 chk "一级简码高频：的" "android/app/src/main/assets/wubi_single.txt" "^r的$"
 # 10) 体积门禁

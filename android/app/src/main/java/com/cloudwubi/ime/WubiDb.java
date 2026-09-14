@@ -39,8 +39,7 @@ public final class WubiDb {
         singleCodeIndex = new HashMap<>();
         loadAsset(ctx, "wubi_single.txt", singleIndex);
         loadAsset(ctx, "wubi_phrase.txt", phraseIndex);
-        // v0.5.13 反馈②：高频搭配联想词表（纯文本，补字头缺口——宇/进/好/民/吴等，queryByPrefix 即时命中）
-        loadAssetText(ctx, "associate.txt", phraseIndex);
+        // v0.5.20（用户指令）：联想词表不再加载（联想功能暂时去除，省体积）
         // 词组反向索引（同一词可能多码，保留首条）
         if (phraseIndex != null) {
             for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
