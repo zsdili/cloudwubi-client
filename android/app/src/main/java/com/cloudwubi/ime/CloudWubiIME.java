@@ -1470,6 +1470,21 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 cloudCatCount = obj.optInt("cat_count", 0);
                 cloudCatWords = obj.optInt("cat_words", 0);
             }
+            // v0.5.38 反馈⑦：云端高频字推送（hot 字段=本次编码高频单字，插到词组后、补全前）
+            //   ——自此高频字/词更新全部走云端 hot 通道，前端无需再发版
+            JSONArray hot = obj.optJSONArray("hot");
+            if (hot != null) {
+                // v0.5.38：hot 高频单字插到 phrases 之后、gen/candidates 之前
+                int hpos = phrases == null ? 0 : phrases.length();
+                List<String> hotList = new ArrayList<>();
+                for (int i = 0; i < hot.length(); i++) {
+                    String h = hot.getString(i);
+                    if (h != null && h.length() == 1) hotList.add(h);
+                }
+                for (int i = hotList.size() - 1; i >= 0; i--) {
+                    if (!list.contains(hotList.get(i))) list.add(hpos, hotList.get(i));
+                }
+            }
             JSONArray gen = obj.optJSONArray("gen");
             if (gen != null) {
                 for (int i = 0; i < gen.length(); i++) {
