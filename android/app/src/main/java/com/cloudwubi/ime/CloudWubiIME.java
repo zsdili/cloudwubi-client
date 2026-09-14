@@ -839,7 +839,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // 数字（v0.5.35 反馈①：纯数字直接上屏——只有表达式已含运算符时才进缓冲，根治"打5出1.5=5 2.5"）
         if (primaryCode >= '0' && primaryCode <= '9') {
             // v0.5.41 反馈⑤：数字键即时触感（消除"粘粘"卡顿感——按键即有反馈）
-            performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
+            keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
             if (panelMode == 1 && hasCalcOp(calcBuffer)) {
                 calcBuffer += (char) primaryCode;
                 updateCandidateView();
