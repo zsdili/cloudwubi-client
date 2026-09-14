@@ -438,9 +438,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.40 反馈①：app 信息只显示 版本号 + github(可点击跳转) + 微信，不得显示其他内容
         sb.append("v").append(currentVersion());
         sb.append("   github");
+        int gStart = sb.length() - 6;   // github 起始（"   github" 末尾 6 位）
+        int gEnd = sb.length();
         sb.append("   微信：175571");
-        int gStart = sb.indexOf("github");
-        int gEnd = gStart + 6;
         ClickableSpan gh = new ClickableSpan() {
             @Override
             public void onClick(View widget) {
