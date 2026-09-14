@@ -420,6 +420,19 @@ public final class WubiDb {
             if (phr != null) result.addAll(phr);
         } else if (len == 3) {
             if (singles != null) result.addAll(singles);
+            // v0.5.36 反馈⑥：3 码前缀匹配全码（suf→栏 sufg、udp→送 udpi）——高频单字可直接打出
+            if (singleIndex != null) {
+                for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+                    String k = e.getKey();
+                    if (k.length() > 3 && k.startsWith(code)) {
+                        for (String w : e.getValue()) {
+                            if (!result.contains(w)) result.add(w);
+                        }
+                    }
+                }
+                if (result.size() > 1) sortByFreq(result);
+                if (result.size() > 10) result = new ArrayList<>(result.subList(0, 10));
+            }
         } else if (len == 4) {
             if (phr != null) result.addAll(phr);
             if (singles != null) result.addAll(singles);

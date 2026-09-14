@@ -115,6 +115,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     // ===== v0.4.9 候选翻页 =====
     private static final int CAND_PAGE_SIZE = 5;
     private int candPage = 0;
+    private int pinyinInsertPos = 0;   // v0.5.36 反馈⑨：拼音候选插入位置（本地五笔候选之后）
 
     // ===== v0.4.9 取消↺ / 重做↻（编辑快照栈） =====
     private final java.util.ArrayDeque<String> undoStack = new java.util.ArrayDeque<>();
@@ -185,6 +186,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private ClipboardManager clipManager;
     private SharedPreferences prefs;
     private List<String> clipHistory = new ArrayList<>();
+    // v0.5.36 反馈④：剪贴板长按删除 → 点"取消↺"恢复还原（防误操作）
+    private String clipUndoItem = null;
+    private int clipUndoIndex = -1;
     /** v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录——上屏词→次数，联想排序权重） */
     private static final String PREFS_FREQ = "cw_freq";
     private final Map<String, Integer> freqMap = new HashMap<>();
@@ -231,9 +235,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candFlingDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onFling(android.view.MotionEvent e1, android.view.MotionEvent e2, float velocityX, float velocityY) {
-                if (Math.abs(velocityX) > Math.abs(velocityY) && Math.abs(velocityX) > 200) {
-                    if (velocityX < 0) { nextCandidatePage(); return true; }
-                    prevCandidatePage(); return true;
+                // v0.5.36 反馈①：所有翻页都用滑动——左右/上下滑动均翻页
+                float vx = Math.abs(velocityX), vy = Math.abs(velocityY);
+                if (Math.max(vx, vy) > 200) {
+                    if (vx > vy) {
+                        if (velocityX < 0) { nextCandidatePage(); return true; }
+                        prevCandidatePage(); return true;
+                    } else {
+                        if (velocityY < 0) { nextCandidatePage(); return true; }
+                        prevCandidatePage(); return true;
+                    }
                 }
                 return false;
             }
@@ -323,9 +334,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
         toolRow.addView(makeToolButton("全选", v -> selectAll()));
         // v0.5.14 反馈③：工具栏加"删除"（删光标前字符/选区，与退格同功能）
-        toolRow.addView(makeToolButton("删除", v -> handleBackspace()));
-        toolRow.addView(makeToolButton("取消↺", v -> doUndo()));
-        toolRow.addView(makeToolButton("重做↻", v -> doRedo()));
+        // v0.5.36 反馈③：取消/删除只用图标节省空间（✕=删除、↺=取消、↻=重做）
+        toolRow.addView(makeToolButton("✕", v -> handleBackspace()));
+        toolRow.addView(makeToolButton("↺", v -> doUndo()));
+        toolRow.addView(makeToolButton("↻", v -> doRedo()));
         toolRow.addView(makeToolButton("亖", v -> {
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
@@ -512,6 +524,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 if (merged.size() >= 12) break;
             }
         }
+        pinyinInsertPos = merged.size();   // v0.5.36 反馈⑨：拼音候选插到本地五笔候选之后
         candidates.addAll(merged);
         candPage = 0;
         updateCandidateView();
@@ -550,6 +563,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.34 反馈⑧：删除剪贴板历史某一项（长按/点✕） */
     private void removeClipItem(int index) {
         if (index < 0 || index >= clipHistory.size()) return;
+        clipUndoItem = clipHistory.get(index);   // v0.5.36 反馈④：记录待撤销项
+        clipUndoIndex = index;
         clipHistory.remove(index);
         saveClipHistory();
     }
@@ -1152,6 +1167,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     private void doUndo() {
+        // v0.5.36 反馈④：剪贴板长按删除 → 点取消↺恢复还原
+        if (clipUndoItem != null) {
+            clipHistory.add(Math.min(clipUndoIndex, clipHistory.size()), clipUndoItem);
+            saveClipHistory();
+            clipUndoItem = null;
+            clipUndoIndex = -1;
+            if (clipMode) updateCandidateView();
+            return;
+        }
         InputConnection ic = getCurrentInputConnection();
         if (ic == null || undoStack.isEmpty()) return;
         redoStack.push(snapshotDoc());
@@ -1271,7 +1295,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             String pc = WubiDb.phraseCode(p);
             if (pc != null && pc.equals(code) && !merged.contains(p)) merged.add(p);
         }
-        if (code.length() == 1 || code.length() == 4) {
+        if (code.length() == 1 || code.length() == 3 || code.length() == 4) {
             List<String> pri = WubiDb.query(code);
             if (pri != null) {
                 for (String c : pri) {
@@ -1319,6 +1343,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             }
         }
+        pinyinInsertPos = merged.size();   // v0.5.36 反馈⑨：拼音候选插到本地五笔候选之后
         candidates.addAll(merged);
         candPage = 0;
         if (candidates.isEmpty()) candidates.add(code);
@@ -1748,6 +1773,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 @Override
                 public void onClick(View widget) {
                     commitText(item);   // v0.4.9 自动记录 undo
+                    clipMode = false;   // v0.5.36 反馈②：点选剪贴板项后自动关闭（不再常驻）
+                    updateCandidateView();
                     clipMode = false;
                     updateCandidateView();
                 }
@@ -2323,7 +2350,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 for (int i = cloud.size() - 1; i >= 0; i--) {
                     String p = cloud.get(i);
                     if (candidates.contains(p)) continue;
-                    if (insertFront) candidates.add(0, p); else candidates.add(p);
+                    // v0.5.36 反馈⑨：≤4 码拼音候选插到本地五笔候选之后（不再沉底）；>4 码拼音模式插最前
+                    if (insertFront) candidates.add(0, p);
+                    else candidates.add(Math.min(pinyinInsertPos, candidates.size()), p);
                     changed = true;
                 }
                 if (changed) updateCandidateView();
