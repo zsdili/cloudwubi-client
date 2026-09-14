@@ -1299,7 +1299,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             List<String> pri = WubiDb.query(code);
             if (pri != null) {
                 for (String c : pri) {
-                    if (code.length() == 4 && c.length() < 2) continue;   // 4 码只置顶词组
+                    // v0.5.37 反馈②：4 码单字不再过滤（WubiDb.query(4) 顺序=词组先单字后，词组仍优先）
                     if (!isJustCommitted(c) && !merged.contains(c)) merged.add(c);
                 }
             }
@@ -2350,9 +2350,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 for (int i = cloud.size() - 1; i >= 0; i--) {
                     String p = cloud.get(i);
                     if (candidates.contains(p)) continue;
-                    // v0.5.36 反馈⑨：≤4 码拼音候选插到本地五笔候选之后（不再沉底）；>4 码拼音模式插最前
-                    if (insertFront) candidates.add(0, p);
-                    else candidates.add(Math.min(pinyinInsertPos, candidates.size()), p);
+                    // v0.5.37 反馈①：拼音候选恢复尾部（不抢位置）；仅 >4 码拼音模式插最前
+                    if (insertFront) candidates.add(0, p); else candidates.add(p);
                     changed = true;
                 }
                 if (changed) updateCandidateView();
