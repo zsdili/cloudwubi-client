@@ -1,3 +1,8 @@
+## v0.5.18（2026-09-14）上滑标点回归修复 + 机器级防回归机制
+- **① ！，/？。上滑失效回归修复**：根因=CloudKeyboardView 重写 onTouchEvent 时 swipeSymbol() 漏了双标点键（-106/-108 返回 0 被吞，IME.swipeUp() 成死代码）→ swipeSymbol 补 case（→0xFF01/0xFF1F）+ onKey 补上屏 case
+- **② 本地词库补 ilif没办法**（+8B，离线可打；云端 imlf/ilif 已补待部署）
+- **③ 机器级防回归机制（自我记忆固化）**：新增 scripts/regression_check.sh——历史 10 类反复出错点全部留锚点（上滑标点/字母上滑/重复上屏根治/词组优先/构词分组/MRU置顶/密码框/shift大小写/ilif词库/一级简码高频/体积门禁），接入 CI 构建后强制执行——锚点丢失=CI 红牌=禁止发布
+- **体积**：APK=99770B 达标（versionCode 68）
 ## v0.5.17（2026-09-14）六项系统性修复（举一反三，根治而非打补丁）
 - **① 密码框输不进去**：根因=InputType 感知后按键仍走编码缓冲 → onKey 新增密码框直通块（字母按 shiftState 大小写/数字/空格/回车直接上屏，不进候选联想）
 - **②③ ilif「没办法」打不出**：根因=本地/云端词库均缺该词 + 云端 4 码未命中触发动态构词返回"渐法/水国法"无意义词 → 云端补词（imlf+ilif 没办法）+ 词组分组（phrases=真词组 lexicon/prediction，gen=构词排后）

@@ -164,3 +164,11 @@
 | ④ | 最近打过的字没调前 | MRU 置顶被 isJustCommitted 过滤（上屏"钟"→重打 qkhh 时"钟"被滤掉） | MRU 精确段+前缀段去掉 isJustCommitted；本地②段保留（v0.5.4 反馈⑥防重复） | ✅ 代码+CI 完成，待真机 |
 | ⑤ | 离开输入触点关闭输入界面 | onFinishInput 未主动收起（窗口生命周期感知缺失） | onFinishInput → hideWindow | ✅ 代码+CI 完成，待真机 |
 | ⑥ | 举一反三深挖 | 系统性核查发现：云端 load_phrase_dict 同码多行 `=` 覆盖丢词（imlf 油墨丢失） | setdefault 合并修复 + InputType/窗口生命周期/词组分类三线核查 | ✅ 修复+验证完成，待部署生效 |
+
+## v0.5.18 反馈核查（2026-09-14）
+
+| # | 反馈 | 根因 | 修复 | 状态 |
+|---|------|------|------|------|
+| ① | 反馈的是 ilif 不是 imlf | 两者都补：ilif=用户反馈码（已补本地+云端）；imlf=标准86码（词库原有 imlf=油墨，合并后同码多词都保留）——用户码优先落实，标准码为增强 | 本地+云端均含 ilif没办法 | ✅ |
+| ② | ！，/？。上滑失效 | CloudKeyboardView.swipeSymbol 漏双标点 case（返回0被吞）；IME.swipeUp() 因 onTouchEvent 重写成死代码 | swipeSymbol 补 -106/-108→0xFF01/0xFF1F + onKey 补上屏 case | ✅ 已发布 v0.5.18 |
+| ③ | 自我记忆/自我纠错机制 | 靠人脑记忆不可靠 | scripts/regression_check.sh 接入 CI：10 类历史出错点机器锚点核查，丢失即红牌 | ✅ 已上线 |
