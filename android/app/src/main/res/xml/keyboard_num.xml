@@ -38,6 +38,6 @@
         <Key android:codes="47" android:keyLabel="/" />
         <Key android:codes="48" android:keyLabel="0" />
         <Key android:codes="-104" android:keyLabel="符号" />
-        <Key android:codes="-211" android:keyLabel="搜索" />
+        <Key android:codes="-201" android:keyLabel="=" />
     </Row>
 </Keyboard>

@@ -38,7 +38,7 @@ public final class WubiDb {
     /** 保障词（特例置顶）：动态规则易错或用户必查的常用词，按编码精确置顶 */
         private static final String[] GUARANTEED = {
         "dgqe三角", "dgqe感触", "ilif没办法", "imlf没办法", "uabn辛苦了", "ytyt谢谢", "trwu我们", "vbrq好的",
-        "ddgj大理", "uefj前进", "wqvb你好", "aawt工作", "thtc怎么", "wftc什么", "ywtc为什么", "ypsu这样",
+        "ddgj大理", "uefj前进", "wqvb你好", "aawt工作", "qiuj乐意", "thtc怎么", "wftc什么", "ywtc为什么", "ypsu这样",
         "vfsu那样", "wygd今天", "jegd明天", "jtgd昨天", "gmdh现在", "cnhh马上", "ggfh一起", "ddpe大家",
         "jfwh时候", "fbyy地方", "eedc朋友", "peww家人", "bybb孩子", "tgit生活", "ipnu学习", "jney电脑",
         "rtsm手机", "tmwy微信", "gdrn天气", "uyad辛苦", "imde没有", "gide还有", "ldyl因为", "rnny所以",
@@ -252,6 +252,10 @@ public final class WubiDb {
             int r = COMMON_FREQ.indexOf(w.charAt(i));
             total += (r < 0) ? 0 : (n - r);
         }
+        // v0.5.27 反馈①：2 字词加权×2（日常用语以 2 字为主）——"乐意"不再被三字噪声（气水意）挤后；
+        //   4 字词×1.5（成语/专名"中国人民"保留优势）；3 字×1
+        if (w.length() == 2) total *= 2;
+        else if (w.length() == 4) total = total * 3 / 2;
         return total;
     }
 

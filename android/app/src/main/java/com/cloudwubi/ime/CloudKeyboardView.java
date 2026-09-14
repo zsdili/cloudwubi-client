@@ -268,12 +268,7 @@ public class CloudKeyboardView extends KeyboardView {
                     canvas.drawText(lab, cx, cy, textPaint);
                 }
             }
-            // 3) 上滑符号标注（v0.5.4 反馈①：水平居中 + 键面上部小字，与主文字同一中轴）
-            int sym = swipeSymbol(key);
-            if (sym != 0) {
-                String s = String.valueOf((char) sym);
-                canvas.drawText(s, cx, y + key.height * 0.28f, hintPaint);
-            }
+            // v0.5.27 反馈⑤：去掉键帽上滑灰色标注（"！，"与"？。"各多一个灰色！？）——上滑功能保留，键面只显示主文字
         }
     }
 

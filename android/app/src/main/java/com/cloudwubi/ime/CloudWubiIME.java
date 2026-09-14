@@ -562,7 +562,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         for (Keyboard.Key k : keyboardMain.getKeys()) {
             int c = k.codes[0];
             if (c == KEY_LANG) {
-                k.label = chineseMode ? "中" : "EN";
+                k.label = chineseMode ? "中" : "en";   // v0.5.27 反馈④：英文切换显示小写 en
             } else if (c == KEY_SYM_IN) {
                 k.label = chineseMode ? "符" : "SYM";
             } else if (c == KEY_PUNCT_BANG) {
@@ -703,6 +703,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         switch (primaryCode) {
             case KEY_123:
+                // v0.5.27 反馈③：数字面板↔主键盘切换时，未上屏的表达式先带式上屏（防计算结果丢失/上不了屏）
+                if (panelMode == 1 && !calcBuffer.isEmpty()) commitCalc(true);
                 panelMode = 1;
                 calcBuffer = "";
                 keyboardView.setKeyboard(keyboardNum);
@@ -1145,6 +1147,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             if (candidates.isEmpty()) candidates.add(code);
             updateCandidateView();
             return;
+        }
+        // v0.5.27 反馈②：复制的文本显示在备选栏末尾供点选（只显示剪贴板文本，不显示上屏历史）
+        String clipTxt = getClipboardText();
+        if (!clipTxt.isEmpty() && !merged.contains(clipTxt)) {
+            merged.add(clipTxt.length() > 10 ? clipTxt.substring(0, 10) + "…" : clipTxt);
         }
         List<String> merged = new ArrayList<>();
         // v0.5.3 反馈①：只滤"最近一次上屏的同一字/词"（避免重复显示）；MRU 词组保留置顶
@@ -1699,6 +1706,21 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             calcAuto = false;   // 手动完整输入 → 不去重（3*2 不以结果 3 开头省略）
         }
         updateCandidateView();
+    }
+
+    /** v0.5.27 反馈②：读取系统剪贴板文本（复制的文本→备选栏点选上屏） */
+    private String getClipboardText() {
+        if (clipManager == null || !clipManager.hasPrimaryClip()) return "";
+        try {
+            android.content.ClipData cd = clipManager.getPrimaryClip();
+            if (cd == null || cd.getItemCount() == 0) return "";
+            CharSequence t = cd.getItemAt(0).coerceToText(this);
+            if (t == null) return "";
+            String s = t.toString().trim();
+            return s.isEmpty() ? "" : s;
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private void commitCalc(boolean fromEq) {
