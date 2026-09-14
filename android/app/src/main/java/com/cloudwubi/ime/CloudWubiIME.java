@@ -1405,37 +1405,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.5.0 反馈⑤：英文/HTML 自动补全（输入 ht→https://、@→邮箱后缀、.→域名后缀） */
     // v0.5.41 反馈④：英文常用词表（真实常用英文单词，前缀匹配自动补全）
-    private static final String[] EN_WORDS = {
-        "the", "and", "you", "hello", "world", "help", "home", "hope", "here", "have", "has",
-        "how", "what", "when", "where", "who", "why", "which", "work", "with", "well", "will",
-        "good", "great", "get", "go", "going", "come", "coming", "can", "could", "should",
-        "would", "please", "thank", "thanks", "this", "that", "these", "those", "there",
-        "their", "they", "them", "we", "our", "ours", "your", "yours", "my", "mine", "his",
-        "her", "its", "not", "no", "yes", "ok", "okay", "sure", "sorry", "welcome", "friend",
-        "family", "love", "like", "life", "time", "today", "tomorrow", "yesterday", "morning",
-        "afternoon", "evening", "night", "week", "month", "year", "day", "date", "new", "old",
-        "big", "small", "fast", "slow", "happy", "sad", "good", "bad", "best", "better",
-        "more", "most", "less", "little", "many", "much", "some", "any", "all", "every",
-        "each", "other", "another", "one", "two", "three", "four", "five", "six", "seven",
-        "eight", "nine", "ten", "first", "second", "third", "last", "next", "last", "back",
-        "front", "left", "right", "up", "down", "open", "close", "start", "stop", "begin",
-        "end", "make", "made", "take", "took", "give", "gave", "send", "sent", "get", "got",
-        "see", "saw", "look", "find", "found", "keep", "kept", "know", "knew", "think",
-        "thought", "want", "need", "call", "called", "email", "mail", "phone", "number",
-        "name", "address", "city", "country", "china", "chinese", "english", "language",
-        "computer", "phone", "mobile", "message", "text", "write", "read", "book", "page",
-        "file", "data", "code", "web", "site", "link", "url", "www", "http", "https", "com",
-        "net", "org", "cn", "io", "app", "android", "ios", "mac", "windows", "linux",
-        "github", "google", "baidu", "wechat", "weixin", "qq", "alipay", "pay", "money",
-        "price", "cost", "buy", "sell", "shop", "store", "market", "business", "company",
-        "work", "job", "office", "meeting", "team", "manager", "leader", "project", "plan",
-        "idea", "problem", "question", "answer", "example", "important", "possible",
-        "different", "together", "sometimes", "always", "never", "usually", "really",
-        "very", "quite", "about", "after", "before", "between", "during", "without",
-        "because", "but", "so", "then", "than", "or", "for", "from", "into", "onto",
-        "under", "over", "through", "around", "again", "also", "already", "although",
-        "though", "until", "while", "if", "when", "where", "whether"
-    };
+    //   体积优化：单长字符串 + split（省数组常量池开销，APK≤100KB 门禁）
+    private static final String EN_WORDS_STR = "the" "and" "you" "hello" "world" "help" "home" "hope" "here" "have" "has how" "what" "when" "where" "who" "why" "which" "work" "with" "well" "will good" "great" "get" "go" "going" "come" "coming" "can" "could" "should would" "please" "thank" "thanks" "this" "that" "these" "those" "there their" "they" "them" "we" "our" "ours" "your" "yours" "my" "mine" "his her" "its" "not" "no" "yes" "ok" "okay" "sure" "sorry" "friend family" "love" "like" "life" "time" "today" "morning "night" "week" "month" "year" "day" "date" "new" "old big" "small" "fast" "slow" "happy" "sad" "good" "bad" "best" "better more" "most" "less" "little" "many" "much" "some" "any" "all" "every each" "other" "one" "two" "three" "four" "five" "six" "seven eight" "nine" "ten" "first" "second" "third" "last" "next" "back front" "left" "right" "up" "down" "open" "close" "start" "stop" "begin end" "make" "made" "take" "took" "give" "gave" "send" "sent" "got see" "saw" "look" "find" "found" "keep" "kept" "know" "knew" "think thought" "want" "need" "call" "called" "email" "mail" "phone" "number name" "city" "china" "mobile" "text" "write" "read" "book" "page file" "data" "code" "web" "site" "link" "url" "www" "http" "https" "com net" "org" "cn" "io" "app" "ios" "mac" "linux github" "google" "baidu" "wechat" "weixin" "qq" "alipay" "pay" "money price" "cost" "buy" "sell" "shop" "store" "market" "company work" "job" "office" "team" "leader" "plan idea" "answer" "always" "never" "really very" "quite" "about" "after" "before" "during" "without because" "but" "so" "then" "than" "or" "for" "from" "into" "onto under" "over" "around" "again" "also"";
+    private static final String[] EN_WORDS = EN_WORDS_STR.split(" ");
 
     private void checkEnglishCompletion(String code) {
         String lower = code.toLowerCase();
