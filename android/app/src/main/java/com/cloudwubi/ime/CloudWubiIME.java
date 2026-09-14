@@ -31,8 +31,10 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -142,6 +144,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private int panelMode = 0;              // 0=主键盘 1=数字 2=符号
     private boolean clipMode = false;       // 候选条是否显示剪贴板历史
     private boolean infoPanelMode = false;  // v0.5.13 反馈①：候选条是否显示 app 信息面板
+    private int candViewH = 0;              // v0.5.14 反馈⑤：备选栏固定高度（正常态单行不抖动）
     private String lastSelected = "";       // MRU 置顶
     private String lastCommittedChar = "";  // v0.4.8 最近上屏单字（触发联想）
     private String lastEnHint = "";         // v0.4.8 最近选字英文翻译提示
@@ -159,6 +162,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private ClipboardManager clipManager;
     private SharedPreferences prefs;
     private List<String> clipHistory = new ArrayList<>();
+    /** v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录——上屏词→次数，联想排序权重） */
+    private static final String PREFS_FREQ = "cw_freq";
+    private final Map<String, Integer> freqMap = new HashMap<>();
 
     @Override
     public void onCreate() {
@@ -167,6 +173,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         loadClipHistory();
         loadRecentPhrases();
+        loadFreq();   // v0.5.14 反馈②：加载端侧词频缓存
         // v0.5.9 反馈⑧：恢复上次选中字/词（字频调整跨会话生效，重启仍记忆）
         lastSelected = prefs.getString(PREFS_LAST_SEL, "");
         try {
@@ -188,8 +195,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     @Override
     public View onCreateInputView() {
         candidateView = new TextView(this);
-        candidateView.setTextSize(15);
+        candidateView.setTextSize(18);   // v0.5.14 反馈⑥：备选词组大字显示（透明背景默认）
         candidateView.setPadding(14, 12, 14, 12);
+        // v0.5.14 反馈⑤：固定备选栏高度（单行）→ 不撑大显示范围、无画面抖动
+        candViewH = Math.round(46 * getResources().getDisplayMetrics().density);
+        candidateView.setMinHeight(candViewH);
+        candidateView.setMaxHeight(candViewH);
+        candidateView.setMaxLines(1);
         candidateView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         candidateView.setHighlightColor(0x00000000);
         // v0.5.10 反馈②：点击候选区空白（非条目/非返回）→ 关闭剪贴板回正常输入
@@ -249,6 +261,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         android.widget.Space spacer = new android.widget.Space(this);
         toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
         toolRow.addView(makeToolButton("全选", v -> selectAll()));
+        // v0.5.14 反馈③：工具栏加"删除"（删光标前字符/选区，与退格同功能）
+        toolRow.addView(makeToolButton("删除", v -> handleBackspace()));
         toolRow.addView(makeToolButton("取消↺", v -> doUndo()));
         toolRow.addView(makeToolButton("重做↻", v -> doRedo()));
         toolRow.addView(makeToolButton("亖", v -> {
@@ -293,7 +307,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private TextView makeToolButton(String text, View.OnClickListener listener) {        TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextSize(12);
-        tv.setPadding(22, 6, 22, 6);
+        tv.setPadding(12, 4, 12, 4);   // v0.5.14 反馈③⑤：6 按钮 + 固定行高不抖动（padding 压缩）
         tv.setGravity(android.view.Gravity.CENTER);
         tv.setOnClickListener(listener);
         return tv;
@@ -310,9 +324,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.13");
-        int s0 = sb.length();
-        sb.append("  作者：zsdili  开源：github.com/zsdili  微信：175571");
+        sb.append("云五笔 v0.5.14");
+        sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
         candidateView.setLineSpacing(0f, 1.25f);
@@ -943,6 +956,42 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
     }
 
+    // ===== v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录，联想排序权重） =====
+
+    private void loadFreq() {
+        try {
+            String j = prefs.getString(PREFS_FREQ, "");
+            if (!j.isEmpty()) {
+                JSONObject o = new JSONObject(j);
+                java.util.Iterator<String> it = o.keys();
+                while (it.hasNext()) {
+                    String k = it.next();
+                    freqMap.put(k, o.optInt(k, 1));
+                }
+            }
+        } catch (Exception ignored) { }
+    }
+
+    private void saveFreq() {
+        try {
+            JSONObject o = new JSONObject();
+            for (Map.Entry<String, Integer> e : freqMap.entrySet()) o.put(e.getKey(), e.getValue());
+            prefs.edit().putString(PREFS_FREQ, o.toString()).apply();
+        } catch (Exception ignored) { }
+    }
+
+    private void bumpFreq(String text) {
+        if (text == null || text.isEmpty()) return;
+        int n = freqMap.containsKey(text) ? freqMap.get(text) : 0;
+        freqMap.put(text, n + 1);
+        saveFreq();
+    }
+
+    private int freqOf(String w) {
+        Integer n = freqMap.get(w);
+        return n == null ? 0 : n;
+    }
+
     // ===== v0.4.9 取消↺ / 重做↻（编辑快照栈，双向 30 层） =====
 
     /** 记录当前文档快照（光标前 2000 字 + 分隔符 + 光标后 2000 字） */
@@ -1241,6 +1290,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             renderClipboardList();
             return;
         }
+        // v0.5.14 反馈⑤：恢复正常态固定单行高度（剪贴板态放宽后恢复，防画面抖动）
+        candidateView.setMaxLines(1);
+        candidateView.setMinHeight(candViewH);
+        candidateView.setMaxHeight(candViewH);
         // v0.5.8 反馈⑨：英文模式——候选条渲染字母串 + 自动补全建议（原只显示 EN，用户看不到输入导致"打不上字"）
         if (!chineseMode) {
             String ec = composingCode.toString();
@@ -1456,6 +1509,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
      *  v0.5.3 反馈④：2 倍行距 + 灰色下横线分隔 + 跟随系统色
      *  v0.5.11 反馈②：剪贴板列表恢复多行（候选单行仅限候选/联想态） */
     private void renderClipboardList() {
+        // v0.5.14 反馈⑤：剪贴板态放宽高度（多行列表），其他态固定单行
+        int dp8 = Math.round(8 * getResources().getDisplayMetrics().density);
+        candidateView.setMinHeight(dp8 * 10);
+        candidateView.setMaxHeight(dp8 * 10);
+        candidateView.setMaxLines(10);
         candidateView.setSingleLine(false);
         candidateView.setEllipsize(null);
         // v0.5.9 反馈⑨：适度行距（0,1.3f 非增大 extra）——条目间用浅色相间背景区分（非虚横线、非空行）
@@ -1686,6 +1744,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         commitText(text);   // v0.4.9 自动记录 undo 快照
         lastSelected = text;   // MRU 置顶
         prefs.edit().putString(PREFS_LAST_SEL, text).apply();   // v0.5.9 反馈⑧：持久化字频调整
+        bumpFreq(text);   // v0.5.14 反馈②：端侧词频累计（最近 3 个月输入记录）
         // v0.5.3 反馈①：记录最近一次上屏的字/词（仅滤紧接着的重复出现）
         committedLast = text;
         if (GATEWAY_READY) reportSelection(text);
@@ -1757,11 +1816,31 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 if (merged.size() >= 12) break;
             }
         }
+        // v0.5.14 反馈②：端侧词频排序（结合最近 3 个月输入记录——MRU 置顶保持，其余按上屏频次降序）
+        List<String> ordered = new ArrayList<>();
+        for (String p : recentPhrases) {
+            if (merged.contains(p) && !ordered.contains(p)) ordered.add(p);
+        }
+        List<String> rest = new ArrayList<>();
+        for (String p : merged) {
+            if (!ordered.contains(p)) rest.add(p);
+        }
+        // 稳定降序：频次高者前（同频保持原顺序——本地词库序/成语序不被打乱）
+        for (int i = 1; i < rest.size(); i++) {
+            String k = rest.get(i);
+            int j = i - 1;
+            while (j >= 0 && freqOf(rest.get(j)) < freqOf(k)) {
+                rest.set(j + 1, rest.get(j));
+                j--;
+            }
+            rest.set(j + 1, k);
+        }
+        ordered.addAll(rest);
         candidates.clear();
-        candidates.addAll(merged);
+        candidates.addAll(ordered);
         candPage = 0;
         updateCandidateView();
-        // ③ 云端热点：整词前缀通道
+        // ③ 云端热点：上下文通道（整句上文→语境连续联想）+ 锚字前缀兜底
         if (GATEWAY_READY) queryAssociateAsync(chain, anchor);
     }
 
@@ -1796,17 +1875,29 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
     }
 
-    /** v0.4.9：云端连续联想（{"prefix":"陈胜"} 前缀热点 + {"word":"陈"} 含字热点） */
+    /** v0.6 反馈①②：云端上下文连续联想（{"context":"光标前8字上文"} → 语境连续联想）
+     *  革命性：不再单字联想，结合输入框上下文/前后文，参考主流输入法联想原理的云端实现 */
     private void queryAssociateAsync(final String chain, final String lastChar) {
         final Handler handler = new Handler(Looper.getMainLooper());
+        final String context = getContextBefore(8);   // 收集光标前 8 字整句上文
         Thread t = new Thread(() -> {
             List<String> cloud = new ArrayList<>();
             try {
-                // v0.5.11 反馈⑤：前缀通道用"锚字"（光标前一字）查询——进→进一步/进行/进入…
-                // （原用整词链"前进"→返回前进X，偏离"光标前字联想"要求；含字通道已停用）
-                String query = lastChar == null || lastChar.isEmpty() ? chain : lastChar;
-                List<String> p1 = postGateway("{\"prefix\":\"" + query + "\"}");
-                if (p1 != null) cloud.addAll(p1);
+                // ① 上下文通道（主）：整句上文 → 成语启发 + 热词趋势 + bigram 顺承 + 学习词
+                if (context != null && !context.isEmpty()) {
+                    List<String> p1 = postGateway("{\"context\":\"" + jsonEscape(context) + "\"}");
+                    if (p1 != null) cloud.addAll(p1);
+                }
+                // ② 锚字前缀通道（兜底）：光标前 1 字前缀联想
+                if (cloud.size() < 12) {
+                    String query = lastChar == null || lastChar.isEmpty() ? chain : lastChar;
+                    List<String> p2 = postGateway("{\"prefix\":\"" + jsonEscape(query) + "\"}");
+                    if (p2 != null) {
+                        for (String s : p2) {
+                            if (!cloud.contains(s)) cloud.add(s);
+                        }
+                    }
+                }
             } catch (Exception ignored) { }
             final List<String> result = cloud;
             handler.post(() -> {
@@ -1820,6 +1911,29 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             });
         });
         t.start();
+    }
+
+    /** v0.6 反馈①：读取光标前 n 字（上下文连续联想输入） */
+    private String getContextBefore(int n) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return "";
+        try {
+            CharSequence cb = ic.getTextBeforeCursor(n, 0);
+            return cb == null ? "" : cb.toString();
+        } catch (Exception ignored) { }
+        return "";
+    }
+
+    /** v0.6：JSON 字符串转义（上文可能含引号/反斜杠） */
+    private String jsonEscape(String s) {
+        if (s == null) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '"' || c == '\\') sb.append('\\');
+            sb.append(c);
+        }
+        return sb.toString();
     }
 
     /** 云端 POST 请求（返回 phrases 数组，失败返回 null） */
