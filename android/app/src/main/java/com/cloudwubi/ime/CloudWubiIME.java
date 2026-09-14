@@ -338,6 +338,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         statusInfo.setPadding(8, 0, 0, 0);
         statusInfo.setSingleLine(true);
         statusInfo.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        statusInfo.setMaxWidth(Math.round(140 * getResources().getDisplayMetrics().density));   // v0.5.40 反馈⑤：限定显示宽度
         statusInfo.setTextColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
         // v0.5.9 反馈⑦：点击状态栏英文翻译 → 上屏翻译内容
         statusInfo.setOnClickListener(v -> {
@@ -395,12 +396,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.0 反馈①：工具行按钮（全选/取消↺/重做↻） */
-    private TextView makeToolButton(String text, View.OnClickListener listener) {        TextView tv = new TextView(this);
+    private TextView makeToolButton(String text, View.OnClickListener listener) {
+        TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextSize(14);   // v0.5.34 反馈④：工具栏字体调大
-        tv.setPadding(12, 4, 12, 4);   // v0.5.14 反馈③⑤：6 按钮 + 固定行高不抖动（padding 压缩）
         tv.setGravity(android.view.Gravity.CENTER);
         tv.setOnClickListener(listener);
+        // v0.5.40 反馈④：固定宽度放置工具栏按钮（44dp），避免文字宽度差异导致位移晃动
+        tv.setLayoutParams(new LinearLayout.LayoutParams(
+                Math.round(44 * getResources().getDisplayMetrics().density),
+                LinearLayout.LayoutParams.MATCH_PARENT));
         return tv;
     }
 
@@ -430,18 +435,33 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        // v0.5.28 反馈①：版本号前去掉"云五笔"三个字，动态读安装包真实版本号（不再硬编码）
+        // v0.5.40 反馈①：app 信息只显示 版本号 + github(可点击跳转) + 微信，不得显示其他内容
         sb.append("v").append(currentVersion());
-        sb.append("  开源：github.com/zsdili  微信：175571");
-        if (cloudCatCount > 0) {
-            sb.append("\n云端词库：本地 2500 词 + 云端词组 6.2 万 + 分类 ")
-              .append(String.valueOf(cloudCatCount))
-              .append(" 类 ").append(String.valueOf(cloudCatWords)).append(" 词");
-        }
+        sb.append("   github");
+        sb.append("   微信：175571");
+        int gStart = sb.indexOf("github");
+        int gEnd = gStart + 6;
+        ClickableSpan gh = new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                try {
+                    android.content.Intent i = new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse("https://github.com/zsdili"));
+                    i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception ignored) { }
+            }
+            @Override
+            public void updateDrawState(android.text.TextPaint ds) {
+                ds.setColor(c);
+                ds.setUnderlineText(true);
+            }
+        };
+        sb.setSpan(gh, gStart, gEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
         candidateView.setLineSpacing(0f, 1.25f);
-        candidateView.setTextSize(16f);   // v0.5.34 反馈④：备选栏字体调大（参考截图，用户要求字大）
+        candidateView.setTextSize(16f);
         candidateView.setText(sb);
     }
 
@@ -715,6 +735,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         }
         keyboardView.invalidateAllKeys();
+        keyboardView.invalidate();   // v0.5.40 反馈②：双保险重绘，确保键面大小写跟随切换
     }
 
     // ===== Shift / Caps 逻辑（反馈③） =====
@@ -888,6 +909,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 panelMode = 0;
                 calcBuffer = "";
                 keyboardView.setKeyboard(keyboardMain);
+                applyLetterCase();
                 updateCandidateView();
                 return;
             case KEY_LANG:
@@ -895,6 +917,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     panelMode = 0;
                     calcBuffer = "";
                     keyboardView.setKeyboard(keyboardMain);
+                    applyLetterCase();
                 } else {
                     toggleLang();
                 }
@@ -1459,7 +1482,21 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                         if (inserted >= 8) break;
                     }
                 }
-                if (inserted > 0) updateCandidateView();
+                // v0.5.40 反馈③：云端高频单字（hot）插到本地单字区首位（词组/MRU 之后）
+                //   ——"栏/送/钟"等高频字必靠前（打字排序按频率调整）
+                int hotPos = candidates.size();
+                for (int i = 0; i < candidates.size(); i++) {
+                    if (candidates.get(i).length() == 1) { hotPos = i; break; }
+                }
+                boolean hotChanged = false;
+                for (String h : cloudHot) {
+                    if (isJustCommitted(h)) continue;
+                    candidates.remove(h);
+                    candidates.add(Math.min(hotPos, candidates.size()), h);
+                    hotPos++;
+                    hotChanged = true;
+                }
+                if (inserted > 0 || hotChanged) updateCandidateView();
             });
         });
         t.start();
@@ -1468,6 +1505,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.31 云端词库统计（词条数上报：点击"云五笔"弹窗显示分类词库规模） */
     private int cloudCatCount = 0;
     private int cloudCatWords = 0;
+    private final List<String> cloudHot = new ArrayList<>();   // v0.5.40 反馈③：云端高频单字（回填时插到单字区首位）
 
     private List<String> parseCandidates(String json) {
         List<String> list = new ArrayList<>();
@@ -1488,19 +1526,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 cloudCatCount = obj.optInt("cat_count", 0);
                 cloudCatWords = obj.optInt("cat_words", 0);
             }
-            // v0.5.38 反馈⑦：云端高频字推送（hot 字段=本次编码高频单字，插到词组后、补全前）
-            //   ——自此高频字/词更新全部走云端 hot 通道，前端无需再发版
+            // v0.5.40 反馈③：hot 单独存 cloudHot（不混入 list），回填时插到本地单字区首位
             JSONArray hot = obj.optJSONArray("hot");
+            cloudHot.clear();
             if (hot != null) {
-                // v0.5.38：hot 高频单字插到 phrases 之后、gen/candidates 之前
-                int hpos = phrases == null ? 0 : phrases.length();
-                List<String> hotList = new ArrayList<>();
                 for (int i = 0; i < hot.length(); i++) {
                     String h = hot.getString(i);
-                    if (h != null && h.length() == 1) hotList.add(h);
-                }
-                for (int i = hotList.size() - 1; i >= 0; i--) {
-                    if (!list.contains(hotList.get(i))) list.add(hpos, hotList.get(i));
+                    if (h != null && h.length() == 1) cloudHot.add(h);
                 }
             }
             JSONArray gen = obj.optJSONArray("gen");
@@ -1585,8 +1617,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         String code = composingCode.toString();
         // v0.5.8 反馈①：编码实时回显到状态栏（备选栏只显示候选）
         if (statusInfo != null) {
+            // v0.5.40 反馈⑤：直接显示英语翻译（去掉 EN: 前缀）+ 限宽不挤占按钮
             String info = code;
-            if (!lastEnHint.isEmpty()) info += "  EN: " + lastEnHint;
+            if (!lastEnHint.isEmpty()) info += "  " + lastEnHint;
             statusInfo.setText(info);
         }
         // v0.5.8 反馈①：数字面板计算式同步状态栏
@@ -1612,7 +1645,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
         if (code.isEmpty()) {
             // v0.5.8 反馈①：编码清空 → 状态栏同步（空闲时无编码，翻译如存在则上移状态栏）
-            if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : "EN: " + lastEnHint);
+            if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : lastEnHint);
             // v0.5.20：联想已去除——上屏后不显示"最近上屏 ▸ 联想词"（renderAssociateHint 不再调用）
             if (candidates.isEmpty()) {
                 // v0.5.28 反馈⑥：空闲态也显示剪贴板项（复制后打开输入法立即可见，点选上屏）
@@ -1970,6 +2003,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.5.11 反馈④：空格——备选栏第一个是中文候选则上中文；候选仅有编码本身（无中文命中）则输出空格 */
     private void commitSpaceOrFirst() {
+        if (!chineseMode) {
+            // v0.5.40 反馈⑥：纯英文输入——全部输完才上屏：空格直接上屏空格（不选候选），单词由字母自然组成
+            commitText(" ");
+            composingCode.setLength(0);
+            candidates.clear();
+            updateCandidateView();
+            return;
+        }
         if (composingCode.length() > 0 && !candidates.isEmpty()
                 && !candidates.get(0).equals(composingCode.toString())) {
             selectCandidate(0);

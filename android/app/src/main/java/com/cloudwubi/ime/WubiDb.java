@@ -435,7 +435,11 @@ public final class WubiDb {
             }
         } else if (len == 4) {
             if (phr != null) result.addAll(phr);
-            if (singles != null) result.addAll(singles);
+            // v0.5.40 反馈③：4 码单字同样按字频排序（同码多字高频靠前）
+            if (singles != null) {
+                if (singles.size() > 1) sortByFreq(singles);
+                result.addAll(singles);
+            }
         }
         return result.isEmpty() ? null : result;
     }
