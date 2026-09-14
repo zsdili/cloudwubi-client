@@ -1,3 +1,10 @@
+## v0.5.19（2026-09-14）词库升级：极点五笔86方案（jidian）
+- **背景**：钟总指定"采用百度输入法五笔的字根方案和词库"——查证：百度五笔默认即**五笔86版**（与现方案同源），但其词库为闭源二进制（wb.bin）无法提取
+- **采用**：开源**极点五笔86词库**（KyleBing/rime-wubi86-jidian，Apache-2.0）——86 版字根方案一致、老五笔用户最熟悉的词库风格
+- **本地**：词库替换为 jidian Top4200 高频词组（按原库词频序）+ 保障词（ilif/imlf 没办法、uefj 前进、dgqe 三角/感触、pgpm 宇宙、baet 陈胜）；单字库保持 86 方案全量
+- **云端**：wubi86_phrases.txt 替换为 jidian 全量 6.2 万词组（818KB，加载 0.2s 实测）+ 保障词（部署待密钥）
+- **回归锚点扩充**：uefj 前进 / dgqe 三角 / dgqe 感触 进机器自检
+- **体积**：APK=99770B 达标（versionCode 69）
 ## v0.5.18（2026-09-14）上滑标点回归修复 + 机器级防回归机制
 - **① ！，/？。上滑失效回归修复**：根因=CloudKeyboardView 重写 onTouchEvent 时 swipeSymbol() 漏了双标点键（-106/-108 返回 0 被吞，IME.swipeUp() 成死代码）→ swipeSymbol 补 case（→0xFF01/0xFF1F）+ onKey 补上屏 case
 - **② 本地词库补 ilif没办法**（+8B，离线可打；云端 imlf/ilif 已补待部署）
