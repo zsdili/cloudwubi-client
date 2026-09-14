@@ -324,11 +324,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.14");
+        sb.append("云五笔 v0.5.15");
         sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
         candidateView.setLineSpacing(0f, 1.25f);
+        candidateView.setTextSize(12f);   // v0.5.15 反馈②：字号与第一行工具栏一致（12sp）
         candidateView.setText(sb);
     }
 
@@ -1376,7 +1377,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.4.8 数字面板：实时显示 表达式=结果 */
-    /** v0.5.1 反馈②：数字面板实时计算 + 两种上屏方式可选（带运算式 / 仅结果） */
+    /** v0.5.1 反馈②：数字面板实时计算；v0.5.15 反馈③：去掉〔带式〕〔结果〕候选，上屏走 = 键（带式默认） */
     private void renderCalcState() {
         if (calcBuffer.isEmpty()) {
             candidateView.setText("");   // v0.5.9 反馈④：去掉自以为是提示
@@ -1390,30 +1391,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         sb.append(calcBuffer);
         sb.setSpan(new ForegroundColorSpan(textColor), s0, s0 + calcBuffer.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         sb.append(" = ").append(res);
-        if (!Double.isNaN(v)) {
-            sb.append("   ");
-            appendCalcOption(sb, "〔带式〕" + calcBuffer + "=" + res, true);
-            sb.append("  ");
-            appendCalcOption(sb, "〔结果〕" + res, false);
-        }
         candidateView.setText(sb);
-    }
-
-    /** v0.5.1 计算候选：可点击上屏（带式或仅结果） */
-    private void appendCalcOption(SpannableStringBuilder sb, String text, final boolean withFormula) {
-        int s = sb.length();
-        sb.append(text);
-        sb.setSpan(new ClickableSpan() {
-            @Override
-            public void onClick(View widget) {
-                commitCalc(withFormula);
-            }
-            @Override
-            public void updateDrawState(android.text.TextPaint ds) {
-                ds.setColor(dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
-                ds.setUnderlineText(false);
-            }
-        }, s, s + text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     /** v0.4.8 反馈①⑦：上屏单字后的联想词组（MRU 置顶 + 本地锚字前缀词组 + 云端热点）
