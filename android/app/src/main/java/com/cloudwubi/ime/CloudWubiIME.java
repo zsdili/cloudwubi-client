@@ -353,6 +353,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.28 反馈①：版本号前去掉"云五笔"三个字，动态读安装包真实版本号（不再硬编码）
         sb.append("v").append(currentVersion());
         sb.append("  开源：github.com/zsdili  微信：175571");
+        if (cloudCatCount > 0) {
+            sb.append("\n云端词库：本地 2500 词 + 云端词组 6.2 万 + 分类 ").append(cloudCatCount)
+              .append(" 类 ").append(cloudCatWords).append(" 词");
+        }
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
         candidateView.setLineSpacing(0f, 1.25f);
@@ -1338,6 +1342,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         t.start();
     }
 
+    /** v0.5.31 云端词库统计（词条数上报：点击"云五笔"弹窗显示分类词库规模） */
+    private int cloudCatCount = 0;
+    private int cloudCatWords = 0;
+
     private List<String> parseCandidates(String json) {
         List<String> list = new ArrayList<>();
         try {
@@ -1352,6 +1360,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
             // v0.5.17 反馈②③（举一反三）：动态构词（gen）排真词组之后——ilif 未收录时"渐法/水国法"等
             //   无意义组合不挡道；补词后"没办法"（lexicon）在 phrases 里优先返回
+            // v0.5.31 词条数上报：云端分类词库规模（弹窗显示）
+            if (obj.has("cat_count")) {
+                cloudCatCount = obj.optInt("cat_count", 0);
+                cloudCatWords = obj.optInt("cat_words", 0);
+            }
             JSONArray gen = obj.optJSONArray("gen");
             if (gen != null) {
                 for (int i = 0; i < gen.length(); i++) {
