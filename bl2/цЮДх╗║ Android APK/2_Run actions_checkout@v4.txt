@@ -1,0 +1,74 @@
+﻿2026-09-14T02:41:04.8642562Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-14T02:41:04.8652689Z ##[group]Run actions/checkout@v4
+2026-09-14T02:41:04.8653545Z with:
+2026-09-14T02:41:04.8654094Z   repository: zsdili/cloudwubi-client
+2026-09-14T02:41:04.8658622Z   token: ***
+2026-09-14T02:41:04.8659138Z   ssh-strict: true
+2026-09-14T02:41:04.8659636Z   ssh-user: git
+2026-09-14T02:41:04.8660145Z   persist-credentials: true
+2026-09-14T02:41:04.8660693Z   clean: true
+2026-09-14T02:41:04.8661184Z   sparse-checkout-cone-mode: true
+2026-09-14T02:41:04.8661778Z   fetch-depth: 1
+2026-09-14T02:41:04.8662263Z   fetch-tags: false
+2026-09-14T02:41:04.8662763Z   show-progress: true
+2026-09-14T02:41:04.8663401Z   lfs: false
+2026-09-14T02:41:04.8663873Z   submodules: false
+2026-09-14T02:41:04.8664435Z   set-safe-directory: true
+2026-09-14T02:41:04.8665001Z   allow-unsafe-pr-checkout: false
+2026-09-14T02:41:04.8665913Z ##[endgroup]
+2026-09-14T02:41:04.9732204Z Syncing repository: zsdili/cloudwubi-client
+2026-09-14T02:41:04.9735092Z ##[group]Getting Git version info
+2026-09-14T02:41:04.9736612Z Working directory is '/home/runner/work/cloudwubi-client/cloudwubi-client'
+2026-09-14T02:41:04.9739068Z [command]/usr/bin/git version
+2026-09-14T02:41:04.9826053Z git version 2.55.0
+2026-09-14T02:41:04.9854490Z ##[endgroup]
+2026-09-14T02:41:04.9873059Z Temporarily overriding HOME='/home/runner/work/_temp/cfab6b33-2bcd-4f2e-9614-e3eb2569ad58' before making global git config changes
+2026-09-14T02:41:04.9875937Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-14T02:41:04.9880170Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/cloudwubi-client/cloudwubi-client
+2026-09-14T02:41:04.9938931Z Deleting the contents of '/home/runner/work/cloudwubi-client/cloudwubi-client'
+2026-09-14T02:41:04.9943089Z ##[group]Initializing the repository
+2026-09-14T02:41:04.9949065Z [command]/usr/bin/git init /home/runner/work/cloudwubi-client/cloudwubi-client
+2026-09-14T02:41:05.0068049Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-14T02:41:05.0070778Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-14T02:41:05.0072863Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-14T02:41:05.0075037Z hint: call:
+2026-09-14T02:41:05.0076392Z hint:
+2026-09-14T02:41:05.0078561Z hint: 	git config --global init.defaultBranch <name>
+2026-09-14T02:41:05.0079700Z hint:
+2026-09-14T02:41:05.0080668Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-14T02:41:05.0082541Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-14T02:41:05.0083860Z hint:
+2026-09-14T02:41:05.0084783Z hint: 	git branch -m <name>
+2026-09-14T02:41:05.0085669Z hint:
+2026-09-14T02:41:05.0086452Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-14T02:41:05.0088695Z Initialized empty Git repository in /home/runner/work/cloudwubi-client/cloudwubi-client/.git/
+2026-09-14T02:41:05.0091613Z [command]/usr/bin/git remote add origin https://github.com/zsdili/cloudwubi-client
+2026-09-14T02:41:05.0143096Z ##[endgroup]
+2026-09-14T02:41:05.0144770Z ##[group]Disabling automatic garbage collection
+2026-09-14T02:41:05.0146396Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-14T02:41:05.0180492Z ##[endgroup]
+2026-09-14T02:41:05.0181385Z ##[group]Setting up auth
+2026-09-14T02:41:05.0189366Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-14T02:41:05.0229923Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-14T02:41:05.0635116Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-14T02:41:05.0681101Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-14T02:41:05.0930628Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-14T02:41:05.0971412Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-14T02:41:05.1213541Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-14T02:41:05.1256111Z ##[endgroup]
+2026-09-14T02:41:05.1257430Z ##[group]Fetching the repository
+2026-09-14T02:41:05.1267548Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +11a53f46ab53bb5db63e40207322a96dc1aabf7f:refs/remotes/origin/main
+2026-09-14T02:41:05.5619676Z From https://github.com/zsdili/cloudwubi-client
+2026-09-14T02:41:05.5621608Z  * [new ref]         11a53f46ab53bb5db63e40207322a96dc1aabf7f -> origin/main
+2026-09-14T02:41:05.5626194Z ##[endgroup]
+2026-09-14T02:41:05.5628447Z ##[group]Determining the checkout info
+2026-09-14T02:41:05.5630281Z ##[endgroup]
+2026-09-14T02:41:05.5633537Z [command]/usr/bin/git sparse-checkout disable
+2026-09-14T02:41:05.5686986Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-14T02:41:05.5721394Z ##[group]Checking out the ref
+2026-09-14T02:41:05.5725705Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-09-14T02:41:05.5857223Z Switched to a new branch 'main'
+2026-09-14T02:41:05.5863474Z branch 'main' set up to track 'origin/main'.
+2026-09-14T02:41:05.5870167Z ##[endgroup]
+2026-09-14T02:41:05.5914039Z [command]/usr/bin/git log -1 --format=%H
+2026-09-14T02:41:05.5941931Z 11a53f46ab53bb5db63e40207322a96dc1aabf7f

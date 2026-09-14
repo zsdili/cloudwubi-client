@@ -1,0 +1,28 @@
+﻿2026-09-14T02:41:05.9164882Z ##[group]Run cd android
+2026-09-14T02:41:05.9165948Z [36;1mcd android[0m
+2026-09-14T02:41:05.9166909Z [36;1mbash build_apk.sh[0m
+2026-09-14T02:41:05.9207303Z shell: /usr/bin/bash -e {0}
+2026-09-14T02:41:05.9208684Z env:
+2026-09-14T02:41:05.9209939Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-09-14T02:41:05.9211973Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-09-14T02:41:05.9213606Z ##[endgroup]
+2026-09-14T02:41:05.9301146Z ✅ Android SDK: /usr/local/lib/android/sdk
+2026-09-14T02:41:05.9353731Z ✅ build-tools: 37.0.0 | platform: android-36
+2026-09-14T02:41:05.9394451Z == 1/6 编译资源（aapt2）==
+2026-09-14T02:41:06.2890257Z == 2/6 链接资源+Manifest ==
+2026-09-14T02:41:06.9398937Z == 3/6 编译 Java（javac，含 aapt2 生成的 R.java）==
+2026-09-14T02:41:08.8615226Z warning: [options] bootstrap class path not set in conjunction with -source 8
+2026-09-14T02:41:10.6560029Z Note: Some input files use or override a deprecated API.
+2026-09-14T02:41:10.6561160Z Note: Recompile with -Xlint:deprecation for details.
+2026-09-14T02:41:10.6562056Z 1 warning
+2026-09-14T02:41:10.6911577Z == 4/6 转 dex（R8 混淆+裁剪，v0.5.6 腾体积用于词库扩容）==
+2026-09-14T02:41:10.6940850Z    🚀 使用 R8（混淆+裁剪）: /usr/local/lib/android/sdk/cmdline-tools/latest/lib/r8.jar
+2026-09-14T02:41:17.6752520Z == 5/6 打包 dex + assets 进 APK ==
+2026-09-14T02:41:17.6770945Z    dex bytes: 48116
+2026-09-14T02:41:17.6936185Z    ✅ 已并入 assets: associate.txt wubi_phrase.txt wubi_single.txt 
+2026-09-14T02:41:17.6937414Z == 6/6 对齐 + 签名（固定发布签名，保证各版本可覆盖安装）==
+2026-09-14T02:41:19.0196415Z 
+2026-09-14T02:41:19.0197455Z == 构建完成 ==
+2026-09-14T02:41:19.0248185Z ✅ CloudWubi.apk: 103941 字节（104K）
+2026-09-14T02:41:19.0250384Z ❌ 超过 100KB 上限！（固化要求：安装包 ≤100KB）
+2026-09-14T02:41:19.0259900Z ##[error]Process completed with exit code 1.

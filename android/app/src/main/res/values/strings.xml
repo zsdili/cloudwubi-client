@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">云五笔</string>
-    <string name="about_slogan">云五笔 · 开源去中心化共建</string>
-    <string name="about_version">版本：v0.5.2</string>
-    <string name="about_author">作者：钟志胜</string>
-    <string name="about_qq">联系QQ：175571</string>
-    <string name="about_copyright">© 2026 钟志胜 · CloudWubi 开源项目</string>
-    <string name="about_desc">云原生五笔输入法：端侧安装包小于 800KB，核心算力与词库在云端，支持任意组合无限输入。</string>
-    <string name="about_license">词库数据派生自 Rime 五笔86 码表（LGPL-3.0），云端引擎自研。</string>
-    <string name="about_github">GitHub：https://github.com/zsdili/cloudwubi-client</string>
-    <string name="about_gitee">Gitee：https://gitee.com/zsdili/cloudwubi-client</string>
-    <string name="about_mission">使命：向全网与全人类贡献智慧与力量，好的产品靠口碑自传播。</string>
 </resources>

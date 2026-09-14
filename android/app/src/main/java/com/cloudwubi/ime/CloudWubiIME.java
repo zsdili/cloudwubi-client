@@ -980,8 +980,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     private void bumpFreq(String text) {
         if (text == null || text.isEmpty()) return;
-        int n = freqMap.containsKey(text) ? freqMap.get(text) : 0;
-        freqMap.put(text, n + 1);
+        freqMap.put(text, freqOf(text) + 1);
         saveFreq();
     }
 
@@ -1922,14 +1921,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.6：JSON 字符串转义（上文可能含引号/反斜杠） */
     private String jsonEscape(String s) {
-        if (s == null) return "";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '"' || c == '\\') sb.append('\\');
-            sb.append(c);
-        }
-        return sb.toString();
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     /** 云端 POST 请求（返回 phrases 数组，失败返回 null） */

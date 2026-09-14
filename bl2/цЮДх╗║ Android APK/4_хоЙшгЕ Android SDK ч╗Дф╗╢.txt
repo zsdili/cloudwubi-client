@@ -1,0 +1,38 @@
+﻿2026-09-14T02:41:05.8691326Z ##[group]Run yes | sdkmanager --licenses >/dev/null 2>&1 || true
+2026-09-14T02:41:05.8694217Z [36;1myes | sdkmanager --licenses >/dev/null 2>&1 || true[0m
+2026-09-14T02:41:05.8697712Z [36;1myes | sdkmanager --install "build-tools;34.0.0" "platforms;android-34" >/dev/null 2>&1 || true[0m
+2026-09-14T02:41:05.8701870Z [36;1myes | sdkmanager --install "build-tools;34.0.0" "platforms;android-33" >/dev/null 2>&1 || true[0m
+2026-09-14T02:41:05.8704227Z [36;1mls "$ANDROID_HOME/build-tools/"[0m
+2026-09-14T02:41:05.8705494Z [36;1mls "$ANDROID_HOME/platforms/"[0m
+2026-09-14T02:41:05.8771496Z shell: /usr/bin/bash -e {0}
+2026-09-14T02:41:05.8773330Z env:
+2026-09-14T02:41:05.8775425Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-09-14T02:41:05.8779267Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-09-14T02:41:05.8782967Z ##[endgroup]
+2026-09-14T02:41:05.8994829Z yes: standard output: Broken pipe
+2026-09-14T02:41:05.9006445Z yes: standard output: Broken pipe
+2026-09-14T02:41:05.9018364Z yes: standard output: Broken pipe
+2026-09-14T02:41:05.9046011Z 34.0.0
+2026-09-14T02:41:05.9047212Z 35.0.0
+2026-09-14T02:41:05.9048824Z 35.0.1
+2026-09-14T02:41:05.9049998Z 36.0.0
+2026-09-14T02:41:05.9051116Z 36.1.0
+2026-09-14T02:41:05.9052237Z 37.0.0
+2026-09-14T02:41:05.9073240Z android-34
+2026-09-14T02:41:05.9074679Z android-34-ext10
+2026-09-14T02:41:05.9076622Z android-34-ext11
+2026-09-14T02:41:05.9078693Z android-34-ext12
+2026-09-14T02:41:05.9079793Z android-34-ext8
+2026-09-14T02:41:05.9080821Z android-35
+2026-09-14T02:41:05.9081786Z android-35-ext14
+2026-09-14T02:41:05.9082827Z android-35-ext15
+2026-09-14T02:41:05.9083848Z android-36
+2026-09-14T02:41:05.9085082Z android-36-ext18
+2026-09-14T02:41:05.9086163Z android-36-ext19
+2026-09-14T02:41:05.9087196Z android-36.1
+2026-09-14T02:41:05.9088424Z android-37.0
+2026-09-14T02:41:05.9089436Z android-37.1
+2026-09-14T02:41:05.9090322Z android-37.2
+2026-09-14T02:41:05.9091191Z android-37.2-beta1
+2026-09-14T02:41:05.9092130Z android-37.2-beta2
+2026-09-14T02:41:05.9093059Z android-37.2-beta3
