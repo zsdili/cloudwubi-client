@@ -324,7 +324,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void renderInfoPanel() {
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        sb.append("云五笔 v0.5.16");
+        sb.append("云五笔 v0.5.17");
         sb.append("  开源：github.com/zsdili  微信：175571");
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
@@ -381,6 +381,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     @Override
     public void onFinishInput() {
         resetComposing();
+        // v0.5.17 反馈⑤（举一反三：窗口生命周期完整感知）：离开输入触点（焦点转移/输入结束）→
+        //   主动收起输入界面，符合"科学、合理"的输入法基础规范
+        hideWindow();
         super.onFinishInput();
     }
 
@@ -646,6 +649,22 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (clipMode) {
             clipMode = false;
             updateCandidateView();
+        }
+        // v0.5.17 反馈①（举一反三：InputType 完整感知）：密码框直通模式——
+        //   字母/数字/空格/回车全部直接上屏，不进编码缓冲/候选/联想（密码可见性 + 输入体验根本保障）
+        if (isPassword) {
+            if (primaryCode >= 'a' && primaryCode <= 'z') {
+                boolean upper = shiftState > 0;
+                commitText(String.valueOf(upper ? Character.toUpperCase((char) primaryCode)
+                                                 : (char) primaryCode));
+            } else if (primaryCode >= '0' && primaryCode <= '9') {
+                commitText(String.valueOf((char) primaryCode));
+            } else if (primaryCode == KEY_SPACE || primaryCode == KEY_MIC) {
+                commitText(" ");
+            } else if (primaryCode == KB_ENTER) {
+                sendDefaultEditorAction(true);   // 执行输入框的"完成/搜索/前往"等动作
+            }
+            return;
         }
         // 字母键
         if (primaryCode >= 'a' && primaryCode <= 'z') {
@@ -1109,7 +1128,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.4 反馈②：上次选中的字/词置顶须"编码匹配当前输入"（避免错位霸榜挡住四码词组）
         // v0.5.8 反馈③⑧：排序硬规则——1 码一级简码字最前、4 码词组最前；2/3 码 MRU 置顶
         // v0.5.9 反馈⑧：MRU 精确匹配（编码==code）置顶最优先（字频调整：上次上屏的字/词永远第一位）
-        if (!lastSelected.isEmpty() && !isJustCommitted(lastSelected)) {
+        // v0.5.17 反馈④（举一反三）：MRU 置顶不受 isJustCommitted 限制——重打同码时"最近打过的字"必须置顶
+        if (!lastSelected.isEmpty()) {
             String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
             if (lc != null && lc.equals(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
         }
@@ -1127,7 +1147,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         }
         // ① MRU：上次选中的字/词（编码前缀匹配）+ 最近上屏词组（编码匹配）
-        if (!lastSelected.isEmpty() && !isJustCommitted(lastSelected)) {
+        if (!lastSelected.isEmpty()) {
             String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
             if (lc != null && lc.startsWith(code) && !lc.equals(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
         }
@@ -1264,6 +1284,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             if (phrases != null) {
                 for (int i = 0; i < phrases.length(); i++) {
                     String p = phrases.getString(i);
+                    if (p != null && p.length() >= 2) list.add(p);
+                }
+            }
+            // v0.5.17 反馈②③（举一反三）：动态构词（gen）排真词组之后——ilif 未收录时"渐法/水国法"等
+            //   无意义组合不挡道；补词后"没办法"（lexicon）在 phrases 里优先返回
+            JSONArray gen = obj.optJSONArray("gen");
+            if (gen != null) {
+                for (int i = 0; i < gen.length(); i++) {
+                    String p = gen.getString(i);
                     if (p != null && p.length() >= 2) list.add(p);
                 }
             }
