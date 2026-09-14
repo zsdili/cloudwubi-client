@@ -45,7 +45,7 @@ public final class WubiDb {
         "wjjg但是", "vkjs如果", "kjqd虽然", "dmeg而且", "akft或者", "qdrg然后", "jbrg最后", "uttf首先",
         "mgjf同时", "djip非常", "trkl特别", "tgsv重要", "tuuj简单", "yywg方便", "nnqi快乐", "lkim加油",
         "pvwg安全", "wvyv健康", "ntna发展", "khlg中国", "wwna人民", "jhvb早上好", "jhvb晚上好", "iutx没关系",
-        "yguk请问", "thnn自己", "yfky认真听讲", "klwn中国人民", "qqit多少", "kvjf哪里"
+        "yguk请问", "thnn自己", "yfky认真听讲", "klwn中国人民", "qqit多少", "kvjf哪里", "gtut不知道", "iujg没问题", "gmmk一帆风顺"
     };
 
     private WubiDb() { }
