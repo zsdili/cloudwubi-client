@@ -25,8 +25,8 @@ public final class WubiDb {
     private static Map<String, String> phraseCodeIndex;
     /** v0.5.4 反馈②：单字→编码 反向索引（lastSelected 置顶需编码匹配，避免错位霸榜） */
     private static Map<String, String> singleCodeIndex;
-    /** v0.5.9 反馈②：积极成语/金句联想层（阳光向上、有启发，含字即联想） */
-    private static List<String> idioms = new ArrayList<>();
+    /** v0.5.13 反馈②：高频搭配+积极成语联想表键（associate.txt 纯文本，前缀匹配 + 含字启发双用） */
+    private static final String ASSOC_KEY = "zzzz";
 
     private WubiDb() { }
 
@@ -41,7 +41,6 @@ public final class WubiDb {
         loadAsset(ctx, "wubi_phrase.txt", phraseIndex);
         // v0.5.13 反馈②：高频搭配联想词表（纯文本，补字头缺口——宇/进/好/民/吴等，queryByPrefix 即时命中）
         loadAssetText(ctx, "associate.txt", phraseIndex);
-        loadIdioms(ctx);
         // 词组反向索引（同一词可能多码，保留首条）
         if (phraseIndex != null) {
             for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
@@ -60,23 +59,15 @@ public final class WubiDb {
         }
     }
 
-    private static void loadIdioms(Context ctx) {
-        try (BufferedReader r = new BufferedReader(
-                new InputStreamReader(ctx.getAssets().open("idioms.txt"), "UTF-8"))) {
-            String line;
-            while ((line = r.readLine()) != null) {
-                line = line.trim();
-                if (!line.isEmpty()) idioms.add(line);
-            }
-        } catch (Exception ignored) { }
-    }
-
-    /** v0.5.9 反馈②：含指定字的积极成语（联想启发层，先本地后云端） */
+    /** v0.5.13 反馈②：含指定字的积极成语/搭配（联想启发层，读 associate.txt 列表含字匹配） */
     public static List<String> queryIdioms(String ch) {
         List<String> out = new ArrayList<>();
         if (ch == null || ch.isEmpty()) return out;
-        for (String idm : idioms) {
-            if (idm.indexOf(ch) >= 0) out.add(idm);
+        List<String> list = phraseIndex == null ? null : phraseIndex.get(ASSOC_KEY);
+        if (list != null) {
+            for (String w : list) {
+                if (w.indexOf(ch) >= 0 && !w.equals(ch)) out.add(w);
+            }
         }
         return out;
     }
