@@ -1798,10 +1798,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             if (calcBuffer.matches("^[0-9.]+$")) {
                 commitText(calcBuffer);
             } else if (calcFormula) {
-                // v0.5.5 反馈③：续算带式去重——表达式以"上次结果"开头时省略重复结果（2+5=7 上屏后 -4= 上屏"-4=3"）
-                // v0.5.8 反馈⑥：去重仅限"运算符自动续接"（calcAuto=true），手动完整输入 3*2 不受影响
+                // v0.5.32 计算器去重科学化（根治"1+2=33*4=12"反复复发）：
+                //   不再依赖 calcAuto 标志（易被面板切换等路径破坏）——直接读文本框末尾验证
+                //   "上次结果是否已在屏"，在屏则省略重复（1+2=3 上屏后 *4 → 上屏"*4=12"，
+                //   文本框拼接 = "1+2=3*4=12"）；不在屏（手动完整输入 3*2）则完整上屏"3*2=6"
                 String expr = calcBuffer;
-                if (calcAuto && !oldResult.isEmpty() && expr.startsWith(oldResult)) {
+                boolean hasResult = false;
+                if (!oldResult.isEmpty()) {
+                    InputConnection cic = getCurrentInputConnection();
+                    try {
+                        CharSequence tb = cic == null ? null : cic.getTextBeforeCursor(oldResult.length(), 0);
+                        if (tb != null && tb.toString().equals(oldResult)) hasResult = true;
+                    } catch (Exception ignored) { }
+                }
+                if (hasResult && expr.startsWith(oldResult)) {
                     expr = expr.substring(oldResult.length());
                     if (expr.isEmpty()) expr = res;
                 }
