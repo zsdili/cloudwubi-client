@@ -416,9 +416,24 @@ public final class WubiDb {
         if (len == 1) {
             if (singles != null) result.addAll(singles);
         } else if (len == 2) {
-            if (singles != null) result.addAll(singles);
+            // v0.5.43 反馈②：词组优先（二字词/三字词/四字词/多字词 均先于单字）
             if (phr != null) result.addAll(phr);
+            if (singles != null) result.addAll(singles);
         } else if (len == 3) {
+            if (phr != null) result.addAll(phr);
+            // v0.5.43 反馈②：3 码前缀匹配 4 码词组（uab→uabn 辛苦了）——词组优先
+            if (phraseIndex != null) {
+                List<String> prePhr = new ArrayList<>();
+                for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
+                    String k = e.getKey();
+                    if (k.length() > 3 && k.startsWith(code)) {
+                        for (String w : e.getValue()) {
+                            if (!prePhr.contains(w)) prePhr.add(w);
+                        }
+                    }
+                }
+                if (!prePhr.isEmpty()) result.addAll(prePhr);
+            }
             if (singles != null) result.addAll(singles);
             // v0.5.36 反馈⑥：3 码前缀匹配全码（suf→栏 sufg、udp→送 udpi）——高频单字可直接打出
             if (singleIndex != null) {

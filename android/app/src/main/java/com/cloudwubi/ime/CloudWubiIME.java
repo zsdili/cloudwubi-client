@@ -1474,6 +1474,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 // v0.5.6：整码(4码)且本地候选全是单字 → 云端词组置顶（四码词组优先全局生效，
                 //        解决"常用词组打不出来"——云端 5.7 万词组全量兜底）
                 int pos = Math.min(Math.max(cloudInsertPos, 0), candidates.size());
+                // v0.5.43 反馈②：2/3 码词组优先——云端词组插到单字区前（MRU 后、单字前）
+                if (code.length() < 4) {
+                    int singleStart = candidates.size();
+                    for (int i = 0; i < candidates.size(); i++) {
+                        if (candidates.get(i).length() == 1) { singleStart = i; break; }
+                    }
+                    pos = singleStart;
+                }
                 if (code.length() == 4) {
                     boolean localHasPhrase = false;
                     for (String c : candidates) {
