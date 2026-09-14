@@ -1,2500 +1,2000 @@
-一个	ggwh
-中国	khlg
-我们	trwu
-他们	wbwu
-自己	thnn
-没有	imde
-国家	lgpe
-可以	skny
-发展	ntna
-工作	aawt
-这个	ypwh
-什么	wftc
-主要	ygsv
-问题	ukjg
-进行	fjtf
-地方	fbyy
-已经	nnxc
-这样	ypsu
-全国	wglg
-经济	xciy
-这些	yphx
-公司	wcng
-人民	wwna
-社会	pywf
-知道	tdut
-这种	yptk
-起来	fhgo
-地区	fbaq
-如果	vkjs
-开始	gavc
-技术	rfsy
-重要	tgsv
-美国	uglg
-成为	dnyl
-因为	ldyl
-通过	cefp
-研究	dgpw
-文化	yywx
-企业	whog
-北京	uxyi
-历史	dlkq
-世界	anlw
-其中	adkh
-现在	gmdh
-不能	gice
-一些	gghx
-时间	jfuj
-生产	tgut
-情况	nguk
-代表	wage
-决定	unpg
-湖北	idux
-关系	udtx
-领导	wynf
-生活	tgit
-时候	jfwh
-一种	ggtk
-可能	skce
-出来	bmgo
-学生	iptg
-以及	nyey
-一般	ggte
-同时	mgjf
-认为	ywyl
-由于	mhgf
-所以	rnny
-不同	gimg
-这里	ypjf
-学院	ipbp
-两个	gmwh
-作为	wtyl
-会议	wfyy
-但是	wjjg
-部分	ukwv
-活动	itfc
-需要	fdsv
-怎么	thtc
-管理	tpgj
-方面	yydm
-市场	ymfn
-组织	xexk
-工业	aaog
-建设	vfym
-形成	gadn
-其他	adwb
-出现	bmgm
-许多	ytqq
-日本	jjsg
-之间	ppuj
-一定	ggpg
-具有	hwde
-城市	fdym
-以上	nyhh
-政治	ghic
-人们	wwwu
-发现	ntgm
-记者	ynft
-国际	lgbf
-规定	fwpg
-机关	smud
-武汉	gaic
-虽然	kjqd
-根据	svrn
-法律	iftv
-影响	jykt
-发生	nttg
-包括	qnrt
-使用	wget
-中心	khny
-教育	ftyc
-要求	svfi
-政府	ghyw
-因此	ldhx
-人口	wwkk
-建立	vfuu
-参加	cdlk
-产品	utkk
-而且	dmeg
-一样	ggsu
-面积	dmtk
-各种	tktk
-提出	rjbm
-我国	trlg
-作用	wtet
-皇帝	rgup
-必须	nted
-行政	tfgh
-编辑	xylk
-职业	bkog
-制度	rmya
-以后	nyrg
-你们	wqwu
-说道	yuut
-世纪	anxn
-为了	ylbn
-应该	yiyy
-之一	ppgg
-之后	pprg
-主席	ygya
-系统	txxy
-有关	deud
-组成	xedn
-民族	nayt
-基本	adsg
-增长	futa
-自然	thqd
-大学	ddip
-如何	vkws
-政体	ghws
-各级	tkxe
-人员	wwkm
-计划	yfaj
-不会	giwf
-产生	uttg
-时期	jfad
-最后	jbrg
-一次	gguq
-表示	gefi
-机构	smsq
-当时	ivjf
-大家	ddpe
-特别	trkl
-改革	ntaf
-长江	taia
-那么	vftc
-这么	yptc
-东西	aisg
-能力	celt
-革命	afwg
-一直	ggfh
-基础	addb
-还有	gide
-得到	tjgc
-进入	fjty
-运动	fcfc
-目前	hhue
-对于	cfgf
-过程	fptk
-方法	yyif
-举行	iwtf
-群众	vtww
-第一	txgg
-单位	ujwu
-如此	vkhx
-孩子	bybb
-所有	rnde
-资源	uqid
-过去	fpfc
-不过	gifp
-条件	tswr
-学校	ipsu
-提高	rjym
-工程	aatk
-环境	ggfu
-提供	rjwa
-方式	yyaa
-百科	djtu
-报告	rbtf
-或者	akft
-下来	ghgo
-军事	plgk
-部门	ukuy
-分别	wvkl
-十分	fgwv
-上海	hhit
-完成	pfdn
-一切	ggav
-那些	vfhx
-最大	jbdd
-然后	qdrg
-农业	peog
-经过	xcfp
-专业	fnog
-准备	uwtl
-增加	fulk
-获得	aqtj
-旅游	ytiy
-一声	ggfn
-觉得	iptj
-一起	ggfh
-理论	gjyw
-今天	wygd
-非常	djip
-中央	khmd
-比较	xxlu
-表现	gegm
-价值	wwwf
-科技	turf
-完全	pfwg
-亿元	wnfq
-有些	dehx
-存在	dhdh
-达到	dpgc
-内容	mwpw
-实行	putf
-思想	lnsh
-事情	gkng
-实现	pugm
-甚至	adgc
-任务	wttl
-选举	tfiw
-形式	gaaa
-原来	drgo
-突然	pwqd
-不断	gion
-咱们	ktwu
-变化	yowx
-直接	fhru
-心中	nykh
-战争	hkqv
-可是	skjg
-不知	gitd
-政策	ghtg
-资本	uqsg
-继续	xoxf
-年代	rhwa
-期间	aduj
-位于	wugf
-任何	wtws
-权力	sclt
-那个	vfwh
-执行	rvtf
-先生	tftg
-解决	qeun
-建筑	vfta
-能够	ceqk
-称为	tqyl
-结构	xfsq
-一点	gghk
-成立	dnuu
-英国	amlg
-统一	xygg
-先进	tffj
-结果	xfjs
-投资	rmuq
-后来	rggo
-一下	gggh
-水平	iigu
-保护	wkry
-主任	ygwt
-关于	udgf
-负责	qmgm
-制定	rmpg
-艺术	ansy
-利用	tjet
-于是	gfjg
-学习	ipnu
-合作	wgwt
-科学	tuip
-看到	rhgc
-项目	adhh
-不敢	ginb
-襄阳	ykbj
-几个	mtwh
-那里	vfjf
-公里	wcjf
-服务	ebtl
-精神	ogpy
-人大	wwdd
-全省	wgit
-当然	ivqd
-个人	whww
-超过	fhfp
-重点	tghk
-很多	tvqq
-原因	drld
-及其	eyad
-公民	wcna
-希望	qdyn
-新闻	usub
-设计	ymyf
-相关	shud
-国内	lgmw
-分布	wvdm
-最高	jbym
-部队	ukbw
-它们	pxwu
-集团	wylf
-信息	wyth
-采用	eset
-重大	tgdd
-回来	lkgo
-范围	ailf
-引起	xhfh
-实际	pubf
-其实	adpu
-不仅	giwc
-取得	bctj
-丰富	dhpg
-农民	pena
-整个	gkwh
-为主	ylyg
-了解	bnqe
-价格	wwst
-地位	fbwu
-这时	ypjf
-劳动	apfc
-按照	rpjv
-控制	rprm
-目标	hhsf
-基地	adfb
-农村	pesf
-传统	wfxy
-受到	epgc
-全部	wguk
-法国	iflg
-比赛	xxpf
-军队	plbw
-土地	fffb
-规模	fwsa
-荆州	agyt
-眼睛	hvhg
-左右	dadk
-选择	tfrc
-批准	rxuw
-身上	tmhh
-专家	fnpe
-分析	wvsr
-统治	xyic
-加强	lkxk
-不到	gigc
-铁路	qrkh
-百度	djya
-每年	txrh
-告诉	tfyr
-支持	fcrf
-交通	uqce
-明白	jerr
-处理	thgj
-本级	sgxe
-作战	wthk
-时代	jfwa
-皇上	rghh
-实施	puyt
-只要	kwsv
-成功	dnal
-办法	lwif
-随着	bdud
-之中	ppkh
-心里	nyjf
-终于	xtgf
-大量	ddjg
-人物	wwtr
-共同	awmg
-下去	ghfc
-多少	qqit
-来说	goyu
-严重	gotg
-词条	ynts
-接受	ruep
-收入	nhty
-以来	nygo
-城邦	fddt
-声音	fnuj
-意见	ujmq
-过来	fpgo
-保持	wkrf
-今日	wyjj
-一条	ggts
-另外	klqh
-坚持	jcrf
-工人	aaww
-汽车	irlg
-而是	dmjg
-敌人	tdww
-商品	umkk
-说话	yuyt
-改变	ntyo
-先后	tfrg
-力量	ltjg
-事业	gkog
-开发	gant
-看见	rhmq
-战略	hklt
-标准	sfuw
-是否	jggi
-出去	bmfc
-今年	wyrh
-报道	rbut
-程度	tkya
-平均	gufq
-消息	iith
-还是	gijg
-安全	pvwg
-独立	qtuu
-注意	iyuj
-机会	smwf
-父亲	wqus
-此外	hxqh
-这次	ypuq
-经验	xccw
-采取	esbc
-喜欢	fkcq
-根本	svsg
-领域	wyfa
-具体	hwws
-联系	butx
-几乎	mttu
-干部	fguk
-印度	qgya
-如今	vkwy
-大会	ddwf
-不可	gisk
-兄弟	kqux
-德国	tflg
-阶段	bwwd
-感到	dggc
-无法	fqif
-宪法	ptif
-似乎	wntu
-原则	drmj
-真正	fhgh
-法规	iffw
-斗争	ufqv
-人类	wwod
-目的	hhrq
-造成	tfdn
-一位	ggwu
-反对	rccf
-儿子	qtbb
-相同	shmg
-以前	nyue
-著名	afqk
-众人	wwww
-建议	vfyy
-迅速	nfgk
-全面	wgdm
-正是	ghjg
-明显	jejo
-就是	yijg
-欧洲	aqiy
-首先	uttf
-作品	wtkk
-集中	wykh
-正式	ghaa
-朋友	eedc
-第二	txfg
-召开	vkga
-材料	sfou
-帮助	dteg
-飞机	nusm
-委员	tvkm
-行动	tffc
-保证	wkyg
-现象	gmqj
-特点	trhk
-现代	gmwa
-资料	uqou
-同志	mgfn
-行为	tfyl
-结束	xfgk
-介绍	wjxv
-只见	kwmq
-胜利	ettj
-认识	ywyk
-人数	wwov
-姑娘	vdvy
-积极	tkse
-家庭	peyt
-之前	ppue
-更加	gjlk
-回答	lktw
-武器	gakk
-那样	vfsu
-应用	yiet
-市长	ymta
-来到	gogc
-设立	ymuu
-产业	utog
-公路	wckh
-人才	wwft
-意义	ujyq
-台湾	ckiy
-容易	pwjq
-长期	taad
-一句	ggqk
-大道	ddut
-扩大	rydd
-官员	pnkm
-调整	ymgk
-考虑	ftha
-联合	buwg
-并且	uaeg
-自由	thmh
-仍然	weqd
-拥有	rede
-民主	nayg
-专门	fnuy
-附近	bwrp
-一天	gggd
-师父	jgwq
-结合	xfwg
-清楚	igss
-说明	yuje
-稳定	tqpg
-古代	dgwa
-三个	dgwh
-此时	hxjf
-电话	jnyt
-物质	trrf
-网络	mqxt
-利益	tjuw
-然而	qddm
-很大	tvdd
-不少	giit
-中学	khip
-开放	gayt
-调查	ymsj
-人家	wwpe
-重新	tgus
-广泛	yyit
-分为	wvyl
-知识	tdyk
-别人	klww
-综合	xpwg
-出口	bmkk
-动物	fctr
-速度	gkya
-总理	ukgj
-脸上	ewhh
-用于	etgf
-设备	ymtl
-女人	vvww
-股东	emai
-作出	wtbm
-展开	naga
-措施	rayt
-通常	ceip
-电子	jnbb
-方向	yytm
-导弹	nfxu
-小时	ihjf
-平民	guna
-行业	tfog
-特色	trqc
-货币	wxtm
-完善	pfud
-地理	fbgj
-功能	alce
-香港	tjia
-巨大	andd
-发表	ntge
-性质	ntrf
-母亲	xgus
-质量	rfjg
-命令	wgwy
-和平	tkgu
-监督	jthi
-一年	ggrh
-身体	tmws
-面前	dmue
-武功	gaal
-位置	wulf
-体系	wstx
-逐渐	epil
-指出	rxbm
-安排	pvrd
-权利	sctj
-训练	ykxa
-考试	ftya
-指挥	rxrp
-却是	fcjg
-指导	rxnf
-除了	bwbn
-发布	ntdm
-从而	wwdm
-感觉	dgip
-努力	vclt
-机场	smfn
-业务	ogtl
-植物	sftr
-同样	mgsu
-状态	uddy
-银行	qvtf
-书记	nnyn
-治疗	icub
-一阵	ggbl
-所谓	rnyl
-这位	ypwu
-反应	rcyi
-语言	ygyy
-忽然	qrqd
-当年	ivrh
-以下	nygh
-找到	ragc
-青年	gerh
-宣布	pgdm
-恢复	ndtj
-离开	ybga
-困难	lscw
-事件	gkwr
-哪里	kvjf
-实在	pudh
-见到	mqgc
-装备	uftl
-某些	afhx
-其它	adpx
-问道	ukut
-万元	dnfq
-平原	gudr
-经营	xcap
-多年	qqrh
-苏联	albu
-往往	tyty
-广场	yyfn
-解释	qeto
-队伍	bwwg
-因素	ldgx
-教授	ftre
-医院	atbp
-怎样	thsu
-男人	llww
-双方	ccyy
-减少	udit
-考生	fttg
-当地	ivfb
-多种	qqtk
-经常	xcip
-各地	tkfb
-生物	tgtr
-南京	fmyi
-海军	itpl
-真是	fhjg
-心想	nysh
-外国	qhlg
-财产	mfut
-全市	wgym
-本来	sggo
-两种	gmtk
-有效	deuq
-尤其	dnad
-一边	gglp
-用户	etyn
-方案	yypv
-进攻	fjat
-机械	smsa
-参与	cdgn
-充分	ycwv
-从事	wwgk
-尽管	nytp
-特殊	trgq
-一块	ggfn
-手段	rtwd
-生命	tgwg
-体育	wsyc
-居民	ndna
-生长	tgta
-内部	mwuk
-立即	uuvc
-简单	tuuj
-一片	ggth
-数量	ovjg
-有时	dejf
-开展	gana
-文学	yyip
-进来	fjgo
-决议	unyy
-显示	jofi
-属于	ntgf
-也许	bnyt
-气候	rnwh
-一只	ggkw
-来自	goth
-还要	gisv
-相信	shwy
-确定	dqpg
-投入	rmty
-一面	ggdm
-普通	uoce
-看着	rhud
-公元	wcfq
-去年	fcrh
-文章	yyuj
-手中	rtkh
-心理	nygj
-女儿	vvqt
-封建	ffvf
-图片	ltth
-创造	wbtf
-总统	ukxy
-促进	wkfj
-大型	ddga
-带来	gkgo
-教师	ftjg
-竟然	ujqd
-看来	rhgo
-若干	adfg
-反映	rcjm
-每个	txwh
-每天	txgd
-食品	wykk
-文明	yyje
-相当	shiv
-资金	uqqq
-变成	yodn
-放在	ytdh
-毫米	ypoy
-中间	khuj
-夫人	fwww
-相对	shcf
-大陆	ddbf
-职权	bksc
-西方	sgyy
-不再	gigm
-导致	nfgc
-对方	cfyy
-应当	yiiv
-讨论	yfyw
-即使	vcwg
-金融	qqgk
-爱国	eplg
-证明	ygje
-制造	rmtf
-构成	sqdn
-老师	ftjg
-担任	rjwt
-区域	aqfa
-一座	ggyw
-院长	bpta
-家里	pejf
-错误	qayk
-曾经	ulxc
-保障	wkbu
-创作	wbwt
-强调	xkym
-连续	lpxf
-运输	fclw
-看看	rhrh
-分钟	wvqk
-主张	ygxt
-商业	umog
-高速	ymgk
-真的	fhrq
-只能	kwce
-天下	gdgh
-贸易	qyjq
-不得	gitj
-境内	fumw
-体制	wsrm
-因而	lddm
-例如	wgvk
-财政	mfgh
-肯定	hepg
-成绩	dnxg
-一件	ggwr
-音乐	ujqi
-建成	vfdn
-回去	lkfc
-难道	cwut
-接着	ruud
-正确	ghdq
-以为	nyyl
-处于	thgf
-大臣	ddah
-高度	ymya
-复杂	tjvs
-社区	pyaq
-身子	tmbb
-回到	lkgc
-媒体	vaws
-地面	fbdm
-分子	wvbb
-意思	ujln
-总是	ukjg
-东北	aiux
-销售	qiwy
-弟子	uxbb
-未来	figo
-等等	tftf
-重视	tgpy
-压力	dflt
-良好	yvvb
-到底	gcyq
-各个	tkwh
-最终	jbxt
-战斗	hkuf
-航空	tepw
-之下	ppgh
-一级	ggxe
-里面	jfdm
-数学	ovip
-毕业	xxog
-竞争	ukqv
-宗教	pfft
-比例	xxwg
-适应	tdyi
-健康	wvyv
-她们	vbwu
-出版	bmth
-故事	dtgk
-责任	gmwt
-面对	dmcf
-将军	uqpl
-粮食	oywy
-政权	ghsc
-各国	tklg
-类型	odga
-发挥	ntrp
-听说	kryu
-遗址	khfh
-南北	fmux
-立刻	uuyn
-亚洲	goiy
-正常	ghip
-女子	vvbb
-培养	fuud
-就业	yiog
-大小	ddih
-明确	jedq
-优势	wdrv
-好像	vbwq
-一场	ggfn
-至少	gcit
-人士	wwfg
-晚上	jqhh
-确实	dqpu
-特征	trtg
-贡献	amfm
-实验	pucw
-高级	ymxe
-想到	shgc
-关键	udqv
-一眼	gghv
-难以	cwny
-周围	mflf
-样子	subb
-本报	sgrb
-一张	ggxt
-相互	shgx
-部长	ukta
-身边	tmlp
-广州	yyyt
-之外	ppqh
-蒙古	apdg
-发出	ntbm
-只有	kwde
-比如	xxvk
-理解	gjqe
-刚才	mqft
-不足	gikh
-南部	fmuk
-程序	tkyc
-加上	lkhh
-西北	sgux
-父母	wqxg
-适当	tdiv
-留下	qygh
-研制	dgrm
-省级	itxe
-发达	ntdp
-东部	aiuk
-品种	kktk
-愿意	druj
-道路	utkh
-类似	odwn
-空军	pwpl
-行使	tfwg
-细胞	xleq
-空间	pwuj
-形势	garv
-西部	sguk
-小说	ihyu
-妇女	vvvv
-股份	emww
-维护	xwry
-公布	wcdm
-名称	qktq
-只好	kwvb
-检查	swsj
-化学	wxip
-矛盾	cbrf
-儿童	qtuj
-任期	wtad
-本身	sgtm
-规划	fwaj
-状况	uduk
-一家	ggpe
-实践	pukh
-成长	dnta
-需求	fdfi
-多次	qquq
-分配	wvsg
-一致	gggc
-西南	sgfm
-一时	ggjf
-贵族	khyt
-既然	vcqd
-高兴	ymiw
-美元	ugfq
-全体	wgws
-统计	xyyf
-事务	gktl
-体现	wsgm
-名字	qkpb
-不了	gibn
-产量	utjg
-始终	vcxt
-最近	jbrp
-长安	tapv
-英雄	amdc
-同意	mguj
-从此	wwhx
-一步	gghi
-海拔	itrd
-掌握	iprn
-普遍	uoyn
-宜昌	pejj
-攻击	atfm
-招生	rvtg
-天然	gdqd
-不错	giqa
-亲自	usth
-一旦	ggjg
-相应	shyi
-观点	cmhk
-实力	pult
-中部	khuk
-听到	krgc
-再次	gmuq
-更是	gjjg
-突出	pwbm
-条例	tswg
-全球	wggf
-经历	xcdl
-进步	fjhi
-上述	hhsy
-抗日	ryjj
-绝对	xqcf
-修改	whnt
-优秀	wdte
-至于	gcgf
-河流	isiy
-发动	ntfc
-审议	pjyy
-计算	yfth
-数据	ovrn
-关注	udiy
-女性	vvnt
-职工	bkaa
-必要	ntsv
-朝廷	fjtf
-表明	geje
-不肯	gihe
-主持	ygrf
-常常	ipip
-遇到	jmgc
-在于	dhgf
-消费	iixj
-欢迎	cqqb
-想起	shfh
-日子	jjbb
-条约	tsxq
-协议	flyy
-公开	wcga
-限制	bvrm
-现实	gmpu
-武昌	gajj
-强烈	xkgq
-早已	jhnn
-衣服	yeeb
-太阳	dybj
-河南	isfm
-广大	yydd
-正在	ghdh
-胖子	eubb
-态度	dyya
-很快	tvnn
-不好	givb
-交流	uqiy
-万吨	dnkg
-森林	ssss
-前面	uedm
-显然	joqd
-有所	dern
-闯王	ucgg
-撤销	ryqi
-千米	tfoy
-破坏	dhfg
-双手	ccrt
-江南	iafm
-阅读	uuyf
-工资	aauq
-上面	hhdm
-纷纷	xwxw
-北部	uxuk
-种类	tkod
-无论	fqyw
-深入	ipty
-推进	rwfj
-石油	dgim
-进去	fjfc
-地上	fbhh
-效果	uqjs
-团体	lfws
-年轻	rhlc
-核心	syny
-倘若	wiad
-电影	jnjy
-纺织	xyxk
-形象	gaqj
-果然	jsqd
-意识	ujyk
-常务	iptl
-规律	fwtv
-显得	jotj
-平等	gutf
-山东	mmai
-加工	lkaa
-只是	kwjg
-两侧	gmwm
-列为	gqyl
-加入	lkty
-解放	qeyt
-逐步	ephi
-担心	rjny
-表面	gedm
-下降	ghbt
-电视	jnpy
-工具	aahw
-第三	txdg
-网站	mquh
-制作	rmwt
-设施	ymyt
-天津	gdiv
-成果	dnjs
-各项	tkad
-预算	cbth
-寡头	pdud
-紧张	jcxt
-手机	rtsm
-势力	rvlt
-记载	ynfa
-外交	qhuq
-搜狐	rvqt
-众多	wwqq
-一把	ggrc
-年底	rhyq
-文物	yytr
-宣传	pgwf
-日常	jjip
-高中	ymkh
-严格	gost
-令人	wyww
-不管	gitp
-满足	iakh
-推动	rwfc
-下午	ghtf
-地下	fbgh
-昨天	jtgd
-随后	bdrg
-认真	ywfh
-大声	ddfn
-生于	tggf
-成员	dnkm
-明代	jewa
-创新	wbus
-不久	giqy
-遭到	gmgc
-培训	fuyk
-持续	rfxf
-数字	ovpb
-游客	iypt
-试验	yacw
-阶级	bwxe
-似的	wnrq
-发射	nttm
-文字	yypb
-天门	gduy
-来看	gorh
-城楼	fdso
-公园	wclf
-空中	pwkh
-软件	lqwr
-事实	gkpu
-习惯	nunx
-地球	fbgf
-一半	gguf
-刚刚	mqmq
-手里	rtjf
-武装	gauf
-不但	giwj
-任免	wtqk
-不想	gish
-距离	khyb
-永远	ynfq
-年间	rhuj
-互相	gxsh
-一段	ggwd
-妻子	gvbb
-妈妈	vcvc
-眼前	hvue
-元年	fqrh
-对象	cfqj
-听见	krmq
-四个	lhwh
-变得	yotj
-彻底	tayq
-毕竟	xxuj
-快速	nngk
-朝鲜	fjqg
-失败	rwmt
-临时	jtjf
-一批	ggrx
-利润	tjiu
-多数	qqov
-那时	vfjf
-路线	khxg
-其余	adwt
-划分	ajwv
-唯一	kwgg
-坦克	fjdq
-尚书	imnn
-概念	svwy
-来源	goid
-降低	btwq
-充满	ycia
-四大	lhdd
-慢慢	njnj
-老人	ftww
-符合	twwg
-小姐	ihve
-哲学	rrip
-轻轻	lclc
-北平	uxgu
-老板	ftsr
-这件	ypwr
-同学	mgip
-校名	suqk
-山地	mmfb
-美军	ugpl
-那种	vftk
-率领	yxwy
-录取	vibc
-矿产	dyut
-当下	ivgh
-别的	klrq
-小龙	ihdx
-咨询	uqyq
-几天	mtgd
-伸手	wjrt
-各自	tkth
-自身	thtm
-判断	udon
-哥哥	sksk
-失去	rwfc
-危机	qdsm
-后面	rgdm
-配合	sgwg
-大事	ddgk
-增强	fuxk
-卫生	bgtg
-金属	qqnt
-成本	dnsg
-文件	yywr
-加以	lkny
-丈夫	dyfw
-财富	mfpg
-必然	ntqd
-首都	utft
-此后	hxrg
-购买	mqnu
-东南	aifm
-公共	wcaw
-医生	attg
-素质	gxrf
-改善	ntud
-打击	rsfm
-生态	tgdy
-广东	yyai
-人生	wwtg
-一带	gggk
-改为	ntyl
-方针	yyqf
-红色	xaqc
-承认	bdyw
-英语	amyg
-象征	qjtg
-少数	itov
-设置	ymlf
-爆发	ojnt
-飞行	nutf
-具备	hwtl
-学者	ipft
-否则	gimj
-对外	cfqh
-性命	ntwg
-故道	dtut
-随即	bdvc
-疾病	utug
-不禁	giss
-大明	ddje
-百姓	djvt
-缺乏	rmtp
-院校	bpsu
-功夫	alfw
-成分	dnwv
-伟大	wfdd
-投票	rmsf
-闭会	ufwf
-完整	pfgk
-起义	fhyq
-机制	smrm
-几年	mtrh
-打开	rsga
-考察	ftpw
-答应	twyi
-演出	ipbm
-相比	shxx
-最早	jbjh
-观念	cmwy
-营养	apud
-运用	fcet
-行者	tfft
-职务	bktl
-面临	dmjt
-本人	sgww
-吸收	kenh
-流通	iyce
-现场	gmfn
-协调	flym
-抓住	rrwy
-海洋	itiu
-对手	cfrt
-承担	bdrj
-交易	uqjq
-原料	drou
-针对	qfcf
-外面	qhdm
-争取	qvbc
-发育	ntyc
-桃花	siaw
-事物	gktr
-风险	mqbw
-奴隶	vcvi
-少年	itrh
-召集	vkwy
-叫做	knwd
-推出	rwbm
-教学	ftip
-作者	wtft
-化工	wxaa
-论坛	ywff
-出席	bmya
-贷款	waff
-东方	aiyy
-再也	gmbn
-理想	gjsh
-游行	iytf
-究竟	pwuj
-下面	ghdm
-危险	qdbw
-年均	rhfq
-平衡	gutq
-上来	hhgo
-清代	igwa
-非洲	djiy
-寻找	vfra
-和尚	tkim
-不必	gint
-兴趣	iwfh
-温度	ijya
-转移	lftq
-团结	lfxf
-国民	lgna
-省长	itta
-患者	kkft
-机器	smkk
-病人	ugww
-宝玉	pggy
-威胁	dgel
-而言	dmyy
-两次	gmuq
-奇怪	dsnc
-相反	shrc
-厘米	djoy
-估计	wdyf
-情绪	ngxf
-密切	pnav
-出发	bmnt
-招聘	rvbm
-一道	ggut
-传播	wfrt
-合理	wggj
-民间	nauj
-点头	hkud
-大约	ddxq
-依据	wyrn
-放心	ytny
-国外	lgqh
-厉害	ddpd
-北方	uxyy
-改造	nttf
-明朝	jefj
-固定	ldpg
-太监	dyjt
-停止	wyhh
-移动	tqfc
-一支	ggfc
-强大	xkdd
-秘密	tnpn
-前提	uerj
-避免	nkqk
-休息	wsth
-街道	tfut
-高校	ymsu
-推荐	rwad
-夏天	dhgd
-伊朗	wvyv
-产值	utwf
-并非	uadj
-模式	saaa
-演习	ipnu
-性能	ntce
-年龄	rhhw
-感情	dgng
-审判	pjud
-维持	xwrf
-费用	xjet
-志愿	fndr
-尚未	imfi
-已有	nnde
-客户	ptyn
-极大	sedd
-适合	tdwg
-王朝	ggfj
-校长	suta
-更新	gjus
-这儿	ypqt
-首次	utuq
-宫廷	pktf
-整体	gkws
-自治	thic
-四川	lhkt
-区别	aqkl
-及时	eyjf
-门外	uyqh
-左手	dart
-风格	mqst
-巴黎	cntq
-江陵	iabf
-早期	jhad
-员工	kmaa
-上升	hhta
-版本	thsg
-成熟	dnyb
-几句	mtqk
-南方	fmyy
-涉及	ihey
-两年	gmrh
-空气	pwrn
-国防	lgby
-旁边	uplp
-药物	axtr
-操作	rkwt
-方便	yywg
-全身	wgtm
-门口	uykk
-有点	dehk
-不在	gidh
-局面	nndm
-银子	qvbb
-突破	pwdh
-由此	mhhx
-建造	vftf
-各类	tkod
-士兵	fgrg
-一份	ggww
-康熙	yvah
-两位	gmwu
-转化	lfwx
-议会	yywf
-心情	nyng
-回头	lkud
-帝国	uplg
-十年	fgrh
-县级	egxe
-独特	qttr
-湖南	idfm
-公斤	wcrt
-依然	wyqd
-微笑	tmtt
-标志	sffn
-棉花	sraw
-战士	hkfg
-规范	fwai
-平台	guck
-成就	dnyi
-升级	taxe
-新型	usga
-交换	uqrq
-拒绝	raxq
-证券	ygud
-直播	fhrt
-合同	wgmg
-日期	jjad
-战场	hkfn
-高考	ymft
-喝道	kjut
-崇祯	mppy
-股权	emsc
-渐渐	ilil
-明清	jeig
-军警	plaq
-一番	ggto
-废除	ynbw
-走向	fhtm
-从来	wwgo
-平时	gujf
-反而	rcdm
-多个	qqwh
-举办	iwlw
-算是	thjg
-简称	tutq
-装置	uflf
-公主	wcyg
-此次	hxuq
-沿海	imit
-痛苦	ucad
-重庆	tgyd
-加速	lkgk
-不行	gitf
-主动	ygfc
-转变	lfyo
-损失	rkrw
-市民	ymna
-之上	pphh
-发行	nttf
-接近	rurp
-重建	tgvf
-备案	tlpv
-医疗	atub
-一生	ggtg
-使得	wgtj
-湖泊	idir
-国有	lgde
-加快	lknn
-审查	pjsj
-生存	tgdh
-评价	ygww
-规则	fwmj
-记录	ynvi
-工厂	aadg
-脸色	ewqc
-累计	lxyf
-祖国	pylg
-阳光	bjiq
-右手	dkrt
-时刻	jfyn
-著作	afwt
-客人	ptww
-以外	nyqh
-医学	atip
-给予	xwcb
-原始	drvc
-学科	iptu
-典型	maga
-仪式	wyaa
-电脑	jney
-上去	hhfc
-医药	atax
-天安门	gpuy
-委员会	tkwf
-湖北省	iuit
-国务院	ltbp
-自治区	tiaq
-进一步	fghi
-发言人	nyww
-国民党	lnip
-为什么	ywtc
-毛泽东	tiai
-越来越	fgfh
-检察院	spbp
-外交部	quuk
-常委会	itwf
-第一次	tguq
-计算机	ytsm
-现代化	gwwx
-俄罗斯	wlad
-秘书长	tnta
-是不是	jgjg
-李自成	stdn
-委员长	tkta
-大部分	duwv
-新华社	uwpy
-一系列	gtgq
-检察长	spta
-意大利	udtj
-发布会	ndwf
-办公室	lwpg
-村委会	stwf
-邓小平	cigu
-大规模	dfsa
-大学生	ditg
-近年来	rrgo
-负责人	qgww
-候选人	wtww
-开发区	gnaq
-大多数	dqov
-统治者	xift
-共产党	auip
-劳动力	aflt
-北京市	uyym
-毕业生	xotg
-武当山	gimm
-解放军	qypl
-博物馆	ftqn
-不由得	gmtj
-一会儿	gwqt
-之所以	prny
-研究所	dprn
-消费者	ixft
-不得不	gtgi
-周恩来	mlgo
-老百姓	fdvt
-联合国	bwlg
-人民币	wntm
-所在地	rdfb
-一方面	gydm
-根据地	srfb
-西班牙	sgah
-宜昌市	pjym
-忍不住	vgwy
-蒋介石	awdg
-科学家	tipe
-没想到	isgc
-党中央	ikmd
-袁世凯	famn
-太平洋	dgiu
-总面积	udtk
-伊拉克	wrdq
-汉白玉	irgy
-洞庭湖	iyid
-发动机	nfsm
-资本家	uspe
-差不多	ugqq
-战斗机	husm
-董事会	agwf
-总产值	uuwf
-江泽民	iina
-共和国	atlg
-有没有	dide
-行政区	tgaq
-一下子	ggbb
-怎么样	ttsu
-实验室	pcpg
-流通股	icem
-基督教	ahft
-亚热带	grgk
-旅行社	ytpy
-投资者	ruft
-只不过	kgfp
-孙中山	bkmm
-主持人	yrww
-神农架	pplk
-没什么	iwtc
-蛋白质	nrrf
-加拿大	lwdd
-一个个	gwwh
-南京市	fyym
-以色列	nqgq
-旅游区	yiaq
-生产力	tult
-中国队	klbw
-老太太	fddy
-平方米	gyoy
-俱乐部	wquk
-直升机	ftsm
-一口气	gkrn
-维生素	xtgx
-年轻人	rlww
-说不定	ygpg
-侵略者	wlft
-上海市	hiym
-总经理	uxgj
-国内外	lmqh
-阿拉伯	brwr
-一辈子	gdbb
-莫斯科	aatu
-研究生	dptg
-互联网	gbmq
-司令部	nwuk
-指挥部	rruk
-紫禁城	hsfd
-老人家	fwpe
-运动员	ffkm
-称之为	tpyl
-东南亚	afgo
-总司令	unwy
-总产量	uujg
-花岗岩	ammd
-黄宗羲	apug
-房地产	yfut
-殖民地	gnfb
-北京城	uyfd
-农产品	pukk
-可能性	scnt
-工程师	atjg
-风景区	mjaq
-图书馆	lnqn
-核武器	sgkk
-经济学	xiip
-手工业	raog
-大西洋	dsiu
-零部件	fuwr
-天主教	gyft
-长安街	tptf
-积极性	tsnt
-斯巴达	acdp
-黑龙江	ldia
-目的地	hrfb
-农作物	pwtr
-政治家	gipe
-不能不	gcgi
-解放区	qyaq
-内蒙古	madg
-黄金周	aqmf
-新加坡	ulfh
-立法权	uisc
-公务员	wtkm
-卖国贼	flma
-看上去	rhfc
-信息化	wtwx
-奥地利	tftj
-李大钊	sdqj
-联合会	bwwf
-两院制	gbrm
-司令员	nwkm
-国防部	lbuk
-打电话	rjyt
-墨西哥	lssk
-地中海	fkit
-有助于	degf
-穆斯林	tass
-电视台	jpck
-干什么	fwtc
-大别山	dkmm
-心理学	ngip
-长方形	tyga
-反革命	rawg
-产业化	uowx
-劳动者	afft
-苏维埃	axfc
-奥运会	tfwf
-有时候	djwh
-博览会	fjwf
-青少年	girh
-天然气	gqrn
-战斗力	hult
-教育部	fyuk
-利润率	tiyx
-少林寺	isff
-物理学	tgip
-县级市	exym
-土耳其	fbad
-来不及	ggey
-出版社	btpy
-办事处	lgth
-消费品	ixkk
-想不到	sggc
-建筑物	vttr
-不仅仅	gwwc
-当事人	igww
-艾滋病	aiug
-混凝土	iuff
-火车站	oluh
-座谈会	yywf
-研究员	dpkm
-飞行员	ntkm
-工业化	aowx
-总书记	unyn
-陕西省	bsit
-尽可能	nsce
-董事长	agta
-无线电	fxjn
-诸葛亮	yayp
-爆米花	ooaw
-对不起	cgfh
-省辖市	ilym
-印度洋	qyiu
-比利时	xtjf
-自行车	ttlg
-中小学	kiip
-康有为	ydyl
-小孩子	ibbb
-艺术家	aspe
-刘少奇	yids
-菲律宾	atpr
-桥头堡	suwk
-接下来	rggo
-审判员	pukm
-哈尔滨	kqip
-科学院	tibp
-马克思	cdln
-运营商	faum
-安徽省	ptit
-女孩子	vbbb
-进出口	fbkk
-阿根廷	bstf
-原材料	dsou
-自动化	tfwx
-法西斯	isad
-江苏省	iait
-华盛顿	wdgb
-参议院	cybp
-小伙子	iwbb
-核潜艇	site
-增长率	ftyx
-工商业	auog
-表决权	gusc
-笔记本	tysg
-哲学家	ripe
-广东省	yait
-残疾人	guww
-自然界	tqlw
-锦标赛	qspf
-水产品	iukk
-比如说	xvyu
-葡萄牙	aaah
-小姑娘	ivvy
-八路军	wkpl
-匈牙利	qatj
-研究院	dpbp
-畜牧业	ytog
-半导体	unws
-轰炸机	losm
-中世纪	kaxn
-稳定性	tpnt
-他妈的	wvrq
-制造业	rtog
-决不能	ugce
-四人帮	lwdt
-机械化	sswx
-了不起	bgfh
-河北省	iuit
-全国性	wlnt
-同义词	myyn
-斯大林	adss
-游击队	ifbw
-英格兰	asuf
-染色体	iqws
-参谋长	cyta
-阿富汗	bpif
-水电站	ijuh
-黄鹤楼	apso
-一家人	gpww
-重庆市	tyym
-来得及	gtey
-政治局	ginn
-外国人	qlww
-陈水扁	biyn
-是因为	jlyl
-古希腊	dqea
-希特勒	qtaf
-四川省	lkit
-山海关	miud
-微生物	tttr
-翰林院	fsbp
-亚运会	gfwf
-一路上	gkhh
-催化剂	wwyj
-陈独秀	bqte
-以至于	nggf
-设计师	yyjg
-用不着	egud
-老头子	fubb
-维也纳	xbxm
-锦衣卫	qybg
-处理器	tgkk
-创造性	wtnt
-志愿者	fdft
-体育场	wyfn
-开玩笑	ggtt
-记者会	yfwf
-看不到	rggc
-浙江省	iiit
-百分点	dwhk
-山东省	mait
-轻工业	laog
-犹太人	qdww
-身份证	twyg
-所有权	rdsc
-反动派	rfir
-乌克兰	qduf
-所有制	rdrm
-党组织	ixxk
-纺织品	xxkk
-伊斯兰	wauf
-选举权	tisc
-研讨会	dywf
-注意力	iult
-生物学	ttip
-事务所	gtrn
-历史性	dknt
-爱尔兰	equf
-主教练	yfxa
-大中型	dkga
-秦始皇	dvrg
-舍不得	wgtj
-江西省	isit
-显示器	jfkk
-望远镜	yfqu
-三角洲	dqiy
-英特尔	atqi
-添加剂	ilyj
-中下游	kgiy
-野战军	jhpl
-影响力	jklt
-吸引力	kxlt
-新西兰	usuf
-服务器	etkk
-叙利亚	wtgo
-柬埔寨	gfpf
-台湾省	ciit
-数据库	oryl
-恨不得	ngtj
-抗生素	rtgx
-运输机	flsm
-分水岭	wimw
-交易所	ujrn
-好不好	vgvb
-纪念馆	xwqn
-训练班	yxgy
-海岸线	imxg
-海内外	imqh
-詹姆斯	qvad
-禁不住	sgwy
-企业家	wope
-会议室	wypg
-通讯社	cypy
-小时候	ijwh
-土特产	ftut
-黄庭坚	ayjc
-公安局	wpnn
-电视剧	jpnd
-护卫舰	rbte
-德意志	tufn
-基金会	aqwf
-十二月	ffee
-大跃进	dkfj
-糖尿病	onug
-针对性	qcnt
-排水量	rijg
-看起来	rfgo
-分数线	woxg
-求职者	fbft
-会计师	wyjg
-奖学金	uiqq
-发源地	nifb
-京广线	yyxg
-胡锦涛	dqid
-小学生	iitg
-招聘会	rbwf
-笑嘻嘻	tkkf
-公积金	wtqq
-无记名	fyqk
-驾驶员	lckm
-新纪元	uxfq
-思想家	lspe
-半决赛	uupf
-海南省	ifit
-辽宁省	bpit
-多媒体	qvws
-到时候	gjwh
-大自然	dtqd
-第一步	tghi
-苏格兰	asuf
-自卫队	tbbw
-新四军	ulpl
-张学良	xiyv
-受不了	egbn
-服务业	etog
-内分泌	mwin
-传染病	wiug
-安理会	pgwf
-不得已	gtnn
-工业园	aolf
-班主任	gywt
-山西省	msit
-柏拉图	srlt
-心脏病	neug
-生产线	tuxg
-福建省	pvit
-张之洞	xpim
-应聘者	ybft
-死亡率	gyyx
-立方米	uyoy
-老年人	frww
-价值观	wwcm
-原子弹	dbxu
-吞吐量	gkjg
-总公司	uwng
-粉红色	oxqc
-云南省	ffit
-怪不得	ngtj
-法兰西	iusg
-装甲兵	ulrg
-志愿军	fdpl
-摩洛哥	yisk
-责任感	gwdg
-海南岛	ifqy
-留学生	qitg
-核电站	sjuh
-南美洲	fuiy
-众议院	wybp
-不在乎	gdtu
-装甲车	ullg
-高分子	ywbb
-无人机	fwsm
-洛杉矶	isdm
-传感器	wdkk
-革命家	awpe
-井冈山	fmmm
-慕尼黑	anlf
-奴隶制	vvrm
-椭圆形	slga
-大理石	dgdg
-三角形	dqga
-原子核	dbsy
-主人公	ywwc
-新世纪	uaxn
-动植物	fstr
-相对论	scyw
-天津市	giym
-广州市	yyym
-理事长	ggta
-一时间	gjuj
-人行道	wtut
-办公厅	lwds
-教科书	ftnn
-博士生	fftg
-巡洋舰	vite
-太阳能	dbce
-考古学	fdip
-指挥员	rrkm
-打交道	ruut
-全方位	wywu
-侦察机	wpsm
-本科生	sttg
-普鲁士	uqfg
-多样化	qswx
-化妆品	wukk
-领导者	wnft
-电视机	jpsm
-多元化	qfwx
-迫击炮	rfoq
-老天爷	fgwq
-胡萝卜	dahh
-指挥官	rrpn
-汪精卫	iobg
-葡萄酒	aais
-刘伯承	ywbd
-责任制	gwrm
-羽毛球	ntgf
-爱好者	evft
-日内瓦	jmgn
-医学院	aibp
-马其顿	cagb
-一等奖	gtuq
-电气化	jrwx
-主席台	yyck
-社会主义	pwyy
-有限公司	dbwn
-帝国主义	ulyy
-资本主义	usyy
-资产阶级	uubx
-高速公路	ygwk
-无产阶级	fubx
-澳大利亚	idtg
-辛亥革命	uyaw
-知识分子	tywb
-八国联军	wlbp
-哈哈大笑	kkdt
-计划生育	yaty
-也就是说	byjy
-无论如何	fyvw
-名胜古迹	qedy
-绝大多数	xdqo
-巴基斯坦	caaf
-工人阶级	awbx
-绝大部分	xduw
-大展宏图	dnpl
-大吃一惊	dkgn
-五四运动	glff
-九曲回肠	vmle
-共产主义	auyy
-实事求是	pgfj
-共产党员	auik
-成吉思汗	dfli
-巴勒斯坦	caaf
-不好意思	gvul
-中华民国	kwnl
-马来西亚	cgsg
-名副其实	qgap
-清清楚楚	iiss
-操作系统	rwtx
-各种各样	ttts
-胡说八道	dywu
-浩浩荡荡	iiaa
-前所未有	urfd
-苏格拉底	asry
-长治久安	tiqp
-无可奈何	fsdw
-南斯拉夫	farf
-四通八达	lcwd
-不知不觉	gtgi
-莫名其妙	aqav
-引人注目	xwih
-四面八方	ldwy
-成千上万	dthd
-航空母舰	tpxt
-比比皆是	xxxj
-焕然一新	oqgu
-独立自主	quty
-统治阶级	xibx
-爱因斯坦	elaf
-罗马尼亚	lcng
-文责自负	ygtq
-一模一样	gsgs
-黑龙江省	ldii
-山珍海味	mgik
-二氧化碳	frwd
-民族主义	nyyy
-中产阶级	kubx
-西伯利亚	swtg
-五星红旗	gjxy
-冲积平原	utgd
-不由自主	gmty
-非同小可	dmis
-现实主义	gpyy
-鸦片战争	athq
-亚历山大	gdmd
-流芳百世	iada
-委内瑞拉	tmgr
-神来之笔	pgpt
-干干净净	ffuu
-同工同酬	mams
-截然不同	fqgm
-爱国主义	elyy
-一动不动	gfgf
-小心翼翼	innn
-通货膨胀	cwee
-意识形态	uygd
-拨乱反正	rtrg
-保加利亚	wltg
-波罗的海	ilri
-大大小小	ddii
-咬牙切齿	kaah
-至关重要	guts
-人际关系	wbut
-可想而知	ssdt
-除此之外	bhpq
-法兰克福	iudp
-实实在在	ppdd
-不动声色	gffq
-股份公司	ewwn
-一国两制	glgr
-必不可少	ngsi
-目瞪口呆	hhkk
-大街小巷	dtia
-穆罕默德	tplt
-不可思议	gsly
-拉丁美洲	rsui
-尼日利亚	njtg
-乌鲁木齐	qqsy
-至高无上	gyfh
-轰轰烈烈	llgg
-千方百计	tydy
-恭恭敬敬	aaaa
-一言不发	gygn
-自然而然	tqdq
-哥伦比亚	swxg
-十月革命	feaw
-与众不同	gwgm
-唯物主义	ktyy
-艰苦奋斗	cadu
-自言自语	tyty
-众星捧月	wjre
-名列前茅	qgua
-九五之尊	vgpu
-息息相关	ttsu
-面面相觑	ddsh
-肆无忌惮	dfnn
-不约而同	gxdm
-全心全意	wnwu
-总工程师	uatj
-得天独厚	tgqd
-金碧辉煌	qgio
-一成不变	gdgy
-断断续续	ooxx
-独树一帜	qsgm
-马列主义	cgyy
-理所当然	griq
-阿弥陀佛	bxbw
-接连不断	rlgo
-耶路撒冷	bkru
-五角大楼	gqds
-耀武扬威	igrd
-人道主义	wuyy
-声势浩大	frid
-恍然大悟	nqdn
-或多或少	aqai
-中流砥柱	kids
-唯心主义	knyy
-圣彼得堡	cttw
-众所周知	wrmt
-情不自禁	ngts
-多种多样	qtqs
-换句话说	rqyy
-挺身而出	rtdb
-自由主义	tmyy
-克罗地亚	dlfg
-惊心动魄	nnfr
-所作所为	rwry
-卧薪尝胆	aaie
-生死存亡	tgdy
-不在话下	gdyg
-出奇制胜	bdre
-平起平坐	gfgw
-显而易见	jdjm
-一清二楚	gifs
-许许多多	yyqq
-出其不意	bagu
-马到成功	cgda
-斯里兰卡	ajuh
-不知所措	gtrr
-迷迷糊糊	oooo
-不以为然	gnyq
-殖民主义	gnyy
-当务之急	itpq
-各家各户	tpty
-依山傍水	wmwi
-最后通牒	jrct
-迫不及待	rget
-垂帘听政	tpkg
-有钱有势	dqdr
-不计其数	gyao
-南水北调	fiuy
-死里逃生	gjit
-一天到晚	gggj
-各司其职	tnab
-佛罗伦萨	wlwa
-一拥而上	grdh
-此起彼伏	hftw
-手忙脚乱	rnet
-光彩夺目	iedh
-莎士比亚	afxg
-有史以来	dkng
-封建主义	fvyy
-回味无穷	lkfp
-荷枪实弹	aspx
-不知去向	gtft
-甲午战争	lthq
-慷慨激昂	nnij
-全军覆没	wpsi
-兴高采烈	iyeg
-独具一格	qhgs
-丝绸之路	xxpk
-出人意料	bwuo
-新陈代谢	ubwy
-不可一世	gsga
-自由自在	tmtd
-举世闻名	iauq
-热泪盈眶	rieh
-无影无踪	fjfk
-新婚燕尔	uvaq
-光合作用	iwwe
-斯洛伐克	aiwd
-抗美援朝	rurf
-乱七八糟	tawo
-微不足道	tgku
-名闻遐迩	qunq
-大兴安岭	dipm
-卖国求荣	flfa
-人杰地灵	wsfv
-无能为力	fcyl
-三顾茅庐	dday
-自给自足	txtk
-别有风味	kdmk
-融为一体	gygw
-布鲁塞尔	dqpq
-星罗棋布	jlsd
-密密麻麻	ppyy
-突如其来	pvag
-这就是说	yyjy
-塞尔维亚	pqxg
-措手不及	rrge
-奥林匹克	tsad
-全神贯注	wpxi
-自力更生	tlgt
-安邦治国	pdil
-坚定不移	jpgt
-为所欲为	yrwy
-老老实实	ffpp
-各式各样	tats
-层出不穷	nbgp
-胡思乱想	dlts
-西双版纳	sctx
-总而言之	udyp
-心满意足	niuk
-赤手空拳	frpu
-里里外外	jjqq
-想方设法	syyi
-怒不可遏	vgsj
-明明白白	jjrr
-家喻户晓	pkyj
-卓有成效	hddu
-上上下下	hhgg
-硬着头皮	duuh
-上层建筑	hnvt
-近在咫尺	rdnn
-呼和浩特	ktit
-摇摇晃晃	rrjj
-目不转睛	hglh
-从容不迫	wpgr
-荡然无存	aqfd
-隐隐约约	bbxx
-当之无愧	ipfn
-气喘吁吁	rkkk
-世界大战	aldh
-大专院校	dfbs
-粉身碎骨	otdm
-一心一意	gngu
-战战兢兢	hhdd
-无与伦比	fgwx
-全副武装	wggu
-久而久之	qdqp
-千家万户	tpdy
-阿拉斯加	bral
-束手无策	grft
-鬼鬼祟祟	rrbb
-接踵而来	rkdg
-灵机一动	vsgf
-大惊失色	dnrq
-审时度势	pjyr
-热血沸腾	rtie
-慈禧太后	updr
-心甘情愿	nand
-一本正经	gsgx
-普普通通	uucc
-骇人听闻	cwku
-亚美尼亚	gung
-发号施令	nkyw
-源源不断	iigo
-恐怖主义	anyy
-百科全书	dtwn
-惊天动地	ngff
-一无所知	gfrt
-心旷神怡	njpn
-大惊小怪	dnin
-喜出望外	fbyq
-安史之乱	pkpt
-黄埔军校	afps
-大兴土木	difs
-脱颖而出	exdb
-津巴布韦	icdf
-义愤填膺	ynfy
-匪夷所思	agrl
-莫桑比克	acxd
-兴致勃勃	igff
-念念不忘	wwgy
-理直气壮	gfru
-时至今日	jgwj
-歌功颂德	sawt
-横冲直撞	sufr
-巴塞罗那	cplv
-无济于事	figg
-不言而喻	gydk
-血肉之躯	tmpt
-随心所欲	bnrw
-玻利维亚	gtxg
-行之有效	tpdu
-绝无仅有	xfwd
-厄瓜多尔	drqq
-一如既往	gvvt
-举足轻重	iklt
-轩然大波	lqdi
-手足无措	rkfr
-同归于尽	mjgn
-忧心忡忡	nnnn
-独一无二	qgff
-机会主义	swyy
-克什米尔	dwoq
-此时此刻	hjhy
-富丽堂皇	pgir
-七零八落	afwa
-一举成名	gidq
-形形色色	ggqq
-口口声声	kkff
-不慌不忙	gngn
-错综复杂	qxtv
-格鲁吉亚	sqfg
-素不相识	ggsy
-没完没了	ipib
-你死我活	wgti
-医疗保险	auwb
-声东击西	fafs
-恻隐之心	nbpn
-翻来覆去	tgsf
-万无一失	dfgr
-大声疾呼	dfuk
-脱口而出	ekdb
-亲眼目睹	uhhh
-将信将疑	uwux
-恰到好处	ngvt
-聪明才智	bjft
-轻而易举	ldji
-全力以赴	wlnf
-结结巴巴	xxcc
-摩托罗拉	yrlr
-遍体鳞伤	ywqw
-不复存在	gtdd
-别有用心	kden
-戒备森严	atsg
-三国演义	dliy
-咄咄逼人	kkgw
-名不虚传	qghw
-针锋相对	qqsc
-辛辛苦苦	uuaa
-应运而生	yfdt
-阿尔泰山	bqdm
-斩钉截铁	lqfq
-同仇敌忾	mwtn
-维多利亚	xqtg
-未成年人	fdrw
-墨索里尼	lfjn
-军国主义	plyy
-取而代之	bdwp
-一氧化碳	grwd
-气急败坏	rqmf
-形而上学	gdhi
-责无旁贷	gfuw
-一举一动	gigf
-忠心耿耿	knbb
-三五成群	dgdv
-吞吞吐吐	ggkk
-力不从心	lgwn
-触目惊心	qhnn
-杀气腾腾	qree
-无话可说	fysy
-滔滔不绝	iigx
-迫在眉睫	rdnh
-迫不得已	rgtn
-突然袭击	pqdf
-无声无息	ffft
-提心吊胆	rnke
-五年计划	grya
-各个击破	twfd
-讨价还价	ywgw
-不堪设想	gfys
-轻描淡写	lrip
-前仆后继	uwrx
-一命呜呼	gwkk
-置之不理	lpgg
-晋冀鲁豫	guqc
-视而不见	pdgm
-流连忘返	ilyr
-有朝一日	dfgj
-顺理成章	kgdu
-年轻力壮	rllu
-付之一炬	wpgo
-无动于衷	ffgy
-国泰民安	ldnp
-相提并论	sruy
-各行各业	ttto
-阿尔卡特	bqht
-胡言乱语	dyty
-一败涂地	gmif
-光明磊落	ijda
-归根结底	jsxy
-奋不顾身	dgdt
-坚持不懈	jrgn
-霸权主义	fsyy
-整整齐齐	ggyy
-独生子女	qtbv
-毛骨悚然	tmnq
-自始至终	tvgx
-大名鼎鼎	dqhh
-丧权辱国	fsdl
-皮开肉绽	hgmx
-神通广大	pcyd
-手无寸铁	rffq
-千千万万	ttdd
-走投无路	frfk
-哭笑不得	ktgt
-以人为本	nwys
-居高临下	nyjg
-乌烟瘴气	qour
-得寸进尺	tffn
-奄奄一息	ddgt
-千军万马	tpdc
-幸灾乐祸	fpqp
-忧国忧民	nlnn
-谢天谢地	ygyf
-十字路口	fpkk
-若无其事	afag
-难以置信	cnlw
-轻举妄动	liyf
-按劳分配	raws
-弗吉尼亚	xfng
-节节败退	aamv
-鸦雀无声	aiff
-能工巧匠	caaa
-流光溢彩	iiie
-塞内加尔	pmlq
-剥削阶级	vibx
-络绎不绝	xxgx
-眼花缭乱	haxt
-因地制宜	lfrp
-扎扎实实	rrpp
-血肉横飞	tmsn
-一目了然	ghbq
-如愿以偿	vdnw
-不折不扣	grgr
-不可或缺	gsar
-心不在焉	ngdg
-竭尽全力	unwl
-不怀好意	gnvu
-铺天盖地	qguf
-当机立断	isuo
-争奇斗艳	qdud
-资治通鉴	uicj
-嫣然一笑	vqgt
-纹丝不动	xxgf
-高官厚禄	ypdp
-落花流水	aaii
-众口一词	wkgy
-从头到尾	wugn
-衣冠楚楚	ypss
-一无所有	gfrd
-名列榜首	qgsu
-先发制人	tnrw
-得意洋洋	tuii
-直截了当	ffbi
-满头大汗	iudi
-坚贞不屈	jhgn
-心中有数	nkdo
-意味深长	ukit
-沸沸扬扬	iirr
-风吹日晒	mkjj
-钦差大臣	quda
-拉脱维亚	rexg
-根深蒂固	sial
-科特迪瓦	ttmg
-贫下中农	wgkp
-塞浦路斯	pika
-昏昏沉沉	qqii
-随机应变	bsyy
-急于求成	qgfd
-闻名于世	uqga
-胸有成竹	eddt
-无法无天	fifg
-专横跋扈	fsky
-无计可施	fysy
-五花八门	gawu
-深不可测	igsi
-心惊肉跳	nnmk
-愁眉苦脸	tnae
-不正之风	ggpm
-不得而知	gtdt
-冤假错案	pwqp
+ggwh一个
+khlg中国
+trwu我们
+wbwu他们
+thnn自己
+imde没有
+lgpe国家
+skny可以
+ntna发展
+aawt工作
+ypwh这个
+wftc什么
+ygsv主要
+ukjg问题
+fjtf进行
+fbyy地方
+nnxc已经
+ypsu这样
+wglg全国
+xciy经济
+yphx这些
+wcng公司
+wwna人民
+pywf社会
+tdut知道
+yptk这种
+fhgo起来
+fbaq地区
+vkjs如果
+gavc开始
+rfsy技术
+tgsv重要
+uglg美国
+dnyl成为
+ldyl因为
+cefp通过
+dgpw研究
+yywx文化
+whog企业
+uxyi北京
+dlkq历史
+anlw世界
+adkh其中
+gmdh现在
+gice不能
+gghx一些
+jfuj时间
+tgut生产
+nguk情况
+wage代表
+unpg决定
+idux湖北
+udtx关系
+wynf领导
+tgit生活
+jfwh时候
+ggtk一种
+skce可能
+bmgo出来
+iptg学生
+nyey以及
+ggte一般
+mgjf同时
+ywyl认为
+mhgf由于
+rnny所以
+gimg不同
+ypjf这里
+ipbp学院
+gmwh两个
+wtyl作为
+wfyy会议
+wjjg但是
+ukwv部分
+itfc活动
+fdsv需要
+thtc怎么
+tpgj管理
+yydm方面
+ymfn市场
+xexk组织
+aaog工业
+vfym建设
+gadn形成
+adwb其他
+bmgm出现
+ytqq许多
+jjsg日本
+ppuj之间
+ggpg一定
+hwde具有
+fdym城市
+nyhh以上
+ghic政治
+wwwu人们
+ntgm发现
+ynft记者
+lgbf国际
+fwpg规定
+smud机关
+gaic武汉
+kjqd虽然
+svrn根据
+iftv法律
+jykt影响
+nttg发生
+qnrt包括
+wget使用
+khny中心
+ftyc教育
+svfi要求
+ghyw政府
+ldhx因此
+wwkk人口
+vfuu建立
+cdlk参加
+utkk产品
+dmeg而且
+ggsu一样
+dmtk面积
+tktk各种
+rjbm提出
+trlg我国
+wtet作用
+rgup皇帝
+nted必须
+tfgh行政
+xylk编辑
+bkog职业
+rmya制度
+nyrg以后
+wqwu你们
+yuut说道
+anxn世纪
+ylbn为了
+yiyy应该
+ppgg之一
+pprg之后
+ygya主席
+txxy系统
+deud有关
+xedn组成
+nayt民族
+adsg基本
+futa增长
+thqd自然
+ddip大学
+vkws如何
+ghws政体
+tkxe各级
+wwkm人员
+yfaj计划
+giwf不会
+uttg产生
+jfad时期
+jbrg最后
+gguq一次
+gefi表示
+smsq机构
+ivjf当时
+ddpe大家
+trkl特别
+ntaf改革
+taia长江
+vftc那么
+yptc这么
+aisg东西
+celt能力
+afwg革命
+ggfh一直
+addb基础
+gide还有
+tjgc得到
+fjty进入
+fcfc运动
+hhue目前
+cfgf对于
+fptk过程
+yyif方法
+iwtf举行
+vtww群众
+txgg第一
+ujwu单位
+vkhx如此
+bybb孩子
+rnde所有
+uqid资源
+fpfc过去
+gifp不过
+tswr条件
+ipsu学校
+rjym提高
+aatk工程
+ggfu环境
+rjwa提供
+yyaa方式
+djtu百科
+rbtf报告
+akft或者
+ghgo下来
+plgk军事
+ukuy部门
+wvkl分别
+fgwv十分
+hhit上海
+pfdn完成
+ggav一切
+vfhx那些
+jbdd最大
+qdrg然后
+peog农业
+xcfp经过
+fnog专业
+uwtl准备
+fulk增加
+aqtj获得
+ytiy旅游
+ggfn一声
+iptj觉得
+ggfh一起
+gjyw理论
+wygd今天
+djip非常
+khmd中央
+xxlu比较
+gegm表现
+wwwf价值
+turf科技
+pfwg完全
+wnfq亿元
+dehx有些
+dhdh存在
+dpgc达到
+mwpw内容
+putf实行
+lnsh思想
+gkng事情
+pugm实现
+adgc甚至
+wttl任务
+tfiw选举
+gaaa形式
+drgo原来
+pwqd突然
+gion不断
+ktwu咱们
+yowx变化
+fhru直接
+nykh心中
+hkqv战争
+skjg可是
+gitd不知
+ghtg政策
+uqsg资本
+xoxf继续
+rhwa年代
+aduj期间
+wugf位于
+wtws任何
+sclt权力
+vfwh那个
+rvtf执行
+tftg先生
+qeun解决
+vfta建筑
+ceqk能够
+tqyl称为
+xfsq结构
+gghk一点
+dnuu成立
+amlg英国
+xygg统一
+tffj先进
+xfjs结果
+rmuq投资
+rggo后来
+gggh一下
+iigu水平
+wkry保护
+ygwt主任
+udgf关于
+qmgm负责
+rmpg制定
+ansy艺术
+tjet利用
+gfjg于是
+ipnu学习
+wgwt合作
+tuip科学
+rhgc看到
+adhh项目
+ginb不敢
+ykbj襄阳
+mtwh几个
+vfjf那里
+wcjf公里
+ebtl服务
+ogpy精神
+wwdd人大
+wgit全省
+ivqd当然
+whww个人
+fhfp超过
+tghk重点
+tvqq很多
+drld原因
+eyad及其
+wcna公民
+qdyn希望
+usub新闻
+ymyf设计
+shud相关
+lgmw国内
+wvdm分布
+jbym最高
+ukbw部队
+pxwu它们
+wylf集团
+wyth信息
+eset采用
+tgdd重大
+lkgo回来
+ailf范围
+xhfh引起
+pubf实际
+adpu其实
+giwc不仅
+bctj取得
+dhpg丰富
+pena农民
+gkwh整个
+ylyg为主
+bnqe了解
+wwst价格
+fbwu地位
+ypjf这时
+apfc劳动
+rpjv按照
+rprm控制
+hhsf目标
+adfb基地
+pesf农村
+wfxy传统
+epgc受到
+wguk全部
+iflg法国
+xxpf比赛
+plbw军队
+fffb土地
+fwsa规模
+agyt荆州
+hvhg眼睛
+dadk左右
+tfrc选择
+rxuw批准
+tmhh身上
+fnpe专家
+wvsr分析
+xyic统治
+lkxk加强
+gigc不到
+qrkh铁路
+djya百度
+txrh每年
+tfyr告诉
+fcrf支持
+uqce交通
+jerr明白
+thgj处理
+sgxe本级
+wthk作战
+jfwa时代
+rghh皇上
+puyt实施
+kwsv只要
+dnal成功
+lwif办法
+bdud随着
+ppkh之中
+nyjf心里
+xtgf终于
+ddjg大量
+wwtr人物
+awmg共同
+ghfc下去
+qqit多少
+goyu来说
+gotg严重
+ynts词条
+ruep接受
+nhty收入
+nygo以来
+fddt城邦
+fnuj声音
+ujmq意见
+fpgo过来
+wkrf保持
+wyjj今日
+ggts一条
+klqh另外
+jcrf坚持
+aaww工人
+irlg汽车
+dmjg而是
+tdww敌人
+umkk商品
+yuyt说话
+ntyo改变
+tfrg先后
+ltjg力量
+gkog事业
+gant开发
+rhmq看见
+hklt战略
+sfuw标准
+jggi是否
+bmfc出去
+wyrh今年
+rbut报道
+tkya程度
+gufq平均
+iith消息
+gijg还是
+pvwg安全
+qtuu独立
+iyuj注意
+smwf机会
+wqus父亲
+hxqh此外
+ypuq这次
+xccw经验
+esbc采取
+fkcq喜欢
+svsg根本
+wyfa领域
+hwws具体
+butx联系
+mttu几乎
+fguk干部
+qgya印度
+vkwy如今
+ddwf大会
+gisk不可
+kqux兄弟
+tflg德国
+bwwd阶段
+dggc感到
+fqif无法
+ptif宪法
+wntu似乎
+drmj原则
+fhgh真正
+iffw法规
+ufqv斗争
+wwod人类
+hhrq目的
+tfdn造成
+ggwu一位
+rccf反对
+qtbb儿子
+shmg相同
+nyue以前
+afqk著名
+wwww众人
+vfyy建议
+nfgk迅速
+wgdm全面
+ghjg正是
+jejo明显
+yijg就是
+aqiy欧洲
+uttf首先
+wtkk作品
+wykh集中
+ghaa正式
+eedc朋友
+txfg第二
+vkga召开
+sfou材料
+dteg帮助
+nusm飞机
+tvkm委员
+tffc行动
+wkyg保证
+gmqj现象
+trhk特点
+gmwa现代
+uqou资料
+mgfn同志
+tfyl行为
+xfgk结束
+wjxv介绍
+kwmq只见
+ettj胜利
+ywyk认识
+wwov人数
+vdvy姑娘
+tkse积极
+peyt家庭
+ppue之前
+gjlk更加
+lktw回答
+gakk武器
+vfsu那样
+yiet应用
+ymta市长
+gogc来到
+ymuu设立
+utog产业
+wckh公路
+wwft人才
+ujyq意义
+ckiy台湾
+pwjq容易
+taad长期
+ggqk一句
+ddut大道
+rydd扩大
+pnkm官员
+ymgk调整
+ftha考虑
+buwg联合
+uaeg并且
+thmh自由
+weqd仍然
+rede拥有
+nayg民主
+fnuy专门
+bwrp附近
+gggd一天
+jgwq师父
+xfwg结合
+igss清楚
+yuje说明
+tqpg稳定
+dgwa古代
+dgwh三个
+hxjf此时
+jnyt电话
+trrf物质
+mqxt网络
+tjuw利益
+qddm然而
+tvdd很大
+giit不少
+khip中学
+gayt开放
+ymsj调查
+wwpe人家
+tgus重新
+yyit广泛
+wvyl分为
+tdyk知识
+klww别人
+xpwg综合
+bmkk出口
+fctr动物
+gkya速度
+ukgj总理
+ewhh脸上
+etgf用于
+ymtl设备
+vvww女人
+emai股东
+wtbm作出
+naga展开
+rayt措施
+ceip通常
+jnbb电子
+yytm方向
+nfxu导弹
+ihjf小时
+guna平民
+tfog行业
+trqc特色
+wxtm货币
+pfud完善
+fbgj地理
+alce功能
+tjia香港
+andd巨大
+ntge发表
+ntrf性质
+xgus母亲
+rfjg质量
+wgwy命令
+tkgu和平
+jthi监督
+ggrh一年
+tmws身体
+dmue面前
+gaal武功
+wulf位置
+wstx体系
+epil逐渐
+rxbm指出
+pvrd安排
+sctj权利
+ykxa训练
+ftya考试
+rxrp指挥
+fcjg却是
+rxnf指导
+bwbn除了
+ntdm发布
+wwdm从而
+dgip感觉
+vclt努力
+smfn机场
+ogtl业务
+sftr植物
+mgsu同样
+uddy状态
+qvtf银行
+nnyn书记
+icub治疗
+ggbl一阵
+rnyl所谓
+ypwu这位
+rcyi反应
+ygyy语言
+qrqd忽然
+ivrh当年
+nygh以下
+ragc找到
+gerh青年
+pgdm宣布
+ndtj恢复
+ybga离开
+lscw困难
+gkwr事件
+kvjf哪里
+pudh实在
+mqgc见到
+uftl装备
+afhx某些
+adpx其它
+ukut问道
+dnfq万元
+gudr平原
+xcap经营
+qqrh多年
+albu苏联
+tyty往往
+yyfn广场
+qeto解释
+bwwg队伍
+ldgx因素
+ftre教授
+atbp医院
+thsu怎样
+llww男人
+ccyy双方
+udit减少
+fttg考生
+ivfb当地
+qqtk多种
+xcip经常
+tkfb各地
+tgtr生物
+fmyi南京
+itpl海军
+fhjg真是
+nysh心想
+qhlg外国
+mfut财产
+wgym全市
+sggo本来
+gmtk两种
+deuq有效
+dnad尤其
+gglp一边
+etyn用户
+yypv方案
+fjat进攻
+smsa机械
+cdgn参与
+ycwv充分
+wwgk从事
+nytp尽管
+trgq特殊
+ggfn一块
+rtwd手段
+tgwg生命
+wsyc体育
+ndna居民
+tgta生长
+mwuk内部
+uuvc立即
+tuuj简单
+ggth一片
+ovjg数量
+dejf有时
+gana开展
+yyip文学
+fjgo进来
+unyy决议
+jofi显示
+ntgf属于
+bnyt也许
+rnwh气候
+ggkw一只
+goth来自
+gisv还要
+shwy相信
+dqpg确定
+rmty投入
+ggdm一面
+uoce普通
+rhud看着
+wcfq公元
+fcrh去年
+yyuj文章
+rtkh手中
+nygj心理
+vvqt女儿
+ffvf封建
+ltth图片
+wbtf创造
+ukxy总统
+wkfj促进
+ddga大型
+gkgo带来
+ftjg教师
+ujqd竟然
+rhgo看来
+adfg若干
+rcjm反映
+txwh每个
+txgd每天
+wykk食品
+yyje文明
+shiv相当
+uqqq资金
+yodn变成
+ytdh放在
+ypoy毫米
+khuj中间
+fwww夫人
+shcf相对
+ddbf大陆
+bksc职权
+sgyy西方
+gigm不再
+nfgc导致
+cfyy对方
+yiiv应当
+yfyw讨论
+vcwg即使
+qqgk金融
+eplg爱国
+ygje证明
+rmtf制造
+sqdn构成
+ftjg老师
+rjwt担任
+aqfa区域
+ggyw一座
+bpta院长
+pejf家里
+qayk错误
+ulxc曾经
+wkbu保障
+wbwt创作
+xkym强调
+lpxf连续
+fclw运输
+rhrh看看
+wvqk分钟
+ygxt主张
+umog商业
+ymgk高速
+fhrq真的
+kwce只能
+gdgh天下
+qyjq贸易
+gitj不得
+fumw境内
+wsrm体制
+lddm因而
+wgvk例如
+mfgh财政
+hepg肯定
+dnxg成绩
+ggwr一件
+ujqi音乐
+vfdn建成
+lkfc回去
+cwut难道
+ruud接着
+ghdq正确
+nyyl以为
+thgf处于
+ddah大臣
+ymya高度
+tjvs复杂
+pyaq社区
+tmbb身子
+lkgc回到
+vaws媒体
+fbdm地面
+wvbb分子
+ujln意思
+ukjg总是
+aiux东北
+qiwy销售
+uxbb弟子
+figo未来
+tftf等等
+tgpy重视
+dflt压力
+yvvb良好
+gcyq到底
+tkwh各个
+jbxt最终
+hkuf战斗
+tepw航空
+ppgh之下
+ggxe一级
+jfdm里面
+ovip数学
+xxog毕业
+ukqv竞争
+pfft宗教
+xxwg比例
+tdyi适应
+wvyv健康
+vbwu她们
+bmth出版
+dtgk故事
+gmwt责任
+dmcf面对
+uqpl将军
+oywy粮食
+ghsc政权
+tklg各国
+odga类型
+ntrp发挥
+kryu听说
+khfh遗址
+fmux南北
+uuyn立刻
+goiy亚洲
+ghip正常
+vvbb女子
+fuud培养
+yiog就业
+ddih大小
+jedq明确
+wdrv优势
+vbwq好像
+ggfn一场
+gcit至少
+wwfg人士
+jqhh晚上
+dqpu确实
+trtg特征
+amfm贡献
+pucw实验
+ymxe高级
+shgc想到
+udqv关键
+gghv一眼
+cwny难以
+mflf周围
+subb样子
+sgrb本报
+ggxt一张
+shgx相互
+ukta部长
+tmlp身边
+yyyt广州
+ppqh之外
+apdg蒙古
+ntbm发出
+kwde只有
+xxvk比如
+gjqe理解
+mqft刚才
+gikh不足
+fmuk南部
+tkyc程序
+lkhh加上
+sgux西北
+wqxg父母
+tdiv适当
+qygh留下
+dgrm研制
+itxe省级
+ntdp发达
+aiuk东部
+kktk品种
+druj愿意
+utkh道路
+odwn类似
+pwpl空军
+tfwg行使
+xleq细胞
+pwuj空间
+garv形势
+sguk西部
+ihyu小说
+vvvv妇女
+emww股份
+xwry维护
+wcdm公布
+qktq名称
+kwvb只好
+swsj检查
+wxip化学
+cbrf矛盾
+qtuj儿童
+wtad任期
+sgtm本身
+fwaj规划
+uduk状况
+ggpe一家
+pukh实践
+dnta成长
+fdfi需求
+qquq多次
+wvsg分配
+gggc一致
+sgfm西南
+ggjf一时
+khyt贵族
+vcqd既然
+ymiw高兴
+ugfq美元
+wgws全体
+xyyf统计
+gktl事务
+wsgm体现
+qkpb名字
+gibn不了
+utjg产量
+vcxt始终
+jbrp最近
+tapv长安
+amdc英雄
+mguj同意
+wwhx从此
+gghi一步
+itrd海拔
+iprn掌握
+uoyn普遍
+pejj宜昌
+atfm攻击
+rvtg招生
+gdqd天然
+giqa不错
+usth亲自
+ggjg一旦
+shyi相应
+cmhk观点
+pult实力
+khuk中部
+krgc听到
+gmuq再次
+gjjg更是
+pwbm突出
+tswg条例
+wggf全球
+xcdl经历
+fjhi进步
+hhsy上述
+ryjj抗日
+xqcf绝对
+whnt修改
+wdte优秀
+gcgf至于
+isiy河流
+ntfc发动
+pjyy审议
+yfth计算
+ovrn数据
+udiy关注
+vvnt女性
+bkaa职工
+ntsv必要
+fjtf朝廷
+geje表明
+gihe不肯
+ygrf主持
+ipip常常
+jmgc遇到
+dhgf在于
+iixj消费
+cqqb欢迎
+shfh想起
+jjbb日子
+tsxq条约
+flyy协议
+wcga公开
+bvrm限制
+gmpu现实
+gajj武昌
+xkgq强烈
+jhnn早已
+yeeb衣服
+dybj太阳
+isfm河南
+yydd广大
+ghdh正在
+eubb胖子
+dyya态度
+tvnn很快
+givb不好
+uqiy交流
+dnkg万吨
+ssss森林
+uedm前面
+joqd显然
+dern有所
+ucgg闯王
+ryqi撤销
+tfoy千米
+dhfg破坏
+ccrt双手
+iafm江南
+uuyf阅读
+aauq工资
+hhdm上面
+xwxw纷纷
+uxuk北部
+tkod种类
+fqyw无论
+ipty深入
+rwfj推进
+dgim石油
+fjfc进去
+fbhh地上
+uqjs效果
+lfws团体
+rhlc年轻
+syny核心
+wiad倘若
+jnjy电影
+xyxk纺织
+gaqj形象
+jsqd果然
+ujyk意识
+iptl常务
+fwtv规律
+jotj显得
+gutf平等
+mmai山东
+lkaa加工
+kwjg只是
+gmwm两侧
+gqyl列为
+lkty加入
+qeyt解放
+ephi逐步
+rjny担心
+gedm表面
+ghbt下降
+jnpy电视
+aahw工具
+txdg第三
+mquh网站
+rmwt制作
+ymyt设施
+gdiv天津
+dnjs成果
+tkad各项
+cbth预算
+pdud寡头
+jcxt紧张
+rtsm手机
+rvlt势力
+ynfa记载
+qhuq外交
+rvqt搜狐
+wwqq众多
+ggrc一把
+rhyq年底
+yytr文物
+pgwf宣传
+jjip日常
+ymkh高中
+gost严格
+wyww令人
+gitp不管
+iakh满足
+rwfc推动
+ghtf下午
+fbgh地下
+jtgd昨天
+bdrg随后
+ywfh认真
+ddfn大声
+tggf生于
+dnkm成员
+jewa明代
+wbus创新
+giqy不久
+gmgc遭到
+fuyk培训
+rfxf持续
+ovpb数字
+iypt游客
+yacw试验
+bwxe阶级
+wnrq似的
+nttm发射
+yypb文字
+gduy天门
+gorh来看
+fdso城楼
+wclf公园
+pwkh空中
+lqwr软件
+gkpu事实
+nunx习惯
+fbgf地球
+gguf一半
+mqmq刚刚
+rtjf手里
+gauf武装
+giwj不但
+wtqk任免
+gish不想
+khyb距离
+ynfq永远
+rhuj年间
+gxsh互相
+ggwd一段
+gvbb妻子
+vcvc妈妈
+hvue眼前
+fqrh元年
+cfqj对象
+krmq听见
+lhwh四个
+yotj变得
+tayq彻底
+xxuj毕竟
+nngk快速
+fjqg朝鲜
+rwmt失败
+jtjf临时
+ggrx一批
+tjiu利润
+qqov多数
+vfjf那时
+khxg路线
+adwt其余
+ajwv划分
+kwgg唯一
+fjdq坦克
+imnn尚书
+svwy概念
+goid来源
+btwq降低
+ycia充满
+lhdd四大
+njnj慢慢
+ftww老人
+twwg符合
+ihve小姐
+rrip哲学
+lclc轻轻
+uxgu北平
+ftsr老板
+ypwr这件
+mgip同学
+suqk校名
+mmfb山地
+ugpl美军
+vftk那种
+yxwy率领
+vibc录取
+dyut矿产
+ivgh当下
+klrq别的
+ihdx小龙
+uqyq咨询
+mtgd几天
+wjrt伸手
+tkth各自
+thtm自身
+udon判断
+sksk哥哥
+rwfc失去
+qdsm危机
+rgdm后面
+sgwg配合
+ddgk大事
+fuxk增强
+bgtg卫生
+qqnt金属
+dnsg成本
+yywr文件
+lkny加以
+dyfw丈夫
+mfpg财富
+ntqd必然
+utft首都
+hxrg此后
+mqnu购买
+aifm东南
+wcaw公共
+attg医生
+gxrf素质
+ntud改善
+rsfm打击
+tgdy生态
+yyai广东
+wwtg人生
+gggk一带
+ntyl改为
+yyqf方针
+xaqc红色
+bdyw承认
+amyg英语
+qjtg象征
+itov少数
+ymlf设置
+ojnt爆发
+nutf飞行
+hwtl具备
+ipft学者
+gimj否则
+cfqh对外
+ntwg性命
+dtut故道
+bdvc随即
+utug疾病
+giss不禁
+ddje大明
+djvt百姓
+rmtp缺乏
+bpsu院校
+alfw功夫
+dnwv成分
+wfdd伟大
+rmsf投票
+ufwf闭会
+pfgk完整
+fhyq起义
+smrm机制
+mtrh几年
+rsga打开
+ftpw考察
+twyi答应
+ipbm演出
+shxx相比
+jbjh最早
+cmwy观念
+apud营养
+fcet运用
+tfft行者
+bktl职务
+dmjt面临
+sgww本人
+kenh吸收
+iyce流通
+gmfn现场
+flym协调
+rrwy抓住
+itiu海洋
+cfrt对手
+bdrj承担
+uqjq交易
+drou原料
+qfcf针对
+qhdm外面
+qvbc争取
+ntyc发育
+siaw桃花
+gktr事物
+mqbw风险
+vcvi奴隶
+itrh少年
+vkwy召集
+knwd叫做
+rwbm推出
+ftip教学
+wtft作者
+wxaa化工
+ywff论坛
+bmya出席
+waff贷款
+aiyy东方
+gmbn再也
+gjsh理想
+iytf游行
+pwuj究竟
+ghdm下面
+qdbw危险
+rhfq年均
+gutq平衡
+hhgo上来
+igwa清代
+djiy非洲
+vfra寻找
+tkim和尚
+gint不必
+iwfh兴趣
+ijya温度
+lftq转移
+lfxf团结
+lgna国民
+itta省长
+kkft患者
+smkk机器
+ugww病人
+pggy宝玉
+dgel威胁
+dmyy而言
+gmuq两次
+dsnc奇怪
+shrc相反
+djoy厘米
+wdyf估计
+ngxf情绪
+pnav密切
+bmnt出发
+rvbm招聘
+ggut一道
+wfrt传播
+wggj合理
+nauj民间
+hkud点头
+ddxq大约
+wyrn依据
+ytny放心
+lgqh国外
+ddpd厉害
+uxyy北方
+nttf改造
+jefj明朝
+ldpg固定
+dyjt太监
+wyhh停止
+tqfc移动
+ggfc一支
+xkdd强大
+tnpn秘密
+uerj前提
+nkqk避免
+wsth休息
+tfut街道
+ymsu高校
+rwad推荐
+dhgd夏天
+wvyv伊朗
+utwf产值
+uadj并非
+saaa模式
+ipnu演习
+ntce性能
+rhhw年龄
+dgng感情
+pjud审判
+xwrf维持
+xjet费用
+fndr志愿
+imfi尚未
+nnde已有
+ptyn客户
+sedd极大
+tdwg适合
+ggfj王朝
+suta校长
+gjus更新
+ypqt这儿
+utuq首次
+pktf宫廷
+gkws整体
+thic自治
+lhkt四川
+aqkl区别
+eyjf及时
+uyqh门外
+dart左手
+mqst风格
+cntq巴黎
+iabf江陵
+jhad早期
+kmaa员工
+hhta上升
+thsg版本
+dnyb成熟
+mtqk几句
+fmyy南方
+ihey涉及
+gmrh两年
+pwrn空气
+lgby国防
+uplp旁边
+axtr药物
+rkwt操作
+yywg方便
+wgtm全身
+uykk门口
+dehk有点
+gidh不在
+nndm局面
+qvbb银子
+pwdh突破
+mhhx由此
+vftf建造
+tkod各类
+fgrg士兵
+ggww一份
+yvah康熙
+gmwu两位
+lfwx转化
+yywf议会
+nyng心情
+lkud回头
+uplg帝国
+fgrh十年
+egxe县级
+qttr独特
+idfm湖南
+wcrt公斤
+wyqd依然
+tmtt微笑
+sffn标志
+sraw棉花
+hkfg战士
+fwai规范
+guck平台
+dnyi成就
+taxe升级
+usga新型
+uqrq交换
+raxq拒绝
+ygud证券
+fhrt直播
+wgmg合同
+jjad日期
+hkfn战场
+ymft高考
+kjut喝道
+mppy崇祯
+emsc股权
+ilil渐渐
+jeig明清
+plaq军警
+ggto一番
+ynbw废除
+fhtm走向
+wwgo从来
+gujf平时
+rcdm反而
+qqwh多个
+iwlw举办
+thjg算是
+tutq简称
+uflf装置
+wcyg公主
+hxuq此次
+imit沿海
+ucad痛苦
+tgyd重庆
+lkgk加速
+gitf不行
+ygfc主动
+lfyo转变
+rkrw损失
+ymna市民
+pphh之上
+nttf发行
+rurp接近
+tgvf重建
+tlpv备案
+atub医疗
+ggtg一生
+wgtj使得
+idir湖泊
+lgde国有
+lknn加快
+pjsj审查
+tgdh生存
+ygww评价
+fwmj规则
+ynvi记录
+aadg工厂
+ewqc脸色
+lxyf累计
+pylg祖国
+bjiq阳光
+dkrt右手
+jfyn时刻
+afwt著作
+ptww客人
+nyqh以外
+atip医学
+xwcb给予
+drvc原始
+iptu学科
+maga典型
+wyaa仪式
+jney电脑
+hhfc上去
+atax医药
+gpuy天安门
+tkwf委员会
+iuit湖北省
+ltbp国务院
+tiaq自治区
+fghi进一步
+nyww发言人
+lnip国民党
+ywtc为什么
+tiai毛泽东
+fgfh越来越
+spbp检察院
+quuk外交部
+itwf常委会
+tguq第一次
+ytsm计算机
+gwwx现代化
+wlad俄罗斯
+tnta秘书长
+jgjg是不是
+stdn李自成
+tkta委员长
+duwv大部分
+uwpy新华社
+gtgq一系列
+spta检察长
+udtj意大利
+ndwf发布会
+lwpg办公室
+stwf村委会
+cigu邓小平
+dfsa大规模
+ditg大学生
+rrgo近年来
+qgww负责人
+wtww候选人
+gnaq开发区
+dqov大多数
+xift统治者
+auip共产党
+aflt劳动力
+uyym北京市
+xotg毕业生
+gimm武当山
+qypl解放军
+ftqn博物馆
+gmtj不由得
+gwqt一会儿
+prny之所以
+dprn研究所
+ixft消费者
+gtgi不得不
+mlgo周恩来
+fdvt老百姓
+bwlg联合国
+wntm人民币
+rdfb所在地
+gydm一方面
+srfb根据地
+sgah西班牙
+pjym宜昌市
+vgwy忍不住
+awdg蒋介石
+tipe科学家
+isgc没想到
+ikmd党中央
+famn袁世凯
+dgiu太平洋
+udtk总面积
+wrdq伊拉克
+irgy汉白玉
+iyid洞庭湖
+nfsm发动机
+uspe资本家
+ugqq差不多
+husm战斗机
+agwf董事会
+uuwf总产值
+iina江泽民
+atlg共和国
+dide有没有
+tgaq行政区
+ggbb一下子
+ttsu怎么样
+pcpg实验室
+icem流通股
+ahft基督教
+grgk亚热带
+ytpy旅行社
+ruft投资者
+kgfp只不过
+bkmm孙中山
+yrww主持人
+pplk神农架
+iwtc没什么
+nrrf蛋白质
+lwdd加拿大
+gwwh一个个
+fyym南京市
+nqgq以色列
+yiaq旅游区
+tult生产力
+klbw中国队
+fddy老太太
+gyoy平方米
+wquk俱乐部
+ftsm直升机
+gkrn一口气
+xtgx维生素
+rlww年轻人
+ygpg说不定
+wlft侵略者
+hiym上海市
+uxgj总经理
+lmqh国内外
+brwr阿拉伯
+gdbb一辈子
+aatu莫斯科
+dptg研究生
+gbmq互联网
+nwuk司令部
+rruk指挥部
+hsfd紫禁城
+fwpe老人家
+ffkm运动员
+tpyl称之为
+afgo东南亚
+unwy总司令
+uujg总产量
+ammd花岗岩
+apug黄宗羲
+yfut房地产
+gnfb殖民地
+uyfd北京城
+pukk农产品
+scnt可能性
+atjg工程师
+mjaq风景区
+lnqn图书馆
+sgkk核武器
+xiip经济学
+raog手工业
+dsiu大西洋
+fuwr零部件
+gyft天主教
+tptf长安街
+tsnt积极性
+acdp斯巴达
+ldia黑龙江
+hrfb目的地
+pwtr农作物
+gipe政治家
+gcgi不能不
+qyaq解放区
+madg内蒙古
+aqmf黄金周
+ulfh新加坡
+uisc立法权
+wtkm公务员
+flma卖国贼
+rhfc看上去
+wtwx信息化
+tftj奥地利
+sdqj李大钊
+bwwf联合会
+gbrm两院制
+nwkm司令员
+lbuk国防部
+rjyt打电话
+lssk墨西哥
+fkit地中海
+degf有助于
+tass穆斯林
+jpck电视台
+fwtc干什么
+dkmm大别山
+ngip心理学
+tyga长方形
+rawg反革命
+uowx产业化
+afft劳动者
+axfc苏维埃
+tfwf奥运会
+djwh有时候
+fjwf博览会
+girh青少年
+gqrn天然气
+hult战斗力
+fyuk教育部
+tiyx利润率
+isff少林寺
+tgip物理学
+exym县级市
+fbad土耳其
+ggey来不及
+btpy出版社
+lgth办事处
+ixkk消费品
+sggc想不到
+vttr建筑物
+gwwc不仅仅
+igww当事人
+aiug艾滋病
+iuff混凝土
+oluh火车站
+yywf座谈会
+dpkm研究员
+ntkm飞行员
+aowx工业化
+unyn总书记
+bsit陕西省
+nsce尽可能
+agta董事长
+fxjn无线电
+yayp诸葛亮
+ooaw爆米花
+cgfh对不起
+ilym省辖市
+qyiu印度洋
+xtjf比利时
+ttlg自行车
+kiip中小学
+ydyl康有为
+ibbb小孩子
+aspe艺术家
+yids刘少奇
+atpr菲律宾
+suwk桥头堡
+rggo接下来
+pukm审判员
+kqip哈尔滨
+tibp科学院
+cdln马克思
+faum运营商
+ptit安徽省
+vbbb女孩子
+fbkk进出口
+bstf阿根廷
+dsou原材料
+tfwx自动化
+isad法西斯
+iait江苏省
+wdgb华盛顿
+cybp参议院
+iwbb小伙子
+site核潜艇
+ftyx增长率
+auog工商业
+gusc表决权
+tysg笔记本
+ripe哲学家
+yait广东省
+guww残疾人
+tqlw自然界
+qspf锦标赛
+iukk水产品
+xvyu比如说
+aaah葡萄牙
+ivvy小姑娘
+wkpl八路军
+qatj匈牙利
+dpbp研究院
+ytog畜牧业
+unws半导体
+losm轰炸机
+kaxn中世纪
+tpnt稳定性
+wvrq他妈的
+rtog制造业
+ugce决不能
+lwdt四人帮
+sswx机械化
+bgfh了不起
+iuit河北省
+wlnt全国性
+myyn同义词
+adss斯大林
+ifbw游击队
+asuf英格兰
+iqws染色体
+cyta参谋长
+bpif阿富汗
+ijuh水电站
+apso黄鹤楼
+gpww一家人
+tyym重庆市
+gtey来得及
+ginn政治局
+qlww外国人
+biyn陈水扁
+jlyl是因为
+dqea古希腊
+qtaf希特勒
+lkit四川省
+miud山海关
+tttr微生物
+fsbp翰林院
+gfwf亚运会
+gkhh一路上
+wwyj催化剂
+pwyy社会主义
+dbwn有限公司
+ulyy帝国主义
+usyy资本主义
+uubx资产阶级
+ygwk高速公路
+fubx无产阶级
+idtg澳大利亚
+uyaw辛亥革命
+tywb知识分子
+wlbp八国联军
+kkdt哈哈大笑
+yaty计划生育
+byjy也就是说
+fyvw无论如何
+qedy名胜古迹
+xdqo绝大多数
+caaf巴基斯坦
+awbx工人阶级
+xduw绝大部分
+dnpl大展宏图
+dkgn大吃一惊
+glff五四运动
+vmle九曲回肠
+auyy共产主义
+pgfj实事求是
+auik共产党员
+dfli成吉思汗
+caaf巴勒斯坦
+gvul不好意思
+kwnl中华民国
+cgsg马来西亚
+qgap名副其实
+iiss清清楚楚
+rwtx操作系统
+ttts各种各样
+dywu胡说八道
+iiaa浩浩荡荡
+urfd前所未有
+asry苏格拉底
+tiqp长治久安
+fsdw无可奈何
+farf南斯拉夫
+lcwd四通八达
+gtgi不知不觉
+aqav莫名其妙
+xwih引人注目
+ldwy四面八方
+dthd成千上万
+tpxt航空母舰
+xxxj比比皆是
+oqgu焕然一新
+quty独立自主
+xibx统治阶级
+elaf爱因斯坦
+lcng罗马尼亚
+ygtq文责自负
+gsgs一模一样
+ldii黑龙江省
+mgik山珍海味
+frwd二氧化碳
+nyyy民族主义
+kubx中产阶级
+swtg西伯利亚
+gjxy五星红旗
+utgd冲积平原
+gmty不由自主
+dmis非同小可
+gpyy现实主义
+athq鸦片战争
+gdmd亚历山大
+iada流芳百世
+tmgr委内瑞拉
+pgpt神来之笔
+ffuu干干净净
+mams同工同酬
+fqgm截然不同
+elyy爱国主义
+gfgf一动不动
+innn小心翼翼
+cwee通货膨胀
+uygd意识形态
+rtrg拨乱反正
+wltg保加利亚
+ilri波罗的海
+ddii大大小小
+kaah咬牙切齿
+guts至关重要
+wbut人际关系
+ssdt可想而知
+bhpq除此之外
+iudp法兰克福
+ppdd实实在在
+gffq不动声色
+ewwn股份公司
+glgr一国两制
+ngsi必不可少
+hhkk目瞪口呆
+dtia大街小巷
+tplt穆罕默德
+gsly不可思议
+rsui拉丁美洲
+njtg尼日利亚
+qqsy乌鲁木齐
+gyfh至高无上
+llgg轰轰烈烈
+tydy千方百计
+aaaa恭恭敬敬
+gygn一言不发
+tqdq自然而然
+swxg哥伦比亚
+feaw十月革命
+gwgm与众不同
+ktyy唯物主义
+cadu艰苦奋斗
+tyty自言自语
+wjre众星捧月
+qgua名列前茅
+vgpu九五之尊
+ttsu息息相关
+ddsh面面相觑
+dfnn肆无忌惮
+gxdm不约而同
+wnwu全心全意
+uatj总工程师
+tgqd得天独厚
+qgio金碧辉煌
+gdgy一成不变
+ooxx断断续续
+qsgm独树一帜
+cgyy马列主义
+griq理所当然
+bxbw阿弥陀佛
+rlgo接连不断
+bkru耶路撒冷
+gqds五角大楼
+igrd耀武扬威
+wuyy人道主义
+frid声势浩大
+nqdn恍然大悟
+aqai或多或少
+kids中流砥柱
+knyy唯心主义
+cttw圣彼得堡
+wrmt众所周知
+ngts情不自禁
+qtqs多种多样
+rqyy换句话说
+rtdb挺身而出
+tmyy自由主义
+dlfg克罗地亚
+nnfr惊心动魄
+rwry所作所为
+aaie卧薪尝胆
+tgdy生死存亡
+gdyg不在话下
+bdre出奇制胜
+gfgw平起平坐
+jdjm显而易见
+gifs一清二楚
+yyqq许许多多
+bagu出其不意
+cgda马到成功
+ajuh斯里兰卡
+gtrr不知所措
+oooo迷迷糊糊
+gnyq不以为然
+gnyy殖民主义
+itpq当务之急
+tpty各家各户
+wmwi依山傍水
+jrct最后通牒
+rget迫不及待
+tpkg垂帘听政
+dqdr有钱有势
+gyao不计其数
+fiuy南水北调
+gjit死里逃生
+gggj一天到晚
+tnab各司其职
+wlwa佛罗伦萨
+grdh一拥而上
+hftw此起彼伏
+rnet手忙脚乱
+iedh光彩夺目
+afxg莎士比亚
+dkng有史以来
+fvyy封建主义
+lkfp回味无穷
+aspx荷枪实弹
+gtft不知去向
+lthq甲午战争
+nnij慷慨激昂
+wpsi全军覆没
+iyeg兴高采烈
+qhgs独具一格
+xxpk丝绸之路
+bwuo出人意料
+ubwy新陈代谢
+gsga不可一世
