@@ -354,8 +354,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         sb.append("v").append(currentVersion());
         sb.append("  开源：github.com/zsdili  微信：175571");
         if (cloudCatCount > 0) {
-            sb.append("
-云端词库：本地 2500 词 + 云端词组 6.2 万 + 分类 ")
+            sb.append("\n云端词库：本地 2500 词 + 云端词组 6.2 万 + 分类 ")
               .append(String.valueOf(cloudCatCount))
               .append(" 类 ").append(String.valueOf(cloudCatWords)).append(" 词");
         }
