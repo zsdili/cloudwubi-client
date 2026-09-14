@@ -288,7 +288,7 @@ public class CloudKeyboardView extends KeyboardView {
             int sym = swipeSymbol(key);
             if (sym != 0) {
                 String symS = String.valueOf((char) sym);
-                String main = (lab == null ? "" : lab);
+                String main = (key.label == null ? "" : key.label.toString());
                 if (main.indexOf(symS) < 0 && !isFuncKey(key)) {
                     canvas.drawText(symS, cx, y + key.height * 0.28f, hintPaint);
                 }
