@@ -1,3 +1,11 @@
+## v0.5.17（2026-09-14）六项系统性修复（举一反三，根治而非打补丁）
+- **① 密码框输不进去**：根因=InputType 感知后按键仍走编码缓冲 → onKey 新增密码框直通块（字母按 shiftState 大小写/数字/空格/回车直接上屏，不进候选联想）
+- **②③ ilif「没办法」打不出**：根因=本地/云端词库均缺该词 + 云端 4 码未命中触发动态构词返回"渐法/水国法"无意义词 → 云端补词（imlf+ilif 没办法）+ 词组分组（phrases=真词组 lexicon/prediction，gen=构词排后）
+- **④ 最近打过的字没调前**：根因=MRU 置顶被 isJustCommitted 过滤（重打同码时刚上屏字被滤掉）→ MRU 两段（精确+前缀）去掉 isJustCommitted 限制，本地②段保留重复过滤
+- **⑤ 离开输入触点关闭输入界面**：onFinishInput 主动 hideWindow（窗口生命周期完整感知）
+- **⑥ 举一反三**：云端 load_phrase_dict 同码多行覆盖 BUG 修复（imlf 油墨+没办法 双保留）、InputType/窗口生命周期/词组分类系统性核查
+- **体积**：APK=99770B 达标（versionCode 67）；云端 wubi86_phrases +2 行、index.py 分组
+
 ## v0.5.16（2026-09-14）三问题根治：词组可见 + shift 大写 + 高频字前移
 - **① dgqe 打不出（词组被截断）**：parseCandidates 先收 phrases 后收 candidates——四码"dgqe"的"感触/三角"不再排到单字码点之后被截断
 - **② shift 大写失效**：appendEnglishCode 强制小写 → 按 shiftState 区分——英文模式大写锁定/中文切英文大写时存大写，小写模式存小写
