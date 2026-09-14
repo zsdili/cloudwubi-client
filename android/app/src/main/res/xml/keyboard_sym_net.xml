@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 云五笔符号面板 v0.5.34 分类式: 网络 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
-    android:keyHeight="44dp"
+    android:keyHeight="33dp"
     android:horizontalGap="0.5%p"
-    android:verticalGap="4dp"
+    android:verticalGap="3dp"
     android:keyBackground="@drawable/key_bg">
     <Row>
         <Key android:codes="-311" android:keyLabel="最近" android:keyWidth="12%p" />
@@ -42,10 +42,10 @@
     </Row>
 
     <Row>
-        <Key android:codes="-321" android:keyLabel="🔒" android:keyWidth="19.2%p" />
-        <Key android:codes="-322" android:keyLabel="⌃" android:keyWidth="19.2%p" />
-        <Key android:codes="-323" android:keyLabel="⌄" android:keyWidth="19.2%p" />
-        <Key android:codes="-5" android:keyLabel="←" android:keyWidth="19.2%p" android:isRepeatable="true" />
-        <Key android:codes="-103" android:keyLabel="返回" android:keyWidth="19.2%p" />
+        <Key android:codes="-321" android:keyLabel="🔒" android:keyWidth="19.2%p" android:keyHeight="34dp" />
+        <Key android:codes="-322" android:keyLabel="⌃" android:keyWidth="19.2%p" android:keyHeight="34dp" />
+        <Key android:codes="-323" android:keyLabel="⌄" android:keyWidth="19.2%p" android:keyHeight="34dp" />
+        <Key android:codes="-5" android:keyLabel="←" android:keyWidth="19.2%p" android:isRepeatable="true" android:keyHeight="34dp" />
+        <Key android:codes="-103" android:keyLabel="返回" android:keyWidth="19.2%p" android:keyHeight="34dp" />
     </Row>
 </Keyboard>

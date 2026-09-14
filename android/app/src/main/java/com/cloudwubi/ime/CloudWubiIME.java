@@ -128,6 +128,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.34 反馈⑧：剪贴板项标记 span（长按定位删除） */
     private static class ClipTagSpan { int index; ClipTagSpan(int i) { index = i; } }
     private float lastTouchX = 0f, lastTouchY = 0f;   // v0.5.34 长按定位坐标
+    private android.view.GestureDetector candFlingDetector;   // v0.5.35 反馈③：候选左右滑动翻页
     private static final String PREFS_PHRASES = "recent_phrases";  // v0.4.8 MRU 词组
     private static final String PREFS_LAST_SEL = "last_selected";  // v0.5.9 反馈⑧：上次选中字/词持久化（字频调整跨会话生效）
 
@@ -171,6 +172,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private String lastEnHint = "";         // v0.4.8 最近选字英文翻译提示
     private android.widget.TextView statusInfo;   // v0.5.8 状态栏：编码 + 英文翻译（左侧"云五笔"固定）
     private boolean calcAuto = false;       // v0.5.8 反馈⑥：续算去重仅用于运算符自动续接（防误伤手动输入）
+    private String lastCalcInput = "";      // v0.5.35 反馈①：最近一次直接上屏的数字（运算符按下时回收为表达式起点）
     private List<String> recentPhrases = new ArrayList<>();  // v0.4.8 最近3个选中词组
     private String calcBuffer = "";         // v0.4.8 数字面板计算表达式
     private String lastCalcResult = "";     // v0.5.3 反馈②：上次计算结果（上屏后接运算符可继续计算）
@@ -225,6 +227,17 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setMaxLines(1);
         candidateView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         candidateView.setHighlightColor(0x00000000);
+        // v0.5.35 反馈③：候选条左右滑动翻页（替代点击翻页）
+        candFlingDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (Math.abs(velocityX) > Math.abs(velocityY) && Math.abs(velocityX) > 200) {
+                    if (velocityX < 0) { nextCandidatePage(); return true; }
+                    prevCandidatePage(); return true;
+                }
+                return false;
+            }
+        });
         // v0.5.10 反馈②：点击候选区空白（非条目/非返回）→ 关闭剪贴板回正常输入
         candidateView.setOnClickListener(v -> {
             if (clipMode) {
@@ -248,13 +261,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
             return false;
         });
-        // v0.5.34 反馈⑧：记录触摸坐标（长按定位用）
+        // v0.5.34 反馈⑧：记录触摸坐标（长按定位用）+ v0.5.35 反馈③：左右滑动翻页
         candidateView.setOnTouchListener((v, ev) -> {
             if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
                 lastTouchX = ev.getX();
                 lastTouchY = ev.getY();
             }
-            return false;
+            candFlingDetector.onTouchEvent(ev);
+            return false;   // 不消费：让 LinkMovementMethod 处理点击/长按
         });
 
         keyboardMain = new Keyboard(this, R.xml.keyboard_qwerty);
@@ -765,17 +779,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
             return;
         }
-        // 数字（v0.5.1：数字面板恢复实时计算——数字进表达式缓冲；其余直接上屏）
+        // 数字（v0.5.35 反馈①：纯数字直接上屏——只有表达式已含运算符时才进缓冲，根治"打5出1.5=5 2.5"）
         if (primaryCode >= '0' && primaryCode <= '9') {
-            if (panelMode == 1) {
-                boolean wasEmpty = calcBuffer.isEmpty();
+            if (panelMode == 1 && hasCalcOp(calcBuffer)) {
                 calcBuffer += (char) primaryCode;
-                // v0.5.9 反馈③：续接中（非空）保持 calcAuto=true（运算符自动续接不被数字打断）；
-                // 全新表达式（空缓冲）→ 非续接
-                if (wasEmpty) calcAuto = false;
                 updateCandidateView();
             } else {
                 commitText(String.valueOf((char) primaryCode));
+                lastCalcInput = String.valueOf((char) primaryCode);   // 回收点：运算符按下时作为表达式起点
             }
             return;
         }
@@ -1020,7 +1031,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     private void appendCode(char c) {
-        if (composingCode.length() >= 4) return;
+        // v0.5.35 反馈⑥：放宽到 8 码支持拼音全拼混打（五笔查询自动截前4，>4 码走拼音分支）
+        if (composingCode.length() >= 8) return;
         associateActive = false;   // v0.4.9 开始新编码 → 联想链断开
         candPage = 0;
         composingCode.append(c);
@@ -1231,6 +1243,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
             return;
         }
+        // v0.5.35 反馈⑥：超 4 码 = 拼音全拼模式——五笔仅用前 4 码查词组，拼音候选云端异步置前
+        if (code.length() > 4) {
+            String wb = code.substring(0, 4);
+            List<String> pri = WubiDb.query(wb);
+            if (pri != null) {
+                for (String c2 : pri) {
+                    if (c2.length() < 2) continue;
+                    if (!isJustCommitted(c2) && !candidates.contains(c2)) candidates.add(c2);
+                }
+            }
+            updateCandidateView();
+            queryPinyin(code, true);
+            return;
+        }
         List<String> merged = new ArrayList<>();
         // v0.5.3 反馈①：只滤"最近一次上屏的同一字/词"（避免重复显示）；MRU 词组保留置顶
         // v0.5.4 反馈②：上次选中的字/词置顶须"编码匹配当前输入"（避免错位霸榜挡住四码词组）
@@ -1302,6 +1328,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             cloudInsertPos = merged.size();
             queryGatewayAsync(code);
         }
+        // v0.5.35 反馈⑥：≤4 码也异步查拼音（如 nihao 前 4 码 niha 期间，候选追加"你好"类辅助）
+        if (code.length() >= 2) queryPinyin(code, false);
     }
 
     /** v0.5.0 反馈⑤：英文/HTML 自动补全（输入 ht→https://、@→邮箱后缀、.→域名后缀） */
@@ -1758,8 +1786,28 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** 候选列表：v0.5.3 反馈③⑦——纯候选（去杂项）；v0.5.4 反馈④：编码前缀实时显示（含删除时同步）
      *  v0.5.11 反馈②：单行不换行 */
-    /** v0.5.34 反馈①：数字面板实时计算候选（带式 / 仅结果，点选上屏，上屏后可续算） */
+    /** v0.5.35 反馈③：候选左右滑动翻页 */
+    private void nextCandidatePage() {
+        int pages = Math.max(1, (candidates.size() + CAND_PAGE_SIZE - 1) / CAND_PAGE_SIZE);
+        if (candPage < pages - 1) { candPage++; updateCandidateView(); }
+    }
+    private void prevCandidatePage() {
+        if (candPage > 0) { candPage--; updateCandidateView(); }
+    }
+
+    /** v0.5.35 反馈①：表达式是否已含运算符（决定数字是否进缓冲） */
+    private boolean hasCalcOp(String expr) {
+        return expr.indexOf('+') >= 0 || expr.indexOf('-') >= 0 || expr.indexOf('*') >= 0
+                || expr.indexOf('/') >= 0 || expr.indexOf('×') >= 0 || expr.indexOf('÷') >= 0;
+    }
+
+    /** v0.5.34 反馈①：数字面板实时计算候选（带式 / 仅结果，点选上屏，上屏后可续算）
+     *  v0.5.35 反馈①：表达式不含运算符（纯数字直接上屏）时清空候选，不弹"1.5=5 2.5" */
     private void renderCalcCandidates() {
+        if (calcBuffer.isEmpty() || !hasCalcOp(calcBuffer)) {
+            candidateView.setText("");
+            return;
+        }
         double v = calcEval(calcBuffer);
         if (Double.isNaN(v)) {
             candidateView.setSingleLine(true);
@@ -1820,6 +1868,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         calcBuffer = "";
         calcAuto = false;
+        if (!lastCalcResult.isEmpty()) lastCalcInput = lastCalcResult;
         updateCandidateView();
     }
 
@@ -1862,6 +1911,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
      *  v0.5.11 反馈④：按回车 → 上屏当前编码的小写英文（qq → qq），不再误选中文候选（多） */
     private void commitFirstCandidate() {
+        // v0.5.35 反馈⑥：超 4 码（拼音全拼模式）回车上屏首选候选（nihao → 你好）
+        if (composingCode.length() > 4 && !candidates.isEmpty()) {
+            selectCandidate(0);
+            return;
+        }
         if (composingCode.length() > 0) {
             String raw = composingCode.toString();
             composingCode.setLength(0);
@@ -1897,9 +1951,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.4.8 数字面板：= 或退出时上屏。带公式（默认）上屏 "1+2=3"；纯数字直接上屏 */
     /** v0.5.3 反馈②：数字面板运算符——上次结果上屏后接运算符自动续算（8 → +2 → 8+2=10） */
     private void calcAppendOp(String op) {
+        // v0.5.35 反馈①：calcBuffer 空时——先续接"上次计算结果"，再回收"刚直接上屏的数字"（5 → + → "5+"）
         if (calcBuffer.isEmpty() && !lastCalcResult.isEmpty()) {
             calcBuffer = lastCalcResult + op;
             calcAuto = true;    // v0.5.8 反馈⑥：运算符自动续接上次结果 → 去重合法（8 → +2 → 上屏"+2=10"）
+        } else if (calcBuffer.isEmpty() && !lastCalcInput.isEmpty()) {
+            calcBuffer = lastCalcInput + op;
+            lastCalcInput = "";
+            calcAuto = true;
         } else {
             calcBuffer += op;
             calcAuto = false;   // 手动完整输入 → 不去重（3*2 不以结果 3 开头省略）
@@ -1961,6 +2020,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         calcBuffer = "";
         calcAuto = false;
+        if (!lastCalcResult.isEmpty()) lastCalcInput = lastCalcResult;   // v0.5.35 续算起点
         // v0.5.4 反馈⑥：结果上屏后保留数字面板——继续按运算符接续计算（2+3=5 → + → 5+）
         panelMode = 1;
         keyboardView.setKeyboard(keyboardNum);
@@ -2221,6 +2281,57 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.4.8 反馈⑦ + v0.4.9：选字后云端英文翻译（{"word":"钟","en":true} → "bell; clock"） */
+    /** v0.5.35 反馈⑥：云端拼音/简拼查询（异步；isLong>4 码时拼音候选插最前——回车即上屏拼音首选） */
+    private void queryPinyin(final String code, final boolean isLong) {
+        if (!GATEWAY_READY || code.length() < 2) return;
+        final int codeAtStart = composingCode.length();
+        Thread t = new Thread(() -> {
+            final java.util.List<String> cloud = new java.util.ArrayList<>();
+            try {
+                URL url = new URL(GATEWAY_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(4000);
+                conn.setReadTimeout(4000);
+                String body = "{\"py\":\"" + code + "\"}";
+                try (OutputStream os = conn.getOutputStream()) { os.write(body.getBytes("UTF-8")); }
+                if (conn.getResponseCode() == 200) {
+                    try (InputStream is = conn.getInputStream()) {
+                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = r.readLine()) != null) sb.append(line);
+                        JSONArray ps = new JSONObject(sb.toString()).optJSONArray("phrases");
+                        if (ps != null) {
+                            for (int i = 0; i < ps.length(); i++) {
+                                String p = ps.getString(i);
+                                if (p != null && p.length() >= 2) cloud.add(p);
+                            }
+                        }
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) { }
+            final boolean insertFront = isLong;
+            final Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(() -> {
+                if (composingCode.length() != codeAtStart) return;   // 输入已变化，丢弃过期结果
+                if (cloud.isEmpty()) return;
+                boolean changed = false;
+                for (int i = cloud.size() - 1; i >= 0; i--) {
+                    String p = cloud.get(i);
+                    if (candidates.contains(p)) continue;
+                    if (insertFront) candidates.add(0, p); else candidates.add(p);
+                    changed = true;
+                }
+                if (changed) updateCandidateView();
+            });
+        });
+        t.start();
+    }
+
     private void queryTranslation(final String word) {
         final Handler handler = new Handler(Looper.getMainLooper());
         Thread t = new Thread(() -> {

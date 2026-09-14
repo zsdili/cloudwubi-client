@@ -7,9 +7,9 @@
      说明：实时计算结果在候选条点选上屏（带式/仅结果），回车执行输入框动作 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="19.2%p"
-    android:keyHeight="44dp"
+    android:keyHeight="50dp"
     android:horizontalGap="1%p"
-    android:verticalGap="5dp"
+    android:verticalGap="6dp"
     android:keyBackground="@drawable/key_bg">
 
     <Row>
@@ -34,10 +34,10 @@
         <Key android:codes="46" android:keyLabel="." />
     </Row>
     <Row>
-        <Key android:codes="-103" android:keyLabel="返回" />
-        <Key android:codes="47" android:keyLabel="/" />
-        <Key android:codes="48" android:keyLabel="0" />
-        <Key android:codes="-104" android:keyLabel="符号" />
-        <Key android:codes="-4" android:keyLabel="↵" />
+        <Key android:codes="-103" android:keyLabel="返回" android:keyHeight="46dp" />
+        <Key android:codes="47" android:keyLabel="/" android:keyHeight="46dp" />
+        <Key android:codes="48" android:keyLabel="0" android:keyHeight="46dp" />
+        <Key android:codes="-104" android:keyLabel="符号" android:keyHeight="46dp" />
+        <Key android:codes="-4" android:keyLabel="↵" android:keyHeight="46dp" />
     </Row>
 </Keyboard>
