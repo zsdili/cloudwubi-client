@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔数字面板 v0.5.1：居中满行 5 键布局（每行 19.2%p×5 + 1%p×4 = 100%），返回固定左下角
+<!-- 云五笔数字面板 v0.5.34：严格按用户参考截图
      行1: + | 1 | 2 | 3 | ←(退格)
      行2: - | 4 | 5 | 6 | @
      行3: * | 7 | 8 | 9 | .
-     行4: 返回 | / | 0 | 符号 | 搜索
-     说明：无语音图标；数字+运算符合实时计算，候选条可选带式/仅结果上屏 -->
+     行4: 返回 | / | 0 | 符号 | ↵(回车)
+     说明：实时计算结果在候选条点选上屏（带式/仅结果），回车执行输入框动作 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="19.2%p"
     android:keyHeight="44dp"
@@ -38,6 +38,6 @@
         <Key android:codes="47" android:keyLabel="/" />
         <Key android:codes="48" android:keyLabel="0" />
         <Key android:codes="-104" android:keyLabel="符号" />
-        <Key android:codes="-201" android:keyLabel="=" />
+        <Key android:codes="-4" android:keyLabel="↵" />
     </Row>
 </Keyboard>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 云五笔符号面板 v0.5.34：分类式（中文）-- 左栏分类 + 右栏符号 + 底部导航 -->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyHeight="44dp"
+    android:horizontalGap="0.5%p"
+    android:verticalGap="4dp"
+    android:keyBackground="@drawable/key_bg">
+    <Row>
+        <Key android:codes="-311" android:keyLabel="最近" android:keyWidth="12%p" />
+        <Key android:codes="65292" android:keyLabel="，" android:keyWidth="21.5%p" />
+        <Key android:codes="12290" android:keyLabel="。" android:keyWidth="21.5%p" />
+        <Key android:codes="65311" android:keyLabel="？" android:keyWidth="21.5%p" />
+        <Key android:codes="65281" android:keyLabel="！" android:keyWidth="21.5%p" />
+    </Row>
+    <Row>
+        <Key android:codes="-312" android:keyLabel="▸中文" android:keyWidth="12%p" />
+        <Key android:codes="65306" android:keyLabel="：" android:keyWidth="21.5%p" />
+        <Key android:codes="12289" android:keyLabel="、" android:keyWidth="21.5%p" />
+        <Key android:codes="64" android:keyLabel="@" android:keyWidth="21.5%p" />
+        <Key android:codes="8230" android:keyLabel="……" android:keyWidth="21.5%p" />
+    </Row>
+    <Row>
+        <Key android:codes="-313" android:keyLabel="英文" android:keyWidth="12%p" />
+        <Key android:codes="8220" android:keyLabel="“" android:keyWidth="21.5%p" />
+        <Key android:codes="8221" android:keyLabel="”" android:keyWidth="21.5%p" />
+        <Key android:codes="65307" android:keyLabel="；" android:keyWidth="21.5%p" />
+        <Key android:codes="8216" android:keyLabel="‘" android:keyWidth="21.5%p" />
+    </Row>
+    <Row>
+        <Key android:codes="-314" android:keyLabel="表情" android:keyWidth="12%p" />
+        <Key android:codes="8217" android:keyLabel="’" android:keyWidth="21.5%p" />
+        <Key android:codes="126" android:keyLabel="~" android:keyWidth="21.5%p" />
+        <Key android:codes="183" android:keyLabel="·" android:keyWidth="21.5%p" />
+        <Key android:codes="45" android:keyLabel="-" android:keyWidth="21.5%p" />
+    </Row>
+    <Row>
+        <Key android:codes="-315" android:keyLabel="网络" android:keyWidth="12%p" />
+        <Key android:codes="65288" android:keyLabel="（" android:keyWidth="21.5%p" />
+        <Key android:codes="65289" android:keyLabel="）" android:keyWidth="21.5%p" />
+        <Key android:codes="12298" android:keyLabel="《" android:keyWidth="21.5%p" />
+        <Key android:codes="12299" android:keyLabel="》" android:keyWidth="21.5%p" />
+    </Row>
+
+    <Row>
+        <Key android:codes="-321" android:keyLabel="🔒" android:keyWidth="19.2%p" />
+        <Key android:codes="-322" android:keyLabel="⌃" android:keyWidth="19.2%p" />
+        <Key android:codes="-323" android:keyLabel="⌄" android:keyWidth="19.2%p" />
+        <Key android:codes="-5" android:keyLabel="←" android:keyWidth="19.2%p" android:isRepeatable="true" />
+        <Key android:codes="-103" android:keyLabel="返回" android:keyWidth="19.2%p" />
+    </Row>
+</Keyboard>
