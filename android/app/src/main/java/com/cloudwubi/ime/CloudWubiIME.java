@@ -430,6 +430,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 if (merged.size() >= 12) break;
             }
         }
+        // v0.5.27 反馈②：复制的文本显示在备选栏末尾供点选（只显示复制文本，不上屏历史）
+        String clipTxt = getClipboardText();
+        if (!clipTxt.isEmpty() && !merged.contains(clipTxt)) {
+            merged.add(clipTxt.length() > 10 ? clipTxt.substring(0, 10) + "…" : clipTxt);
+        }
         candidates.addAll(merged);
         candPage = 0;
         updateCandidateView();
@@ -1148,11 +1153,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
             return;
         }
-        // v0.5.27 反馈②：复制的文本显示在备选栏末尾供点选（只显示剪贴板文本，不显示上屏历史）
-        String clipTxt = getClipboardText();
-        if (!clipTxt.isEmpty() && !merged.contains(clipTxt)) {
-            merged.add(clipTxt.length() > 10 ? clipTxt.substring(0, 10) + "…" : clipTxt);
-        }
         List<String> merged = new ArrayList<>();
         // v0.5.3 反馈①：只滤"最近一次上屏的同一字/词"（避免重复显示）；MRU 词组保留置顶
         // v0.5.4 反馈②：上次选中的字/词置顶须"编码匹配当前输入"（避免错位霸榜挡住四码词组）
@@ -1214,6 +1214,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     if (!merged.contains(p)) merged.add(p);
                 }
             }
+        }
+        // v0.5.27 反馈②：复制的文本显示在备选栏末尾供点选（只显示复制文本，不上屏历史）
+        String clipTxt = getClipboardText();
+        if (!clipTxt.isEmpty() && !merged.contains(clipTxt)) {
+            merged.add(clipTxt.length() > 10 ? clipTxt.substring(0, 10) + "…" : clipTxt);
         }
         candidates.addAll(merged);
         candPage = 0;
