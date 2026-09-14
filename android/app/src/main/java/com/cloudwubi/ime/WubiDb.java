@@ -294,7 +294,9 @@ public final class WubiDb {
         List<String> out = new ArrayList<>();
         // 保障词精确置顶（v0.5.25 扩容至 70 个高频词，命中率 85%→95%+ 的基石）
         for (String g : GUARANTEED) {
-            if (g.length() == 6 && g.startsWith(code)) {
+            // v0.5.26 修复：保障词长度条件 ==6 只匹配 2 字词，3/4 字保障词（没办法/中国人民）全部失效
+            //   → 改为 >4（4 码 + 任意长度词），ilif 重新打出"没办法"
+            if (g.length() > 4 && g.startsWith(code)) {
                 String w = g.substring(4);
                 if (!out.contains(w)) out.add(w);
             }
