@@ -33,6 +33,14 @@ public final class WubiDb {
     // 86 规则：2字词=前字前2码+后字前2码；3字词=前2字各1码+末字前2码；4字词=前3字各1码+末字1码
     /** 前缀索引：编码前缀(1-3码) -> 字列表（简码精确 + 全码前缀匹配，遍历序保证精确在前） */
     private static Map<String, List<String>> prefixIndex;
+    /** v0.5.45 反馈④：86 版 25 键一级简码（Q我 W人 E有 R的 T和 Y主 U产 I不 O为 P这 /
+     *  A工 S要 D在 F地 G一 H上 J是 K中 L国 M同 N民 B了 V发 C以 X经）——1 码查询强制置顶 */
+    private static final String[] SIMPLE1 = {
+        "g一","f地","d在","s要","a工","h上","j是","k中","l国","m同",
+        "t和","r的","e有","w人","q我","y主","u产","i不","o为","p这",
+        "n民","b了","v发","c以","x经"
+    };
+
     /** 单字全码索引：字 -> 全码（拼词取码用；构建时 4 码/最长优先） */
     private static Map<String, String> fullCodeIndex;
     /** 保障词（特例置顶）：动态规则易错或用户必查的常用词，按编码精确置顶 */
@@ -412,9 +420,22 @@ public final class WubiDb {
         List<String> phr = phraseIndex == null ? null : phraseIndex.get(code);
         int len = code.length();
         // v0.5.16 反馈③：2/3/4 码单字按常用字频序重排（高频字自动前移，先科学后先进）
-        if (len >= 2 && singles != null && singles.size() > 1) sortByFreq(singles);
+        // v0.5.45 反馈④：1 码同样重排 + 一级简码强制第一（打 r=的/i=不/w=人，键名字不得压过简码）
+        if (singles != null && singles.size() > 1) sortByFreq(singles);
         if (len == 1) {
-            if (singles != null) result.addAll(singles);
+            if (singles != null) {
+                // 一级简码强制置顶（如 w 行"八/人"→"人"第一）
+                String expect = null;
+                for (String s1 : SIMPLE1) {
+                    if (s1.charAt(0) == code.charAt(0)) { expect = s1.substring(1); break; }
+                }
+                if (expect != null) {
+                    result.add(expect);
+                    for (String c : singles) if (!c.equals(expect)) result.add(c);
+                } else {
+                    result.addAll(singles);
+                }
+            }
         } else if (len == 2) {
             // v0.5.43 反馈②：词组优先（二字词/三字词/四字词/多字词 均先于单字）
             if (phr != null) result.addAll(phr);
