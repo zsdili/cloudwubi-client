@@ -2256,6 +2256,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
         } else if (isMultiline()) {
             commitText("\n");
+        } else {
+            // v0.5.76 回车失灵根治：单行文本框（搜索框/浏览器地址栏/表单）回车 → 执行输入框动作
+            //   （搜索/前往/完成）。旧代码此分支为空 → 用户实测"输入广州按回车不搜索，回车键失灵"
+            sendDefaultEditorAction(true);
         }
     }
 
