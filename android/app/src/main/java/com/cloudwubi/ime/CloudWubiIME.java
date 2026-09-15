@@ -427,8 +427,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private TextView makeToolButton(String text, View.OnClickListener listener) {
         TextView tv = new TextView(this);
         tv.setText(text);
-        // v0.5.53 反馈：取消↺/重做↻ 字符渲染偏小，放大至 18；其余统一 15——工具栏图标视觉统一
-        float ts = (text.equals("↺") || text.equals("↻")) ? 18f : 15f;
+        // v0.5.54 反馈：取消↺/重做↻ 仍偏小 → 放大至 22；其余统一 15——工具栏图标视觉统一
+        float ts = (text.equals("↺") || text.equals("↻")) ? 22f : 15f;
         tv.setTextSize(ts);
         tv.setGravity(android.view.Gravity.CENTER);
         tv.setOnClickListener(listener);
@@ -878,7 +878,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 updateCandidateView();
             } else {
                 commitText(String.valueOf((char) primaryCode));
-                lastCalcInput = String.valueOf((char) primaryCode);   // 回收点：运算符按下时作为表达式起点
+                // v0.5.54：连续数字/小数点累积到 lastCalcInput（"1.6" 整体回收），并清残留表达式防混入
+                lastCalcInput += String.valueOf((char) primaryCode);
+                calcBuffer = "";
             }
             return;
         }
@@ -1026,7 +1028,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitText(chineseMode ? "，" : ",");
                 return;
             case 46:
-                if (panelMode == 1) { calcBuffer += "."; updateCandidateView(); return; }
+                // v0.5.54：小数点直接上屏并累积到 lastCalcInput（防 calcBuffer 残留 "." 导致 1.6 拆散错乱）
+                if (panelMode == 1) { commitText("."); lastCalcInput += "."; updateCandidateView(); return; }
                 commitText(chineseMode ? "。" : ".");
                 return;
             case 0xFF01:   // v0.5.17 修复回归：！，键上滑 → ！（CloudKeyboardView.swipeSymbol 直达）
@@ -2063,14 +2066,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.4.8 数字面板：= 或退出时上屏。带公式（默认）上屏 "1+2=3"；纯数字直接上屏 */
     /** v0.5.3 反馈②：数字面板运算符——上次结果上屏后接运算符自动续算（8 → +2 → 8+2=10） */
     private void calcAppendOp(String op) {
-        // v0.5.35 反馈①：calcBuffer 空时——先续接"上次计算结果"，再回收"刚直接上屏的数字"（5 → + → "5+"）
-        if (calcBuffer.isEmpty() && !lastCalcResult.isEmpty()) {
-            calcBuffer = lastCalcResult + op;
-            calcAuto = true;    // v0.5.8 反馈⑥：运算符自动续接上次结果 → 去重合法（8 → +2 → 上屏"+2=10"）
-        } else if (calcBuffer.isEmpty() && !lastCalcInput.isEmpty()) {
+        // v0.5.54 反馈：刚上屏的数字（lastCalcInput）必须优先于上次结果（lastCalcResult）
+        //   ——否则 2(上屏)→* → 续接上次结果"6*" → "6*3"（2*3 错成 6*3 的根因）
+        //   同时：删除已上屏的数字/小数（"1.6"），避免表达式上屏时重复（1.6*3=4.8 重复成 1.66*3）
+        if (calcBuffer.isEmpty() && !lastCalcInput.isEmpty()) {
+            InputConnection cic = getCurrentInputConnection();
+            try {
+                if (cic != null) cic.deleteSurroundingText(lastCalcInput.length(), 0);
+            } catch (Exception ignored) { }
             calcBuffer = lastCalcInput + op;
             lastCalcInput = "";
-            calcAuto = true;
+            calcAuto = true;    // 直接上屏数字回收为表达式起点（5 → + → "5+"）
+        } else if (calcBuffer.isEmpty() && !lastCalcResult.isEmpty()) {
+            calcBuffer = lastCalcResult + op;
+            calcAuto = true;    // 上屏结果后直接按运算符 → 续算（8+2=10 后 → + → "10+"）
         } else {
             calcBuffer += op;
             calcAuto = false;   // 手动完整输入 → 不去重（3*2 不以结果 3 开头省略）
