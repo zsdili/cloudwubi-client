@@ -776,7 +776,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         ASSOC_LINK.put("相信", new String[]{"你", "自己", "未来"});
         ASSOC_LINK.put("帮助", new String[]{"你", "大家", "需要"});
         ASSOC_LINK.put("陪伴", new String[]{"你", "左右", "成长"});
-        ASSOC_LINK.put("加油", new String[]{"吧", "努力"});
         ASSOC_LINK.put("早上好", new String[]{"钟总", "大家", "朋友们"});
         ASSOC_LINK.put("下午好", new String[]{"钟总", "大家"});
         ASSOC_LINK.put("晚上好", new String[]{"钟总", "大家"});
