@@ -6,3 +6,4 @@ cloudwubi_demo_offline
 windows/core/eval_test
 windows/core/dict_test
 windows/core/*.o
+apk*/
