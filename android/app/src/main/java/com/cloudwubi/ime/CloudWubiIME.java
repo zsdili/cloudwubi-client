@@ -427,7 +427,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private TextView makeToolButton(String text, View.OnClickListener listener) {
         TextView tv = new TextView(this);
         tv.setText(text);
-        tv.setTextSize(14);   // v0.5.34 反馈④：工具栏字体调大
+        // v0.5.53 反馈：取消↺/重做↻ 字符渲染偏小，放大至 18；其余统一 15——工具栏图标视觉统一
+        float ts = (text.equals("↺") || text.equals("↻")) ? 18f : 15f;
+        tv.setTextSize(ts);
         tv.setGravity(android.view.Gravity.CENTER);
         tv.setOnClickListener(listener);
         // v0.5.40 反馈④：固定宽度放置工具栏按钮（44dp），避免文字宽度差异导致位移晃动
