@@ -561,7 +561,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.59：点击"云五笔"时检测新版本——有新版则提示可点击下载升级（GitHub APK 直链）
         if (latestVersion != null && compareVersions(latestVersion, currentVersion()) > 0) {
             int uStart = sb.length();
-            sb.append("\n发现新版本 v").append(latestVersion).append(" [点击下载升级]");
+            sb.append("  ·  发现新版本 v").append(latestVersion).append(" [点击下载升级]");
             int uEnd = sb.length();
             ClickableSpan dl = new ClickableSpan() {
                 @Override
@@ -581,11 +581,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             };
             sb.setSpan(dl, uStart, uEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else if (updateChecked) {
-            sb.append(latestVersion == null ? "\n检查更新失败（网络）" : "\n已是最新版本");
+            sb.append(latestVersion == null ? "  ·  检查更新失败（网络）" : "  ·  已是最新版本");
         }
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        candidateView.setSingleLine(false);
-        candidateView.setLineSpacing(0f, 1.25f);
+        // v0.5.65 反馈①：app 信息仅限一行（不换行、超宽省略），保证不撑大显示范围
+        candidateView.setSingleLine(true);
+        candidateView.setMaxLines(1);
+        candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        candidateView.setMinHeight(candViewH);
+        candidateView.setMaxHeight(candViewH);
         candidateView.setTextSize(16f);
         safeSetText(sb);
     }
@@ -671,6 +675,125 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.20（用户指令）：联想已去除——不再做"进入输入状态时光标前字联想"
         enterAssociateChar = "";
         super.onStartInputView(info, restarting);
+    }
+
+    /** v0.5.65 反馈②：意思衔接词表（前进→方向 是"衔接"，不是"进行"式组词）——
+     *  词义上"下一个自然出现的词"，让用户少打很多字 */
+    private static final java.util.Map<String, String[]> ASSOC_LINK = new java.util.HashMap<>();
+    static {
+        ASSOC_LINK.put("前进", new String[]{"方向", "道路", "号角", "浪潮", "脚步", "吧"});
+        ASSOC_LINK.put("方向", new String[]{"明确", "正确", "目标", "感"});
+        ASSOC_LINK.put("吃", new String[]{"饭", "亏", "苦", "东西", "早餐", "午饭"});
+        ASSOC_LINK.put("喝", new String[]{"水", "茶", "酒", "咖啡"});
+        ASSOC_LINK.put("走", new String[]{"路", "开", "出", "进", "吧"});
+        ASSOC_LINK.put("看", new String[]{"书", "电影", "电视", "手机", "一下"});
+        ASSOC_LINK.put("听", new String[]{"音乐", "歌", "话", "讲座"});
+        ASSOC_LINK.put("学", new String[]{"习", "校", "生", "知识"});
+        ASSOC_LINK.put("说", new String[]{"话", "明", "道", "一下"});
+        ASSOC_LINK.put("想", new String[]{"你", "办法", "法", "一下"});
+        ASSOC_LINK.put("做", new String[]{"事", "完", "好", "饭", "决定"});
+        ASSOC_LINK.put("打", new String[]{"电话", "字", "开", "球", "工"});
+        ASSOC_LINK.put("开", new String[]{"门", "会", "车", "始", "心"});
+        ASSOC_LINK.put("来", new String[]{"了", "到", "电", "吧", "啦"});
+        ASSOC_LINK.put("去", new String[]{"了", "过", "上班", "吧"});
+        ASSOC_LINK.put("买", new String[]{"东西", "单", "菜", "票"});
+        ASSOC_LINK.put("卖", new String[]{"东西", "完", "力"});
+        ASSOC_LINK.put("工作", new String[]{"顺利", "忙碌", "辛苦", "安排"});
+        ASSOC_LINK.put("生活", new String[]{"美好", "幸福", "充实", "愉快"});
+        ASSOC_LINK.put("问题", new String[]{"解决", "不大", "分析", "所在"});
+        ASSOC_LINK.put("办法", new String[]{"想", "好", "总比困难多"});
+        ASSOC_LINK.put("天气", new String[]{"很好", "不错", "变化", "预报"});
+        ASSOC_LINK.put("谢谢", new String[]{"你", "大家", "帮忙"});
+        ASSOC_LINK.put("加油", new String[]{"努力", "奋斗", "吧"});
+        ASSOC_LINK.put("睡觉", new String[]{"了", "吧", "时间"});
+        ASSOC_LINK.put("上班", new String[]{"了", "去", "打卡", "路上"});
+        ASSOC_LINK.put("下班", new String[]{"了", "回家", "路上"});
+        ASSOC_LINK.put("回家", new String[]{"了", "吧", "路上"});
+        ASSOC_LINK.put("吃饭", new String[]{"了", "吧", "了吗"});
+        ASSOC_LINK.put("开始", new String[]{"了", "吧", "工作", "行动"});
+        ASSOC_LINK.put("结束", new String[]{"了", "吧"});
+        ASSOC_LINK.put("明白", new String[]{"了", "吧"});
+        ASSOC_LINK.put("知道", new String[]{"了", "吗"});
+        ASSOC_LINK.put("了解", new String[]{"一下", "清楚"});
+        ASSOC_LINK.put("帮忙", new String[]{"一下", "吧"});
+        ASSOC_LINK.put("支持", new String[]{"你", "一下", "我们"});
+        ASSOC_LINK.put("喜欢", new String[]{"你", "这个", "生活"});
+        ASSOC_LINK.put("努力", new String[]{"工作", "学习", "奋斗", "上进"});
+        ASSOC_LINK.put("奋斗", new String[]{"吧", "到底", "不息"});
+        ASSOC_LINK.put("坚持", new String[]{"到底", "不懈", "就是胜利"});
+        ASSOC_LINK.put("成功", new String[]{"了", "在望", "喜悦", "经验"});
+        ASSOC_LINK.put("失败", new String[]{"了", "是成功之母"});
+        ASSOC_LINK.put("快乐", new String[]{"每一天", "生活", "成长"});
+        ASSOC_LINK.put("幸福", new String[]{"生活", "快乐", "美满"});
+        ASSOC_LINK.put("健康", new String[]{"快乐", "长寿", "第一"});
+        ASSOC_LINK.put("平安", new String[]{"快乐", "幸福", "顺利"});
+        ASSOC_LINK.put("顺利", new String[]{"成功", "平安", "完成"});
+        ASSOC_LINK.put("美好", new String[]{"生活", "未来", "时光", "祝愿"});
+        ASSOC_LINK.put("未来", new String[]{"可期", "美好", "发展"});
+        ASSOC_LINK.put("梦想", new String[]{"成真", "起航", "实现"});
+        ASSOC_LINK.put("目标", new String[]{"明确", "实现", "达成"});
+        ASSOC_LINK.put("计划", new String[]{"落实", "执行", "安排"});
+        ASSOC_LINK.put("执行", new String[]{"到位", "有力", "计划"});
+        ASSOC_LINK.put("落实", new String[]{"到位", "执行", "落地"});
+        ASSOC_LINK.put("提升", new String[]{"能力", "效率", "水平", "品质"});
+        ASSOC_LINK.put("效率", new String[]{"提升", "提高", "优先"});
+        ASSOC_LINK.put("提高", new String[]{"效率", "水平", "质量"});
+        ASSOC_LINK.put("合作", new String[]{"共赢", "伙伴", "愉快"});
+        ASSOC_LINK.put("共赢", new String[]{"合作", "发展", "未来"});
+        ASSOC_LINK.put("团队", new String[]{"合作", "精神", "力量"});
+        ASSOC_LINK.put("客户", new String[]{"满意", "服务", "至上"});
+        ASSOC_LINK.put("服务", new String[]{"客户", "至上", "到位"});
+        ASSOC_LINK.put("品质", new String[]{"保证", "提升", "卓越"});
+        ASSOC_LINK.put("质量", new String[]{"保证", "提升", "第一"});
+        ASSOC_LINK.put("成本", new String[]{"降低", "控制", "控制"});
+        ASSOC_LINK.put("风险", new String[]{"控制", "防范", "意识"});
+        ASSOC_LINK.put("管理", new String[]{"规范", "提升", "水平"});
+        ASSOC_LINK.put("优化", new String[]{"升级", "提升", "方案"});
+        ASSOC_LINK.put("投资", new String[]{"回报", "项目", "机会"});
+        ASSOC_LINK.put("项目", new String[]{"推进", "落地", "启动"});
+        ASSOC_LINK.put("落地", new String[]{"实施", "项目", "生根"});
+        ASSOC_LINK.put("推进", new String[]{"落实", "项目", "进度"});
+        ASSOC_LINK.put("方案", new String[]{"实施", "优化", "可行"});
+        ASSOC_LINK.put("数据", new String[]{"分析", "驱动", "安全"});
+        ASSOC_LINK.put("分析", new String[]{"数据", "问题", "报告"});
+        ASSOC_LINK.put("决策", new String[]{"科学", "明智", "支持"});
+        ASSOC_LINK.put("行动", new String[]{"起来", "果断", "力"});
+        ASSOC_LINK.put("精神", new String[]{"饱满", "可嘉", "力量"});
+        ASSOC_LINK.put("积极", new String[]{"向上", "主动", "乐观"});
+        ASSOC_LINK.put("乐观", new String[]{"向上", "积极", "心态"});
+        ASSOC_LINK.put("成长", new String[]{"进步", "快乐", "路上"});
+        ASSOC_LINK.put("进步", new String[]{"成长", "飞快", "空间"});
+        ASSOC_LINK.put("收获", new String[]{"满满", "成功", "喜悦"});
+        ASSOC_LINK.put("成果", new String[]{"丰硕", "显著", "共享"});
+        ASSOC_LINK.put("完成", new String[]{"任务", "目标", "了"});
+        ASSOC_LINK.put("任务", new String[]{"完成", "艰巨", "安排"});
+        ASSOC_LINK.put("达成", new String[]{"目标", "共识", "一致"});
+        ASSOC_LINK.put("共识", new String[]{"达成", "一致"});
+        ASSOC_LINK.put("满意", new String[]{"服务", "客户", "结果"});
+        ASSOC_LINK.put("欢迎", new String[]{"你", "大家", "光临"});
+        ASSOC_LINK.put("恭喜", new String[]{"你", "发财", "成功"});
+        ASSOC_LINK.put("祝福", new String[]{"你", "大家", "安康"});
+        ASSOC_LINK.put("相信", new String[]{"你", "自己", "未来"});
+        ASSOC_LINK.put("帮助", new String[]{"你", "大家", "需要"});
+        ASSOC_LINK.put("陪伴", new String[]{"你", "左右", "成长"});
+        ASSOC_LINK.put("加油", new String[]{"吧", "努力"});
+        ASSOC_LINK.put("早上好", new String[]{"钟总", "大家", "朋友们"});
+        ASSOC_LINK.put("下午好", new String[]{"钟总", "大家"});
+        ASSOC_LINK.put("晚上好", new String[]{"钟总", "大家"});
+        ASSOC_LINK.put("辛苦了", new String[]{"钟总", "大家", "你"});
+    }
+
+    /** v0.5.65 反馈③：光标前字符是否为数字（决定"+"等运算符进计算缓冲还是直接上屏）
+     *  规则：calcBuffer 非空（正在计算）或光标前字符是数字 → 进缓冲继续计算；
+     *       否则（中文后直接点符号）→ 直接上屏，无需按空格 */
+    private boolean prevCharIsDigit() {
+        if (!calcBuffer.isEmpty()) return true;
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return false;
+        try {
+            CharSequence t = ic.getTextBeforeCursor(1, 0);
+            return t != null && t.length() > 0 && Character.isDigit(t.charAt(0));
+        } catch (Exception e) { return false; }
     }
 
     /** v0.5.5 反馈⑦：进入输入状态/光标前字联想（本地 MRU + 含字词组 + 云端前缀） */
@@ -1025,22 +1148,22 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitCalc(true);
                 return;
             case KEY_CALC_DIV:     // ÷
-                if (panelMode == 1) { calcAppendOp("÷"); } else commitText("÷");
+                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("÷"); } else commitText("÷");
                 return;
             case KEY_CALC_MUL:     // ×
-                if (panelMode == 1) { calcAppendOp("×"); } else commitText("×");
+                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("×"); } else commitText("×");
                 return;
             case 43:               // +
-                if (panelMode == 1) { calcAppendOp("+"); } else commitText("+");
+                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("+"); } else commitText("+");
                 return;
             case 45:               // -
-                if (panelMode == 1) { calcAppendOp("-"); } else commitText("-");
+                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("-"); } else commitText("-");
                 return;
             case 42:               // *（数字面板计算）
-                if (panelMode == 1) { calcAppendOp("*"); } else commitText("*");
+                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("*"); } else commitText("*");
                 return;
             case 47:               // /（数字面板计算）
-                if (panelMode == 1) { calcAppendOp("/"); } else commitText("/");
+                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("/"); } else commitText("/");
                 return;
             case 64:               // @（数字面板邮箱直上屏）
                 commitText("@");
@@ -2351,6 +2474,25 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         for (String p : recentPhrases) {
             if (p.startsWith(chain) && !merged.contains(p)) merged.add(p);
         }
+        // ②d v0.5.65 反馈②：意思衔接词表（前进→方向/道路/号角——"衔接"非"组词"，让人少打很多字）
+        //   先整词精确衔接（前进→方向），再尾字衔接（进→一步/取/来）；排位=MRU 之后、词库前缀之前
+        if (!chain.isEmpty()) {
+            String[] links = ASSOC_LINK.get(chain);
+            if (links != null) {
+                for (String lk : links) {
+                    if (!merged.contains(lk)) merged.add(lk);
+                }
+            }
+        }
+        if (merged.size() < 12 && !anchor.isEmpty()) {
+            String[] links2 = ASSOC_LINK.get(anchor);
+            if (links2 != null) {
+                for (String lk : links2) {
+                    if (!merged.contains(lk)) merged.add(lk);
+                    if (merged.size() >= 12) break;
+                }
+            }
+        }
         // ② 整词前缀联想：本地词库以整词开头（前进→前进浪潮/前进号角）
         if (!chain.isEmpty()) {
             List<String> prefix = WubiDb.queryByPrefix(chain);
@@ -2358,17 +2500,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 for (String p : prefix) if (!merged.contains(p)) merged.add(p);
             }
         }
-        // ②b v0.5.11 反馈⑤：锚字前缀联想（进→进一步/进行/进入/进攻…，光标前一字开头的常用搭配）
-        //   （原 queryByChar 含字联想会返回"共进/驶进"等 X进 结尾词——方向错误，已废弃）
-        if (merged.size() < 12 && !anchor.isEmpty()) {
-            List<String> byPrefix = WubiDb.queryByPrefix(anchor);
-            if (byPrefix != null) {
-                for (String p : byPrefix) {
-                    if (!merged.contains(p)) merged.add(p);
-                    if (merged.size() >= 12) break;
-                }
-            }
-        }
+        // ②b v0.5.65 移除：锚字前缀联想（进→进行/进一步/进入）是"组词"非"意思衔接"，
+        //   用户明确"如果是组词的话那就完全错了"——以 ASSOC_LINK 衔接词表替代
         // ②c v0.5.9 反馈②：积极成语联想层（含锚字成语——阳光向上、有启发有感悟、眼前一亮）
         if (merged.size() < 12 && !anchor.isEmpty()) {
             List<String> idms = WubiDb.queryIdioms(anchor);

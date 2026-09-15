@@ -48,7 +48,92 @@ public final class WubiDbCore {
         "wjjg但是", "vkjs如果", "kjqd虽然", "dmeg而且", "akft或者", "qdrg然后", "jbrg最后", "uttf首先",
         "mgjf同时", "djip非常", "trkl特别", "tgsv重要", "tuuj简单", "yywg方便", "nnqi快乐", "lkim加油",
         "pvwg安全", "wvyv健康", "ntna发展", "khlg中国", "wwna人民", "jhvb早上好", "jhvb晚上好", "iutx没关系",
-        "yguk请问", "thnn自己", "yfky认真听讲", "klwn中国人民", "qqit多少", "kvjf哪里", "gtut不知道", "iujg没问题", "gmmk一帆风顺"
+        "yguk请问", "thnn自己", "yfky认真听讲", "klwn中国人民", "qqit多少", "kvjf哪里", "gtut不知道", "iujg没问题", "gmmk一帆风顺",
+        // v0.5.65 反馈⑤：高频日常三字词（86 规则算码，真实词频表 wubi86_basic 全码计算）
+        "gfsv不需要",
+"gbgo不出来",
+"iwtc没什么",
+"gtut不知道",
+"iutx没关系",
+"iujg没问题",
+"tggh等一下",
+"ttsu怎么样",
+"ywtc为什么",
+"fwtc干什么",
+"kprn别客气",
+"gprn不客气",
+"yywq谢谢你",
+"geyt不用谢",
+"cgfh对不起",
+"snkc可以吗",
+"tgtf行不行",
+"vgvb好不好",
+"sgsv要不要",
+"cgce能不能",
+"wgwf会不会",
+"dkjf在哪里",
+"jwtc是什么",
+"ttlw怎么办",
+"gtbn不得了",
+"bgfh了不起",
+"ghhk一点点",
+"ggbb一下子",
+"gwqt一会儿",
+"gdbb一辈子",
+"gpww一家人",
+"gqyt一句话",
+"gwww一个人",
+"gkhh一路上",
+"guwv一部分",
+"gydm一方面",
+"difh感兴趣",
+"duln有意思",
+"iuln没意思",
+"gpjq不容易",
+"ugqq差不多",
+"ughk差一点",
+"utvb准备好",
+"gvbn开始了",
+"xgbn结束了",
+"lgbn回来了",
+"bfbn出去了",
+"fgbn进来了",
+"hfkc上去吧",
+"ggkc下来吧",
+"tbkc算了吧",
+"fkfh走吧走",
+"grrh来看看",
+"ktyu听我说",
+"rtrq看我的",
+"yysu就这样",
+"vvkc那好吧",
+"snkb可以啊",
+"tubn知道了",
+"jrbn明白了",
+"ywbn记住了",
+"swbn想你了",
+"twkn等你呢",
+"likb加油啊",
+"dsbn太棒了",
+"fgqa真不错",
+"dpbn厉害了",
+"dvbn太好了",
+"uakr辛苦啦",
+"jpkr晚安啦",
+"jhvb早上好",
+"ktvb中午好",
+"jhvb晚上好",
+"urvb新年好",
+"afwq恭喜你",
+"ppwq祝福你",
+"cqwq欢迎你",
+"dywq感谢你",
+"frwq支持你",
+"swwq相信你",
+"dewq帮助你",
+"bwwq陪伴你",
+"fcwq喜欢你",
+"erwq爱护你"
     };
 
     private WubiDbCore() { }
@@ -394,6 +479,22 @@ public final class WubiDbCore {
             if (phr != null) result.addAll(phr);
             if (singles != null) result.addAll(singles);
         } else if (len == 3) {
+            // v0.5.65 反馈④：三码查询=三级简码单字优先（86 老习惯：三码出字）——
+            //   先精确单字、再全码前缀单字（如 nua→nuak屏），词组殿后（避免单字被词组截断）
+            if (singles != null) {
+                if (singles.size() > 1) sortByFreq(singles);
+                result.addAll(singles);
+            }
+            if (singleIndex != null) {
+                for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+                    String k = e.getKey();
+                    if (k.length() > 3 && k.startsWith(code)) {
+                        for (String w : e.getValue()) {
+                            if (!result.contains(w)) result.add(w);
+                        }
+                    }
+                }
+            }
             if (phr != null) result.addAll(phr);
             if (phraseIndex != null) {
                 List<String> prePhr = new ArrayList<>();
@@ -407,19 +508,8 @@ public final class WubiDbCore {
                 }
                 if (!prePhr.isEmpty()) result.addAll(prePhr);
             }
-            if (singles != null) result.addAll(singles);
-            if (singleIndex != null) {
-                for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
-                    String k = e.getKey();
-                    if (k.length() > 3 && k.startsWith(code)) {
-                        for (String w : e.getValue()) {
-                            if (!result.contains(w)) result.add(w);
-                        }
-                    }
-                }
-                if (result.size() > 1) sortByFreq(result);
-                if (result.size() > 10) result = new ArrayList<>(result.subList(0, 10));
-            }
+            if (result.size() > 1) sortByFreq(result);
+            if (result.size() > 10) result = new ArrayList<>(result.subList(0, 10));
         } else if (len == 4) {
             if (phr != null) result.addAll(phr);
             if (singles != null) {
