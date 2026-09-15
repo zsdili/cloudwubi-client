@@ -448,10 +448,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         tv.setGravity(android.view.Gravity.CENTER);
         if (isRound) tv.setIncludeFontPadding(false);   // v0.5.56：↺↻ 大字符基线偏下 → 去字体内边距视觉行居中
         tv.setOnClickListener(listener);
-        // v0.5.40 反馈④：固定宽度放置工具栏按钮（44dp），避免文字宽度差异导致位移晃动
+        // v0.5.40 反馈④：固定宽度放置工具栏按钮，避免文字宽度差异导致位移晃动
+        // v0.5.60 反馈③：宽度 44dp→34dp（5 按钮间隔缩小一半）；↺↻ 再下移 3 像素视觉对齐
         tv.setLayoutParams(new LinearLayout.LayoutParams(
-                Math.round(44 * getResources().getDisplayMetrics().density),
+                Math.round(34 * getResources().getDisplayMetrics().density),
                 LinearLayout.LayoutParams.MATCH_PARENT));
+        if (isRound) tv.setTranslationY(3f);
         return tv;
     }
 
@@ -478,25 +480,35 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (updateChecked && now - lastUpdateCheck < 30000) return;   // 30 秒冷却：避免反复点击重复请求
         checkingUpdate = true;
         new Thread(() -> {
+            // v0.5.60：双源检测（GitHub 主 → Gitee 兜底——国内网络 GitHub API 常不通）
             String latest = null;
-            java.net.HttpURLConnection conn = null;
-            try {
-                java.net.URL u = new java.net.URL("https://api.github.com/repos/zsdili/cloudwubi-client/releases/latest");
-                conn = (java.net.HttpURLConnection) u.openConnection();
-                conn.setConnectTimeout(6000);
-                conn.setReadTimeout(6000);
-                conn.setRequestProperty("User-Agent", "CloudWubi-IME");
-                conn.setRequestProperty("Accept", "application/vnd.github+json");
-                java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = r.readLine()) != null) sb.append(line);
-                r.close();
-                String json = sb.toString();
-                int i = json.indexOf("\"tag_name\":\"");
-                if (i >= 0) latest = json.substring(i + 12, json.indexOf('"', i + 12));
-            } catch (Exception ignored) { } finally {
-                if (conn != null) try { conn.disconnect(); } catch (Exception ignored) { }
+            String[] urls = {
+                "https://api.github.com/repos/zsdili/cloudwubi-client/releases/latest",
+                "https://gitee.com/api/v5/repos/zsdili/cloudwubi-client/releases/latest"
+            };
+            for (String ustr : urls) {
+                java.net.HttpURLConnection conn = null;
+                try {
+                    java.net.URL u = new java.net.URL(ustr);
+                    conn = (java.net.HttpURLConnection) u.openConnection();
+                    conn.setConnectTimeout(5000);
+                    conn.setReadTimeout(5000);
+                    conn.setRequestProperty("User-Agent", "CloudWubi-IME");
+                    conn.setRequestProperty("Accept", "application/vnd.github+json");
+                    java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = r.readLine()) != null) sb.append(line);
+                    r.close();
+                    String json = sb.toString();
+                    int i = json.indexOf("\"tag_name\":\"");
+                    if (i >= 0) {
+                        latest = json.substring(i + 12, json.indexOf('"', i + 12));
+                        break;
+                    }
+                } catch (Exception ignored) { } finally {
+                    if (conn != null) try { conn.disconnect(); } catch (Exception ignored) { }
+                }
             }
             final String v = latest;
             idleHandler.post(() -> {
@@ -509,18 +521,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }).start();
     }
 
-    /** 版本号比较（按段数字：0.5.9 < 0.5.10；a>b→1 a<b→-1 a==b→0） */
-    private static int compareVersions(String a, String b) {
-        String[] pa = a.replace("v", "").split("\\.");
-        String[] pb = b.replace("v", "").split("\\.");
-        int n = Math.max(pa.length, pb.length);
-        for (int i = 0; i < n; i++) {
-            int x = i < pa.length ? Integer.parseInt(pa[i]) : 0;
-            int y = i < pb.length ? Integer.parseInt(pb[i]) : 0;
-            if (x != y) return x > y ? 1 : -1;
-        }
-        return 0;
-    }
+    /** 版本号比较（v0.5.60：逻辑提取到 VersionUtil——纯 Java 可测） */
+    private static int compareVersions(String a, String b) { return VersionUtil.compare(a, b); }
 
     private String currentVersion() {
         try {
@@ -578,14 +580,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             };
             sb.setSpan(dl, uStart, uEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else if (updateChecked && latestVersion != null) {
-            sb.append("\n已是最新版本");
+        } else if (updateChecked) {
+            sb.append(latestVersion == null ? "\n检查更新失败（网络）" : "\n已是最新版本");
         }
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
         candidateView.setLineSpacing(0f, 1.25f);
         candidateView.setTextSize(16f);
-        candidateView.setText(sb);
+        safeSetText(sb);
     }
 
     /** v0.5.0 反馈①：全选当前文本框内容 */
@@ -1689,6 +1691,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** 候选条渲染：空闲态（云五笔 ▾ 剪贴板）/ 剪贴板历史 / 数字计算 / 候选列表 */
+    /** v0.5.60：内容相同不重绘（消除联想上屏等场景屏幕闪动——setText 全量替换触发重绘闪烁） */
+    private void safeSetText(CharSequence t) {
+        if (candidateView == null) return;
+        CharSequence cur = candidateView.getText();
+        if (cur != null && t != null && cur.toString().equals(t.toString())) return;
+        safeSetText(t);
+    }
+    private void safeStatusText(CharSequence t) {
+        if (statusInfo == null) return;
+        CharSequence cur = statusInfo.getText();
+        if (cur != null && t != null && cur.toString().equals(t.toString())) return;
+        safeStatusText(t);
+    }
+
     private void updateCandidateView() {
         if (candidateView == null) return;
         // v0.5.13 反馈①：app 信息面板优先渲染
@@ -1713,7 +1729,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.8 反馈⑨：英文模式——候选条渲染字母串 + 自动补全建议（原只显示 EN，用户看不到输入导致"打不上字"）
         if (!chineseMode) {
             String ec = composingCode.toString();
-            if (statusInfo != null) statusInfo.setText(ec);
+            if (statusInfo != null) safeStatusText(ec);
             if (!candidates.isEmpty() || !ec.isEmpty()) {
                 int tColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
                 int eColor = dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT;
@@ -1742,10 +1758,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
                 candidateView.setSingleLine(true);   // v0.5.11 反馈②：英文候选单行不换行
                 candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                candidateView.setText(esb);
+                safeSetText(esb);
             } else {
                 setHintText("EN");
-                if (statusInfo != null) statusInfo.setText("");
+                if (statusInfo != null) safeStatusText("");
             }
             return;
         }
@@ -1755,11 +1771,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             // v0.5.40 反馈⑤：直接显示英语翻译（去掉 EN: 前缀）+ 限宽不挤占按钮
             String info = code;
             if (!lastEnHint.isEmpty()) info += "  " + lastEnHint;
-            statusInfo.setText(info);
+            safeStatusText(info);
         }
         // v0.5.8 反馈①：数字面板计算式同步状态栏
         if (panelMode == 1 && statusInfo != null) {
-            statusInfo.setText(calcBuffer.isEmpty() ? "123" : calcBuffer);
+            safeStatusText(calcBuffer.isEmpty() ? "123" : calcBuffer);
         }
         // v0.4.8 反馈③：非剪贴板状态恢复默认行距
         candidateView.setLineSpacing(0f, 1.0f);
@@ -1770,7 +1786,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.5.1：数字面板空缓冲提示
         if (panelMode == 1) {
-            candidateView.setText("");   // v0.5.9 反馈④：去掉自以为是提示
+            safeSetText("");   // v0.5.9 反馈④：去掉自以为是提示
             return;
         }
         if (clipMode) {
@@ -1780,12 +1796,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
         if (code.isEmpty()) {
             // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
-            if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : lastEnHint);
+            if (statusInfo != null) safeStatusText(lastEnHint.isEmpty() ? "" : lastEnHint);
             // v0.5.55：恢复上下文联想渲染——联想态且有候选时显示"最近上屏 ▸ 联想词"
             if (associateActive && !candidates.isEmpty()) {
                 renderAssociateHint();
             } else {
-                candidateView.setText("");
+                safeSetText("");
             }
             return;
         }
@@ -1796,7 +1812,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.1 反馈②：数字面板实时计算；v0.5.15 反馈③：去掉〔带式〕〔结果〕候选，上屏走 = 键（带式默认） */
     private void renderCalcState() {
         if (calcBuffer.isEmpty()) {
-            candidateView.setText("");   // v0.5.9 反馈④：去掉自以为是提示
+            safeSetText("");   // v0.5.9 反馈④：去掉自以为是提示
             return;
         }
         double v = calcEval(calcBuffer);
@@ -1807,7 +1823,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         sb.append(calcBuffer);
         sb.setSpan(new ForegroundColorSpan(textColor), s0, s0 + calcBuffer.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         sb.append(" = ").append(res);
-        candidateView.setText(sb);
+        safeSetText(sb);
     }
 
     /** v0.4.8 反馈①⑦：上屏单字后的联想词组（MRU 置顶 + 本地锚字前缀词组 + 云端热点）
@@ -1844,7 +1860,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         } else {
             sb.append("（暂无联想，继续输入编码）");
         }
-        candidateView.setText(sb);
+        safeSetText(sb);
     }
 
     /** v0.5.39 反馈①③：翻页按钮去掉——纯滑动翻页（左右/上下），指示改为"左右滑动查看"文本 */
@@ -1864,7 +1880,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void setHintText(String text) {
         SpannableString ss = new SpannableString(text);
         ss.setSpan(new ForegroundColorSpan(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        candidateView.setText(ss);
+        safeSetText(ss);
     }
 
     /** 剪贴板历史列表（仅复制文本，最新在前，最多 8 条显示；点击上屏）
@@ -1944,7 +1960,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 css.setSpan(new android.text.style.BackgroundColorSpan(altBg), idx, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
-        candidateView.setText(css);
+        safeSetText(css);
     }
 
     /** 候选列表：v0.5.3 反馈③⑦——纯候选（去杂项）；v0.5.4 反馈④：编码前缀实时显示（含删除时同步）
@@ -1965,13 +1981,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
      *  v0.5.35 反馈①：表达式不含运算符（纯数字直接上屏）时清空候选，不弹"1.5=5 2.5" */
     private void renderCalcCandidates() {
         if (calcBuffer.isEmpty() || !hasCalcOp(calcBuffer)) {
-            candidateView.setText("");
+            safeSetText("");
             return;
         }
         double v = calcEval(calcBuffer);
         if (Double.isNaN(v)) {
             candidateView.setSingleLine(true);
-            candidateView.setText(calcBuffer);
+            safeSetText(calcBuffer);
             return;
         }
         final String res = fmtResult(v);
@@ -2007,7 +2023,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         }, s1, e1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(true);
-        candidateView.setText(csb);
+        safeSetText(csb);
     }
 
     /** v0.5.34 反馈①：计算候选上屏（withFormula=带式/仅结果），结果保留供运算符续算 */
@@ -2062,7 +2078,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.4.9 翻页指示（跟随系统色）
         appendPager(sb, pages);
-        candidateView.setText(sb);
+        safeSetText(sb);
     }
 
     /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
