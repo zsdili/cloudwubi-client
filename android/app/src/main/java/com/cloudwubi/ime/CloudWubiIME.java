@@ -191,6 +191,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         this.lastCalcResult = calcEngine.lastCalcResult;
         this.calcAuto = calcEngine.calcAuto;
     }
+    /** v0.5.59 反馈：点击"云五笔"时检测新版本（不点击不检测）；有新版→可点击下载升级 */
+    private String latestVersion = null;
+    private boolean updateChecked = false;
+    private long lastUpdateCheck = 0L;
+    private volatile boolean checkingUpdate = false;
 
     // Shift / Caps（反馈③）
     private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
@@ -463,6 +468,58 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         clipMode = false;
         updateCandidateView();
+        if (infoPanelMode) checkUpdateAsync();   // v0.5.59：打开面板即检测新版本（不点击"云五笔"不做在线检测）
+    }
+
+    /** v0.5.59：异步检测最新版本（GitHub releases/latest；不阻塞 UI；失败静默——面板仍显示基础信息） */
+    private void checkUpdateAsync() {
+        if (checkingUpdate) return;
+        long now = System.currentTimeMillis();
+        if (updateChecked && now - lastUpdateCheck < 30000) return;   // 30 秒冷却：避免反复点击重复请求
+        checkingUpdate = true;
+        new Thread(() -> {
+            String latest = null;
+            java.net.HttpURLConnection conn = null;
+            try {
+                java.net.URL u = new java.net.URL("https://api.github.com/repos/zsdili/cloudwubi-client/releases/latest");
+                conn = (java.net.HttpURLConnection) u.openConnection();
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
+                conn.setRequestProperty("User-Agent", "CloudWubi-IME");
+                conn.setRequestProperty("Accept", "application/vnd.github+json");
+                java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = r.readLine()) != null) sb.append(line);
+                r.close();
+                String json = sb.toString();
+                int i = json.indexOf("\"tag_name\":\"");
+                if (i >= 0) latest = json.substring(i + 12, json.indexOf('"', i + 12));
+            } catch (Exception ignored) { } finally {
+                if (conn != null) try { conn.disconnect(); } catch (Exception ignored) { }
+            }
+            final String v = latest;
+            idleHandler.post(() -> {
+                latestVersion = v;
+                updateChecked = true;
+                lastUpdateCheck = System.currentTimeMillis();
+                checkingUpdate = false;
+                if (infoPanelMode) updateCandidateView();   // 面板仍打开才刷新（否则下次打开再显示）
+            });
+        }).start();
+    }
+
+    /** 版本号比较（按段数字：0.5.9 < 0.5.10；a>b→1 a<b→-1 a==b→0） */
+    private static int compareVersions(String a, String b) {
+        String[] pa = a.replace("v", "").split("\\.");
+        String[] pb = b.replace("v", "").split("\\.");
+        int n = Math.max(pa.length, pb.length);
+        for (int i = 0; i < n; i++) {
+            int x = i < pa.length ? Integer.parseInt(pa[i]) : 0;
+            int y = i < pb.length ? Integer.parseInt(pb[i]) : 0;
+            if (x != y) return x > y ? 1 : -1;
+        }
+        return 0;
     }
 
     private String currentVersion() {
@@ -499,6 +556,31 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         };
         sb.setSpan(gh, gStart, gEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // v0.5.59：点击"云五笔"时检测新版本——有新版则提示可点击下载升级（GitHub APK 直链）
+        if (latestVersion != null && compareVersions(latestVersion, currentVersion()) > 0) {
+            int uStart = sb.length();
+            sb.append("\n发现新版本 v").append(latestVersion).append(" [点击下载升级]");
+            int uEnd = sb.length();
+            ClickableSpan dl = new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    try {
+                        android.content.Intent i = new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://github.com/zsdili/cloudwubi-client/releases/latest/download/CloudWubi.apk"));
+                        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                    } catch (Exception ignored) { }
+                }
+                @Override
+                public void updateDrawState(android.text.TextPaint ds) {
+                    ds.setColor(dark() ? 0xFF4FC3F7 : 0xFF1565C0);
+                    ds.setUnderlineText(true);
+                }
+            };
+            sb.setSpan(dl, uStart, uEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else if (updateChecked && latestVersion != null) {
+            sb.append("\n已是最新版本");
+        }
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         candidateView.setSingleLine(false);
         candidateView.setLineSpacing(0f, 1.25f);
@@ -2183,6 +2265,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             } else if (associateActive) {
                 // v0.5.57 联想态通用重叠拼接：陈胜吴广 + 吴广起义 → 陈胜吴广起义（不出现"陈胜吴广吴广起义"）
+                // v0.5.59：逻辑提取到 AssociateEngine（纯 Java 可测——测试对象=线上对象）
                 // 直接读文本框末尾找最大重叠，不依赖 committedLast（防状态不一致导致删除失败）
                 InputConnection cic = getCurrentInputConnection();
                 if (cic != null) {
@@ -2191,10 +2274,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                         CharSequence tb = cic.getTextBeforeCursor(Math.min(text.length(), 10), 0);
                         if (tb != null) tail = tb.toString();
                     } catch (Exception ignored) { }
-                    int overlap = 0;
-                    for (int n = Math.min(text.length(), tail.length()); n >= 1; n--) {
-                        if (tail.endsWith(text.substring(0, n))) { overlap = n; break; }
-                    }
+                    int overlap = AssociateEngine.overlapJoin(tail, text);
                     if (overlap > 0) {
                         try {
                             pushUndo();
