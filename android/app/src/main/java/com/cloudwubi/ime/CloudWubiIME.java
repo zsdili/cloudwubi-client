@@ -1639,7 +1639,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         //   旧版只在云端 hot 回填后调，本地查询路径漏调 + 动态词反查失败 → 用户实测"从未前移"
         applyMruTop(code);
         candPage = 0;
-        if (candidates.isEmpty()) candidates.add(code);
+        // v0.5.76 顽疾根治：备选栏绝不显示编码本身（状态栏已回显"云五笔 lyab"），
+        //   避免旧代码把"lyab"当候选 1 → 四码词组被挤位 / localHasPhrase 误判
         updateCandidateView();
         // ④ 云端热点词组：异步回填，插到 MRU 段之后、五笔之前
         if (GATEWAY_READY) {
@@ -1741,8 +1742,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 int inserted = 0;
                 for (String s : result) {
                     if (isJustCommitted(s)) continue;
-                    // v0.5.6 fix：整码置顶时只置顶词组（云端单字本地已全，置顶会挤占词组位）
-                    if (pos == 0 && s.length() < 2) continue;
+                    // v0.5.76 修正：整码置顶不再粗暴跳过单字——
+                    //   旧逻辑"云端单字本地已全"不成立（如 lyab 本地无单字，国/庆/节只能来自云端），
+                    //   跳过会导致四码只剩词组、单字候选缺失；contains 已防重，无需再跳
                     if (!candidates.contains(s)) {
                         candidates.add(pos + inserted, s);
                         inserted++;
@@ -2238,8 +2240,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
      *  v0.5.11 反馈④：按回车 → 上屏当前编码的小写英文（qq → qq），不再误选中文候选（多） */
     private void commitFirstCandidate() {
-        // v0.5.35 反馈⑥：超 4 码（拼音全拼模式）回车上屏首选候选（nihao → 你好）
-        if (composingCode.length() > 4 && !candidates.isEmpty()) {
+        // v0.5.76 回车顽疾根治：候选非空一律上屏第一候选（≤4 码同样生效）——
+        //   旧逻辑≤4 码回车上屏"编码本身"（打 lyab 候选"国庆节"按回车却上屏 lyab，
+        //   用户实测"回车没反应/打不出词"）；中文候选上中文、英文候选上英文，符合 v0.5.10 要求
+        if (!candidates.isEmpty()) {
             selectCandidate(0);
             return;
         }
