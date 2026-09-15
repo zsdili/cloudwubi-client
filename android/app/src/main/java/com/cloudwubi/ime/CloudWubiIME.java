@@ -2483,10 +2483,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
             return;
         }
-        // v0.5.72 反馈：翻译优先整词（光标前完整词）→ 没词翻译末字 → 没字不翻译；与打字状态无关
-        if (!lastCommittedText.isEmpty()) {
-            queryTranslationSmart(lastCommittedText);
-        }
+        // v0.5.73：翻译基于光标（整词→末字→空不译，与打不打字无关）
+        refreshTranslation();
         // v0.5.55：恢复上下文联想（用户强化要求：光标前字/整词上下文联想——MRU置顶+整词前缀+锚字+成语+云端顺承）
         associateActive = true;
         triggerAssociate();
@@ -2588,7 +2586,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     public void onUpdateSelection(int oldSelStart, int oldSelEnd, int newSelStart, int newSelEnd,
                                   int candidatesStart, int candidatesEnd) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
-        if (!chineseMode || composingCode.length() > 0 || !associateActive) return;
+        if (!chineseMode || composingCode.length() > 0 || !associateActive || isPassword) return;
         if (oldSelStart != newSelStart || oldSelEnd != newSelEnd) {
             String prev = getCursorPrevChar();
             if (!prev.isEmpty()) {
@@ -2600,14 +2598,34 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             }
             triggerAssociate();   // 以新光标前字重新联想
+            // v0.5.73：光标移动 → 同步刷新翻译（整词→字→空不译）
+            refreshTranslation();
         }
     }
 
-    /** v0.6 反馈①②：云端上下文连续联想（{"context":"光标前8字上文"} → 语境连续联想）
+    /** v0.5.73：光标前整句（最后一句，去尾标点）——基于当前光标，非"最近上屏" */
+    private String cursorBeforeText() {
+        try {
+            InputConnection ic = getCurrentInputConnection();
+            CharSequence cb = ic == null ? null : ic.getTextBeforeCursor(50, 0);
+            if (cb == null) return "";
+            String s = cb.toString().trim();
+            if (s.isEmpty()) return "";
+            int cut = Math.max(s.lastIndexOf('。'), Math.max(s.lastIndexOf('！'), s.lastIndexOf('？')));
+            if (cut >= 0 && cut < s.length() - 1) s = s.substring(cut + 1);
+            while (!s.isEmpty() && "，。！？、；：\"'”’".indexOf(s.charAt(s.length() - 1)) >= 0)
+                s = s.substring(0, s.length() - 1);
+            return s.trim();
+        } catch (Exception e) { return ""; }
+    }
+
+    /** v0.6 反馈①②：云端上下文连续联想（{"context":"光标前整句"} → 语境连续联想）
      *  革命性：不再单字联想，结合输入框上下文/前后文，参考主流输入法联想原理的云端实现 */
     private void queryAssociateAsync(final String chain, final String lastChar) {
         final Handler handler = new Handler(Looper.getMainLooper());
-        final String context = getContextBefore(8);   // 收集光标前 8 字整句上文
+        // v0.5.73：整句联想（光标前最后一句）；空则回退 8 字
+        String context = cursorBeforeText();
+        if (context.isEmpty()) context = getContextBefore(8);
         Thread t = new Thread(() -> {
             List<String> cloud = new ArrayList<>();
             try {
@@ -2830,15 +2848,48 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         t.start();
     }
 
-    /** v0.5.72 反馈：翻译整词优先（国庆节→PRC National Day）；整词未命中回退末字；末字也无则清空提示 */
-    private void queryTranslationSmart(final String wholeWord) {
+    /** v0.5.73：翻译基于光标——候选数组（末4/3/2/1字）整词优先，云端逐个命中；
+     *  非词组→末字；文本框空→不翻译（与打不打字无关） */
+    private void queryTranslationByCursor(final String ctx) {
+        if (ctx == null || ctx.trim().isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
         final Handler handler = new Handler(Looper.getMainLooper());
         Thread t = new Thread(() -> {
             final String chainAtStart = lastCommittedText;
-            String en = postEn(wholeWord);
-            if (en.isEmpty() && wholeWord.length() > 1) {
-                en = postEn(wholeWord.substring(wholeWord.length() - 1));   // 回退末字翻译
-            }
+            String en = "";
+            try {
+                URL url = new URL(GATEWAY_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
+                java.util.List<String> list = new java.util.ArrayList<>();
+                for (int len = 4; len >= 1; len--) {
+                    if (ctx.length() >= len) {
+                        String w = ctx.substring(ctx.length() - len);
+                        if (!list.contains(w)) list.add(w);
+                    }
+                }
+                StringBuilder body = new StringBuilder("{\"word\":\"").append(jsonEscape(list.get(0)))
+                        .append("\",\"words\":[");
+                for (int i = 0; i < list.size(); i++) {
+                    if (i > 0) body.append(',');
+                    body.append('"').append(jsonEscape(list.get(i))).append('"');
+                }
+                body.append("],\"en\":true}");
+                try (OutputStream os = conn.getOutputStream()) os.write(body.toString().getBytes("UTF-8"));
+                if (conn.getResponseCode() == 200) {
+                    try (InputStream is = conn.getInputStream()) {
+                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = r.readLine()) != null) sb.append(line);
+                        en = new JSONObject(sb.toString()).optString("en", "");
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) { }
             final String hint = en;
             handler.post(() -> {
                 if (!chainAtStart.equals(lastCommittedText)) return;
@@ -2849,33 +2900,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         t.start();
     }
 
-    /** 云端 en 翻译请求（复用旧 queryTranslation 网络体） */
-    private String postEn(final String word) {
-        String en2 = "";
-        try {
-            URL url = new URL(GATEWAY_URL);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(6000);
-            conn.setReadTimeout(6000);
-            String body = "{\"word\":\"" + word + "\",\"en\":true}";
-            try (OutputStream os = conn.getOutputStream()) {
-                os.write(body.getBytes("UTF-8"));
-            }
-            if (conn.getResponseCode() == 200) {
-                try (InputStream is = conn.getInputStream()) {
-                    BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = r.readLine()) != null) sb.append(line);
-                    en2 = new JSONObject(sb.toString()).optString("en", "");
-                }
-            }
-            conn.disconnect();
-        } catch (Exception ignored) { }
-        return en2;
+    /** v0.5.73：光标移动/上屏后刷新翻译（整词→字→空不译） */
+    private void refreshTranslation() {
+        if (isPassword) { lastEnHint = ""; updateCandidateView(); return; }
+        String ctx = cursorBeforeText();
+        if (ctx.isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
+        queryTranslationByCursor(ctx);
     }
 
     /** 上报选词（云端 MRU 学习，尽力而为） */
