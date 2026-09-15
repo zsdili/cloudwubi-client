@@ -732,6 +732,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.6.3 CCA 联动增强：云端衔接映射表缓存（云端规则实时生效，免发版）
      *  打字/联想路径双表查锚定：内置 ASSOC_LINK + 云端 ngram_link 缓存 */
     private static java.util.Map<String, java.util.List<String>> CLOUD_LINKS = new java.util.HashMap<>();
+    /** v0.6.6 逗号补全：最近一次逗号触发的下半句候选（云端返回，空=无） */
+    private volatile java.util.List<String> pendingComma = null;
     private static java.util.List<String> getLinks(String chain) {
         java.util.List<String> r = new java.util.ArrayList<>();
         String[] local = ASSOC_LINK.get(chain);
@@ -1269,6 +1271,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.35 反馈⑥：放宽到 8 码支持拼音全拼混打（五笔查询自动截前4，>4 码走拼音分支）
         if (composingCode.length() >= 8) return;
         associateActive = false;   // v0.4.9 开始新编码 → 联想链断开
+        pendingComma = null;       // v0.6.6 新打字 → 逗号补全候选失效
         candPage = 0;
         composingCode.append(c);
         queryCandidates();
@@ -1278,6 +1281,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
      *  v0.5.16 反馈②：shift 大写生效——shiftState>0（大写锁定/中文切英文大写）时存大写，否则小写 */
     private void appendEnglishCode(char c) {
         if (composingCode.length() >= 24) return;
+        pendingComma = null;       // v0.6.6 新打字 → 逗号补全候选失效
         candPage = 0;
         boolean upper = shiftState > 0;
         composingCode.append(upper ? Character.toUpperCase(c) : Character.toLowerCase(c));
@@ -1335,6 +1339,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             try { ic.finishComposingText(); } catch (Exception ignored) { }
             ic.commitText(s, 1);
         }
+        maybeTriggerComma(s);   // v0.6.6 上屏含中文逗号 → 联想下半句/下半段
     }
 
     // ===== v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录，联想排序权重） =====
@@ -2659,6 +2664,42 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                             synchronized (CLOUD_LINKS) { CLOUD_LINKS = map; }
                         }
                     }
+                }
+            } catch (Exception ignored) { }
+        });
+        t.start();
+    }
+
+    /** v0.6.6 逗号补全联想：上屏含中文逗号 → 取光标前末句 → 云端查下半句 → 候选置顶
+     *  数据源为公共知识（诗词/俗语/名言），非个人语料 */
+    private void maybeTriggerComma(String s) {
+        if (s == null || !s.contains("，")) return;
+        Thread t = new Thread(() -> {
+            try {
+                InputConnection ic = getCurrentInputConnection();
+                if (ic == null) return;
+                CharSequence before = ic.getTextBeforeCursor(2000, 0);
+                if (before == null) return;
+                String txt = before.toString().replace("，", "").replace(",", "").replace("、", "").trim();
+                if (txt.length() < 2) return;
+                int cut = Math.max(txt.lastIndexOf("。"), Math.max(txt.lastIndexOf("！"), txt.lastIndexOf("？")));
+                if (cut >= 0 && cut < txt.length() - 1) txt = txt.substring(cut + 1);
+                if (txt.length() < 2 || txt.length() > 12) return;
+                final String query = txt;
+                String body = "{\"comma\":\"" + jsonEscape(query) + "\"}";
+                List<String> rs = postGateway(body);
+                if (rs != null && !rs.isEmpty()) {
+                    final List<String> result = rs;
+                    runOnUiThread(() -> {
+                        synchronized (this) {
+                            pendingComma = result;
+                            for (int i = result.size() - 1; i >= 0; i--) {
+                                String w = result.get(i);
+                                if (w != null && !candidates.contains(w)) candidates.add(0, w);
+                            }
+                        }
+                        updateCandidateView();
+                    });
                 }
             } catch (Exception ignored) { }
         });
