@@ -1544,6 +1544,30 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         //   保障词置顶 + 2+2/1+1+2/1+1+1+1 动态组合（词组在前、单字殿后）
         // v0.5.44 反馈④：禁用前端动态拼词（"战行/点行"类 2+2 噪声组合）
         //   云端真词库 64,935 条覆盖；动态拼词噪声大且非词典词——回归"先科学后先进"
+        // v0.5.66 革命性创新——上下文编码锚定 CCA（Coding-Anchored Prediction）：
+        //   把 triggerAssociate 的 ASSOC_LINK 意思衔接词（前进→方向/道路/号角）接入打字路径：
+        //   用户上屏"前进"后敲 f（方向首码）→ 候选立即置顶"方向"——只敲 1 码就见到衔接词！
+        //   原理：五笔编码确定性 + 语义衔接（拼音输入法无法将"正在敲的音节"与衔接词做
+        //   确定性映射——这是云五笔独有、三 AI 联想方案均不具备的编码×上下文双锚定）
+        if (!chain.isEmpty() && !code.isEmpty()) {
+            String[] links = ASSOC_LINK.get(chain);
+            if (links != null) {
+                for (String lk : links) {
+                    String lc = WubiDb.phraseCode(lk);
+                    if (lc == null) lc = WubiDb.singleCode(lk);   // 单字衔接词（饭/亏/你/了）回退单字码
+                    if (lc != null && lc.startsWith(code) && !merged.contains(lk)) merged.add(lk);
+                }
+            }
+            String anchor1 = chain.substring(chain.length() - 1);
+            String[] links2 = ASSOC_LINK.get(anchor1);
+            if (links2 != null) {
+                for (String lk : links2) {
+                    String lc = WubiDb.phraseCode(lk);
+                    if (lc == null) lc = WubiDb.singleCode(lk);
+                    if (lc != null && lc.startsWith(code) && !merged.contains(lk)) merged.add(lk);
+                }
+            }
+        }
         // ② 第二位：传统五笔（高频字/字根/一至四码简码词组，优先照顾老用户习惯）
         List<String> local = WubiDb.query(code);
         if (local != null) {
