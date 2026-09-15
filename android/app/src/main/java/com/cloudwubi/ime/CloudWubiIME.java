@@ -457,8 +457,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         boolean isRound = text.equals("↺") || text.equals("↻");
         float ts = isRound ? 22f : 15f;
         tv.setTextSize(ts);
+        // v0.5.72 反馈：重塑图标字符位置——全部按钮去字体内边距 + 行居中（上下/左右均居中）
+        tv.setIncludeFontPadding(false);
         tv.setGravity(android.view.Gravity.CENTER);
-        if (isRound) tv.setIncludeFontPadding(false);   // v0.5.56：↺↻ 大字符基线偏下 → 去字体内边距视觉行居中
         tv.setOnClickListener(listener);
         // v0.5.40 反馈④：固定宽度放置工具栏按钮，避免文字宽度差异导致位移晃动
         // v0.5.60 反馈③：宽度 44dp→34dp（5 按钮间隔缩小一半）；↺↻ 再下移 3 像素视觉对齐
@@ -2482,9 +2483,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
             return;
         }
-        String lastChar = lastCommittedText.isEmpty() ? "" : lastCommittedText.substring(lastCommittedText.length() - 1);
-        if (!lastChar.isEmpty()) {
-            queryTranslation(lastChar);   // 仅保留状态栏英文翻译（v0.5.13 要求，非联想）
+        // v0.5.72 反馈：翻译优先整词（光标前完整词）→ 没词翻译末字 → 没字不翻译；与打字状态无关
+        if (!lastCommittedText.isEmpty()) {
+            queryTranslationSmart(lastCommittedText);
         }
         // v0.5.55：恢复上下文联想（用户强化要求：光标前字/整词上下文联想——MRU置顶+整词前缀+锚字+成语+云端顺承）
         associateActive = true;
@@ -2829,35 +2830,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         t.start();
     }
 
-    private void queryTranslation(final String word) {
+    /** v0.5.72 反馈：翻译整词优先（国庆节→PRC National Day）；整词未命中回退末字；末字也无则清空提示 */
+    private void queryTranslationSmart(final String wholeWord) {
         final Handler handler = new Handler(Looper.getMainLooper());
         Thread t = new Thread(() -> {
             final String chainAtStart = lastCommittedText;
-            String en2 = "";
-            try {
-                URL url = new URL(GATEWAY_URL);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setDoOutput(true);
-                conn.setConnectTimeout(6000);
-                conn.setReadTimeout(6000);
-                String body = "{\"word\":\"" + word + "\",\"en\":true}";
-                try (OutputStream os = conn.getOutputStream()) {
-                    os.write(body.getBytes("UTF-8"));
-                }
-                if (conn.getResponseCode() == 200) {
-                    try (InputStream is = conn.getInputStream()) {
-                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                        StringBuilder sb = new StringBuilder();
-                        String line;
-                        while ((line = r.readLine()) != null) sb.append(line);
-                        en2 = new JSONObject(sb.toString()).optString("en", "");
-                    }
-                }
-                conn.disconnect();
-            } catch (Exception ignored) { }
-            final String hint = en2;
+            String en = postEn(wholeWord);
+            if (en.isEmpty() && wholeWord.length() > 1) {
+                en = postEn(wholeWord.substring(wholeWord.length() - 1));   // 回退末字翻译
+            }
+            final String hint = en;
             handler.post(() -> {
                 if (!chainAtStart.equals(lastCommittedText)) return;
                 lastEnHint = hint;
@@ -2865,6 +2847,35 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             });
         });
         t.start();
+    }
+
+    /** 云端 en 翻译请求（复用旧 queryTranslation 网络体） */
+    private String postEn(final String word) {
+        String en2 = "";
+        try {
+            URL url = new URL(GATEWAY_URL);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(6000);
+            conn.setReadTimeout(6000);
+            String body = "{\"word\":\"" + word + "\",\"en\":true}";
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(body.getBytes("UTF-8"));
+            }
+            if (conn.getResponseCode() == 200) {
+                try (InputStream is = conn.getInputStream()) {
+                    BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = r.readLine()) != null) sb.append(line);
+                    en2 = new JSONObject(sb.toString()).optString("en", "");
+                }
+            }
+            conn.disconnect();
+        } catch (Exception ignored) { }
+        return en2;
     }
 
     /** 上报选词（云端 MRU 学习，尽力而为） */
