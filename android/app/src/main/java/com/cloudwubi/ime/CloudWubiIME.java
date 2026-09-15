@@ -378,7 +378,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(statusInfo);
         android.widget.Space spacer = new android.widget.Space(this);
         toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
-        toolRow.addView(makeToolButton("全选", v -> selectAll()));
+        toolRow.addView(makeToolButton("⭕️", v -> selectAll()));
         // v0.5.14 反馈③：工具栏加"删除"（删光标前字符/选区，与退格同功能）
         // v0.5.36 反馈③：取消/删除只用图标节省空间（✕=删除、↺=取消、↻=重做）
         toolRow.addView(makeToolButton("✕", v -> handleBackspace()));
