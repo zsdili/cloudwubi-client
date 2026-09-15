@@ -51,9 +51,9 @@ chk "密码框运算符直通" "$IME" "KEY_CALC_DIV"
 # 7) shift 大小写——v0.5.16
 chk "shift 大小写" "$IME" "Character\.toUpperCase"
 # 8) v0.5.23 动态拼词：基础库全码锚点（拼词源：工作=aaaa+wthf、你好=wqiy+vbg、前进=uejj+fjpk）
-chk "动态拼词引擎：buildDynamicWords" "android/app/src/main/java/com/cloudwubi/ime/WubiDb.java" "buildDynamicWords"
-chk "动态词组编码：dynamicPhraseCode" "android/app/src/main/java/com/cloudwubi/ime/WubiDb.java" "dynamicPhraseCode"
-chk "保障词数组 GUARANTEED" "android/app/src/main/java/com/cloudwubi/ime/WubiDb.java" "GUARANTEED = "
+chk "动态拼词引擎：buildDynamicWords" "android/app/src/main/java/com/cloudwubi/ime/WubiDbCore.java" "buildDynamicWords"
+chk "动态词组编码：dynamicPhraseCode" "android/app/src/main/java/com/cloudwubi/ime/WubiDbCore.java" "dynamicPhraseCode"
+chk "保障词数组 GUARANTEED" "android/app/src/main/java/com/cloudwubi/ime/WubiDbCore.java" "GUARANTEED = "
 chk "基础库 全码：工=aaaa（拼工作）" "android/app/src/main/assets/wubi_single.txt" "^aaaa工$"
 chk "基础库 全码：作=wthf（拼工作）" "android/app/src/main/assets/wubi_single.txt" "^wthf作$"
 chk "基础库 全码：你=wqiy（拼你好）" "android/app/src/main/assets/wubi_single.txt" "^wqiy你$"
