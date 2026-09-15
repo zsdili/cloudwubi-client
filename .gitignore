@@ -3,3 +3,6 @@ build/
 cloudwubi_demo
 cloudwubi_demo_offline
 *.o
+windows/core/eval_test
+windows/core/dict_test
+windows/core/*.o
