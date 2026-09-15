@@ -1169,6 +1169,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 CharSequence sel = ic.getSelectedText(0);
                 if (sel != null && sel.length() > 0) {
                     pushUndo();
+                    // v0.5.57：选区删除（全选/部分选中）同样清计算续算基准
+                    //  （根治"2*3=6全选删除后再输2*3把6带进来"：lastCalcResult/lastCalcInput 残留）
+                    lastCalcResult = "";
+                    lastCalcInput = "";
                     ic.commitText("", 0);
                     return;
                 }
@@ -2254,6 +2258,27 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                             ic.deleteSurroundingText(base.length(), 0);
                         }
                     } catch (Exception ignored) { }
+                }
+            } else if (associateActive) {
+                // v0.5.57 联想态通用重叠拼接：陈胜吴广 + 吴广起义 → 陈胜吴广起义（不出现"陈胜吴广吴广起义"）
+                // 直接读文本框末尾找最大重叠，不依赖 committedLast（防状态不一致导致删除失败）
+                InputConnection cic = getCurrentInputConnection();
+                if (cic != null) {
+                    String tail = "";
+                    try {
+                        CharSequence tb = cic.getTextBeforeCursor(Math.min(text.length(), 10), 0);
+                        if (tb != null) tail = tb.toString();
+                    } catch (Exception ignored) { }
+                    int overlap = 0;
+                    for (int n = Math.min(text.length(), tail.length()); n >= 1; n--) {
+                        if (tail.endsWith(text.substring(0, n))) { overlap = n; break; }
+                    }
+                    if (overlap > 0) {
+                        try {
+                            pushUndo();
+                            cic.deleteSurroundingText(overlap, 0);
+                        } catch (Exception ignored) { }
+                    }
                 }
             }
         }
