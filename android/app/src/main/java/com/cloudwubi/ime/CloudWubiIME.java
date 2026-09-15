@@ -2610,10 +2610,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             CharSequence cb = ic == null ? null : ic.getTextBeforeCursor(50, 0);
             if (cb == null) return "";
             String s = cb.toString().trim();
-            if (s.isEmpty()) return "";
             int cut = Math.max(s.lastIndexOf('。'), Math.max(s.lastIndexOf('！'), s.lastIndexOf('？')));
-            if (cut >= 0 && cut < s.length() - 1) s = s.substring(cut + 1);
-            while (!s.isEmpty() && "，。！？、；：\"'”’".indexOf(s.charAt(s.length() - 1)) >= 0)
+            if (cut > 0) s = s.substring(cut + 1);
+            while (!s.isEmpty() && "，。！？、；：\"'".indexOf(s.charAt(s.length() - 1)) >= 0)
                 s = s.substring(0, s.length() - 1);
             return s.trim();
         } catch (Exception e) { return ""; }
@@ -2850,62 +2849,45 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         t.start();
     }
 
-    /** v0.5.73：翻译基于光标——候选数组（末4/3/2/1字）整词优先，云端逐个命中；
+    /** v0.5.73：翻译基于光标——候选数组（整句+逐位去首→末字）整词优先，云端逐个命中；
      *  非词组→末字；文本框空→不翻译（与打不打字无关） */
     private void queryTranslationByCursor(final String ctx) {
-        if (ctx == null || ctx.trim().isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
-        final Handler handler = new Handler(Looper.getMainLooper());
-        Thread t = new Thread(() -> {
-            final String chainAtStart = lastCommittedText;
+        if (ctx.trim().isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
+        final String start = lastCommittedText;
+        new Thread(() -> {
             String en = "";
             try {
-                URL url = new URL(GATEWAY_URL);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setDoOutput(true);
-                conn.setConnectTimeout(6000);
-                conn.setReadTimeout(6000);
-                java.util.List<String> list = new java.util.ArrayList<>();
-                for (int len = 4; len >= 1; len--) {
-                    if (ctx.length() >= len) {
-                        String w = ctx.substring(ctx.length() - len);
-                        if (!list.contains(w)) list.add(w);
-                    }
+                HttpURLConnection c = (HttpURLConnection) new URL(GATEWAY_URL).openConnection();
+                c.setRequestMethod("POST"); c.setRequestProperty("Content-Type", "application/json");
+                c.setDoOutput(true); c.setConnectTimeout(6000); c.setReadTimeout(6000);
+                StringBuilder w = new StringBuilder("[\"").append(jsonEscape(ctx)).append("\"");
+                String s = ctx;
+                while (s.length() > 1) { s = s.substring(1); w.append(",\"").append(jsonEscape(s)).append("\""); }
+                w.append("]");
+                try (OutputStream os = c.getOutputStream()) {
+                    os.write(("{\"word\":\"" + jsonEscape(ctx) + "\",\"words\":" + w + ",\"en\":true}").getBytes("UTF-8"));
                 }
-                StringBuilder body = new StringBuilder("{\"word\":\"").append(jsonEscape(list.get(0)))
-                        .append("\",\"words\":[");
-                for (int i = 0; i < list.size(); i++) {
-                    if (i > 0) body.append(',');
-                    body.append('"').append(jsonEscape(list.get(i))).append('"');
-                }
-                body.append("],\"en\":true}");
-                try (OutputStream os = conn.getOutputStream()) { os.write(body.toString().getBytes("UTF-8")); }
-                if (conn.getResponseCode() == 200) {
-                    try (InputStream is = conn.getInputStream()) {
+                if (c.getResponseCode() == 200) {
+                    try (InputStream is = c.getInputStream()) {
                         BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                        StringBuilder sb = new StringBuilder();
-                        String line;
+                        StringBuilder sb = new StringBuilder(); String line;
                         while ((line = r.readLine()) != null) sb.append(line);
                         en = new JSONObject(sb.toString()).optString("en", "");
                     }
                 }
-                conn.disconnect();
+                c.disconnect();
             } catch (Exception ignored) { }
             final String hint = en;
-            handler.post(() -> {
-                if (!chainAtStart.equals(lastCommittedText)) return;
-                lastEnHint = hint;
-                updateCandidateView();
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (!start.equals(lastCommittedText)) return;
+                lastEnHint = hint; updateCandidateView();
             });
-        });
-        t.start();
+        }).start();
     }
 
-    /** v0.5.73：光标移动/上屏后刷新翻译（整词→字→空不译） */
+    /** v0.5.73：光标移动/上屏后刷新翻译（整词→字→空不译）；密码框不译 */
     private void refreshTranslation() {
-        if (isPassword) { lastEnHint = ""; updateCandidateView(); return; }
-        String ctx = cursorBeforeText();
+        String ctx = isPassword ? "" : cursorBeforeText();
         if (ctx.isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
         queryTranslationByCursor(ctx);
     }
