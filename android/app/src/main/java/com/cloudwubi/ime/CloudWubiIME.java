@@ -279,8 +279,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 lastTouchX = ev.getX();
                 lastTouchY = ev.getY();
                 if (infoPanelMode) {
-                    infoPanelMode = false;
-                    updateCandidateView();
+                    // v0.5.47 反馈②：点中 github 链接 span 时保留面板（让 LinkMovementMethod 在 ACTION_UP 触发跳转）
+                    boolean onGithub = false;
+                    try {
+                        int off = candidateView.getOffsetForPosition(lastTouchX, lastTouchY);
+                        if (candidateView.getText() instanceof android.text.Spanned) {
+                            android.text.ClickableSpan[] cs = ((android.text.Spanned) candidateView.getText())
+                                    .getSpans(off, off, android.text.ClickableSpan.class);
+                            onGithub = (cs != null && cs.length > 0);
+                        }
+                    } catch (Exception ignored) { }
+                    if (!onGithub) {
+                        infoPanelMode = false;
+                        updateCandidateView();
+                    }
                 } else if (clipMode) {
                     try {
                         int off = candidateView.getOffsetForPosition(lastTouchX, lastTouchY);
@@ -593,9 +605,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 CharSequence t = cd.getItemAt(0).coerceToText(CloudWubiIME.this);
                 if (t != null && t.length() > 0 && t.length() <= 5000) {
                     addClipHistory(t.toString());
-                    // v0.5.34 反馈③：复制的内容在备选栏单独只显示一次（点选上屏/点其他部位消失）
-                    clipMode = true;
-                    updateCandidateView();
+                    // v0.5.47 反馈⑦：复制后不自动打开剪贴板（只记录历史；需要时点亖 查看）——避免无意义弹出
                 }
             }
         } catch (Exception ignored) { }
@@ -1006,9 +1016,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 return;
             case 0xFF01:   // v0.5.17 修复回归：！，键上滑 → ！（CloudKeyboardView.swipeSymbol 直达）
                 commitText("！");
+                // v0.5.47 反馈①：上滑输入后清空输入状态（候选/编码不残留——"上滑不消失"根治）
+                composingCode.setLength(0);
+                candidates.clear();
+                updateCandidateView();
                 return;
             case 0xFF1F:   // v0.5.17 修复回归：？。键上滑 → ？
                 commitText("？");
+                composingCode.setLength(0);
+                candidates.clear();
+                updateCandidateView();
                 return;
             default:
                 // v0.5.24 修复②：符号键兜底——symbolToText 未覆盖的 ASCII 可见字符直接上屏
@@ -1343,7 +1360,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.17 反馈④（举一反三）：MRU 置顶不受 isJustCommitted 限制——重打同码时"最近打过的字"必须置顶
         if (!lastSelected.isEmpty()) {
             String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
-            if (lc != null && lc.equals(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
+            // v0.5.47 反馈③④：MRU 也支持一级简码匹配——上屏"的"后打 r，"的"必须置顶（singleCode 返回全码 rqyy 不匹配 r）
+            boolean mruMatch = (lc != null && lc.equals(code));
+            if (!mruMatch && lastSelected.length() == 1 && code.length() == 1) {
+                String s1 = WubiDb.simple1Char(code.charAt(0));
+                mruMatch = (s1 != null && s1.equals(lastSelected));
+            }
+            if (mruMatch && !merged.contains(lastSelected)) merged.add(lastSelected);
         }
         for (String p : recentPhrases) {
             String pc = WubiDb.phraseCode(p);
@@ -1393,13 +1416,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         pinyinInsertPos = merged.size();   // v0.5.36 反馈⑨：拼音候选插到本地五笔候选之后
         candidates.addAll(merged);
         // v0.5.46 反馈③：1 码一级简码双保险——云端/本地任何回填后，简码字强制置顶（打 r=的/i=不/w=人/p=这）
-        if (code.length() == 1) {
-            String s1 = WubiDb.simple1Char(code.charAt(0));
-            if (s1 != null) {
-                candidates.remove(s1);
-                candidates.add(0, s1);
-            }
-        }
+        applySimple1Top(code);
         candPage = 0;
         if (candidates.isEmpty()) candidates.add(code);
         updateCandidateView();
@@ -1525,7 +1542,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     hotPos++;
                     hotChanged = true;
                 }
-                if (inserted > 0 || hotChanged) updateCandidateView();
+                if (inserted > 0 || hotChanged) {
+                    // v0.5.47 顽疾根治：hot 回填后重跑一级简码置顶——hot 异步覆盖此前双保险（如 r 查询 hot=[白,的] 把白插到的前）
+                    if (composingCode.length() == 1) applySimple1Top(composingCode.toString());
+                    updateCandidateView();
+                }
             });
         });
         t.start();
@@ -2133,6 +2154,24 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private String committedLast = "";
 
     /** v0.5.3 反馈①：候选是否为"刚上屏过"的同一内容（只滤最近一次，MRU/高频字不受影响） */
+    /** v0.5.47：1 码一级简码强制置顶（本地/云端/hot 任何回填后调用——顽疾根治） */
+    private void applySimple1Top(String code) {
+        if (code == null || code.length() != 1 || candidates == null) return;
+        String s1 = WubiDb.simple1Char(code.charAt(0));
+        if (s1 == null) return;
+        for (int i = 0; i < candidates.size(); i++) {
+            if (candidates.get(i).equals(s1)) {
+                if (i != 0) {
+                    candidates.remove(i);
+                    candidates.add(0, s1);
+                }
+                return;
+            }
+        }
+        // 简码字被过滤（isJustCommitted）——重新加回第一位
+        candidates.add(0, s1);
+    }
+
     private boolean isJustCommitted(String c) {
         return !committedLast.isEmpty() && c != null && c.equals(committedLast);
     }
