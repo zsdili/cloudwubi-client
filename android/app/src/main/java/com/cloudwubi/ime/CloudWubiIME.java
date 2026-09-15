@@ -453,7 +453,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         tv.setLayoutParams(new LinearLayout.LayoutParams(
                 Math.round(34 * getResources().getDisplayMetrics().density),
                 LinearLayout.LayoutParams.MATCH_PARENT));
-        if (isRound) tv.setTranslationY(3f);
+        if (isRound) tv.setTranslationY(-3f);   // v0.5.61 更正：上移 3 像素
         return tv;
     }
 
@@ -1501,6 +1501,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidates.addAll(merged);
         // v0.5.46 反馈③：1 码一级简码双保险——云端/本地任何回填后，简码字强制置顶（打 r=的/i=不/w=人/p=这）
         applySimple1Top(code);
+        // v0.5.61 写死规则：本地查询收尾必调 MRU 置顶（上屏过的字/词最前）——
+        //   旧版只在云端 hot 回填后调，本地查询路径漏调 + 动态词反查失败 → 用户实测"从未前移"
+        applyMruTop(code);
         candPage = 0;
         if (candidates.isEmpty()) candidates.add(code);
         updateCandidateView();
@@ -2214,30 +2217,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidates.add(0, s1);
     }
 
-    /** v0.5.49/50 写死规则：MRU 置顶防云端覆盖——同码打过的字/词（新上屏第一、旧的按序）在 hot/云端回填后强制前移 */
+    /** v0.5.49/50 写死规则：MRU 置顶防云端覆盖——同码打过的字/词（新上屏第一、旧的按序）强制前移
+     *  v0.5.61 委托 MruEngine（正向匹配：候选可见即置顶——本地/动态/云端词全命中，
+     *  根治"上屏字词从未前移"：旧逻辑编码反查动态词返回 null 永不置顶） */
     private void applyMruTop(String code) {
         if (code == null || code.isEmpty()) return;
-        java.util.List<String> ordered = new java.util.ArrayList<>();
-        if (lastSelected != null && !lastSelected.isEmpty()) ordered.add(lastSelected);
-        for (String m : mruList) {
-            if (!ordered.contains(m)) ordered.add(m);
-        }
-        for (String m : ordered) {
-            String mc = m.length() >= 2 ? WubiDb.phraseCode(m) : WubiDb.singleCode(m);
-            boolean match = (mc != null && mc.equals(code));
-            if (!match && m.length() == 1 && code.length() == 1) {
-                String s1 = WubiDb.simple1Char(code.charAt(0));
-                match = (s1 != null && s1.equals(m));
-            }
-            if (!match) continue;
-            candidates.remove(m);
-            int pos = 0;
-            // 排在已置顶的同码 MRU 之后（保持"新上屏在前"）
-            for (int i = 0; i < candidates.size() && i < ordered.indexOf(m); i++) {
-                if (ordered.subList(0, ordered.indexOf(m)).contains(candidates.get(i))) pos = i + 1;
-            }
-            candidates.add(Math.min(pos, candidates.size()), m);
-        }
+        MruEngine.applyTop(candidates, lastSelected, mruList);
     }
 
     /** v0.5.50 写死规则：记录同码 MRU 历史（新上屏排头，去重，最多 10 个，持久化） */
