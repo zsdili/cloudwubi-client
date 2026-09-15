@@ -260,6 +260,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setMaxLines(1);
         candidateView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         candidateView.setHighlightColor(0x00000000);
+        candidateView.setGravity(android.view.Gravity.CENTER_VERTICAL);   // v0.5.70：文本垂直居中——有字/无字视觉高度一致
         // v0.5.35 反馈③：候选条左右滑动翻页（替代点击翻页）
         candFlingDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
             @Override
@@ -456,7 +457,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         tv.setLayoutParams(new LinearLayout.LayoutParams(
                 Math.round(34 * getResources().getDisplayMetrics().density),
                 LinearLayout.LayoutParams.MATCH_PARENT));
-        if (isRound) tv.setTranslationY(-3f);   // v0.5.61 更正：上移 3 像素
+        if (isRound) tv.setTranslationY(-6f);   // v0.5.70 反馈：↺↻ 仍下掉 → 上移 6 像素（22sp 大字符基线偏下）
         return tv;
     }
 
@@ -1178,6 +1179,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 candidates.clear();
                 updateCandidateView();
                 return;
+            case 0x3001:   // v0.5.70 反馈：M 键上滑 → 顿号、
+                commitText("、");
+                composingCode.setLength(0);
+                candidates.clear();
+                updateCandidateView();
+                return;
             default:
                 // v0.5.24 修复②：符号键兜底——symbolToText 未覆盖的 ASCII 可见字符直接上屏
                 //   （91[]/93]/123{/125}/35#/37%/94^/61= 等特殊字符，密码框与常规模式通用）
@@ -1836,6 +1843,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setTextSize(18);
         candidateView.setLineSpacing(0f, 1f);
         candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        candidateView.setGravity(android.view.Gravity.CENTER_VERTICAL);   // v0.5.70：正常态文本垂直居中
     }
 
     private void updateCandidateView() {
@@ -2030,6 +2038,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setEllipsize(null);
         // v0.5.9 反馈⑨：适度行距（0,1.3f 非增大 extra）——条目间用浅色相间背景区分（非虚横线、非空行）
         candidateView.setLineSpacing(0f, 1.3f);
+        candidateView.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);   // v0.5.70：剪贴板列表顶对齐
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         int altBg = dark() ? 0x2AFFFFFF : 0xFFF3F3F3;   // 相间浅色背景（跟随深浅色）
         StringBuilder sb = new StringBuilder();

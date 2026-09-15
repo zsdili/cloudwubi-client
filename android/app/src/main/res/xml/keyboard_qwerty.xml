@@ -48,7 +48,7 @@
         <Key android:codes="118" android:keyLabel="V" />
         <Key android:codes="98" android:keyLabel="B" />
         <Key android:codes="110" android:keyLabel="N" />
-        <Key android:codes="109" android:keyLabel="M" />
+        <Key android:codes="109" android:keyLabel="M" android:popupCharacters="、" />
         <Key android:codes="-5" android:keyLabel="←" android:keyWidth="14%p" android:isRepeatable="true" />
     </Row>
 

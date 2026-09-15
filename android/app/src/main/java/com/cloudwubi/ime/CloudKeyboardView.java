@@ -132,7 +132,7 @@ public class CloudKeyboardView extends KeyboardView {
             case 118: return '_';  // V
             case 98: return ':';   // B
             case 110: return ';';  // N
-            case 109: return '`';  // M
+            case 109: return 0x3001;  // v0.5.70 反馈：M 上滑 → 顿号、
             case -106: return 0xFF01;  // v0.5.17 修复回归：！，键上滑 → ！（原设计走 IME.swipeUp 但 onTouchEvent 重写后死代码）
             case -108: return 0xFF1F;  // v0.5.17 修复回归：？。键上滑 → ？
             default: return 0;
