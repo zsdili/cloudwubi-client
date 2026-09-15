@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cloudwubi.ime"
-    android:versionCode="97"
-    android:versionName="0.5.47">
+    android:versionCode="98"
+    android:versionName="0.5.48">
 
     <!-- 云端查询需要网络权限 -->
     <uses-permission android:name="android.permission.INTERNET" />

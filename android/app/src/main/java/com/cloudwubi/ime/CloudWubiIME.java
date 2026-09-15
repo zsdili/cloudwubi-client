@@ -1697,33 +1697,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             // v0.5.8 反馈①：编码清空 → 状态栏同步（空闲时无编码，翻译如存在则上移状态栏）
             if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : lastEnHint);
             // v0.5.20：联想已去除——上屏后不显示"最近上屏 ▸ 联想词"（renderAssociateHint 不再调用）
-            if (candidates.isEmpty()) {
-                // v0.5.28 反馈⑥：空闲态也显示剪贴板项（复制后打开输入法立即可见，点选上屏）
-                String clipTxt = getClipboardText();
-                if (!clipTxt.isEmpty()) {
-                    String disp = clipTxt.length() > 4 ? clipTxt.substring(0, 4) + "…" : clipTxt;
-                    SpannableStringBuilder csb = new SpannableStringBuilder();
-                    int cs0 = csb.length();
-                    csb.append("📋").append(disp);
-                    int cs1 = csb.length();
-                    final String clipFinal = clipTxt;
-                    ClickableSpan clipCs = new ClickableSpan() {
-                        @Override
-                        public void onClick(View widget) {
-                            commitText(clipFinal);
-                        }
-                        @Override
-                        public void updateDrawState(android.text.TextPaint ds) {
-                            ds.setColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
-                            ds.setUnderlineText(false);
-                        }
-                    };
-                    csb.setSpan(clipCs, cs0, cs1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    candidateView.setText(csb);
-                } else {
-                    candidateView.setText("");
-                }
-            }
+            // v0.5.48 反馈：去掉"空闲态自动显示剪贴板项"——剪贴板内容只点击亖 时显示（复制过就每次弹出=用户眼中的"垃圾"）
+            if (candidates.isEmpty()) candidateView.setText("");
             return;
         }
         renderCandidates();
