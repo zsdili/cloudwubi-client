@@ -567,14 +567,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         pinyinInsertPos = merged.size();   // v0.5.36 反馈⑨：拼音候选插到本地五笔候选之后
         candidates.addAll(merged);
-        // v0.5.46 反馈③：1 码一级简码双保险——云端/本地任何回填后，简码字强制置顶（打 r=的/i=不/w=人/p=这）
-        if (code.length() == 1) {
-            String s1 = WubiDb.simple1Char(code.charAt(0));
-            if (s1 != null) {
-                candidates.remove(s1);
-                candidates.add(0, s1);
-            }
-        }
         candPage = 0;
         updateCandidateView();
         if (GATEWAY_READY && !merged.isEmpty()) queryAssociateAsync(ch, ch);
