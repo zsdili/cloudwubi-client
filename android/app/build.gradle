@@ -1,0 +1,23 @@
+// CloudWubi app 模块（纯 Java，零第三方依赖；AGP 7.x 使用 Manifest package）
+plugins {
+    id 'com.android.application'
+}
+android {
+    compileSdk 33
+    defaultConfig {
+        applicationId "com.cloudwubi.ime"
+        minSdk 21
+        targetSdk 33
+        versionCode 101
+        versionName "0.5.51"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}

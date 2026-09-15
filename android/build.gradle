@@ -1,0 +1,4 @@
+// CloudWubi 根构建脚本（F-Droid 可复现构建，AGP 7.x 兼容 Manifest package）
+plugins {
+    id 'com.android.application' version '7.4.2' apply false
+}
