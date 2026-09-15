@@ -2690,7 +2690,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 List<String> rs = postGateway(body);
                 if (rs != null && !rs.isEmpty()) {
                     final List<String> result = rs;
-                    runOnUiThread(() -> {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
                         synchronized (this) {
                             pendingComma = result;
                             for (int i = result.size() - 1; i >= 0; i--) {
