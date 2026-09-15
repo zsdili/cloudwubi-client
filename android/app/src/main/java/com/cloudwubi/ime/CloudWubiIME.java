@@ -156,6 +156,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private int prevPanel = 0;
     /** v0.5.5 反馈⑦：进入输入状态时联想基准字（光标前一字），云端回填校验用 */
     private String enterAssociateChar = "";
+    /** v0.5.67 云端语义衔接候选插入点（联想路径=MRU段后；打字路径=-1 走原逻辑） */
+    private int cloudAssocInsert = -1;
     private Keyboard keyboardMain;
     private Keyboard keyboardNum;
     private Keyboard keyboardSymRecent;   // v0.5.34 符号面板分类：最近
@@ -743,8 +745,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void showAssociateForChar(String ch) {
         candidates.clear();
         List<String> merged = new ArrayList<>();
+        int mruCount = 0;   // v0.5.67：云端语义衔接候选插到 MRU 段后（修"了解"置顶——语义衔接>字词搭配）
         for (String p : recentPhrases) {
-            if (p.startsWith(ch) && !merged.contains(p)) merged.add(p);
+            if (p.startsWith(ch) && !merged.contains(p)) { merged.add(p); mruCount++; }
         }
         List<String> byChar = WubiDb.queryByChar(ch);
         if (byChar != null) {
@@ -757,6 +760,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidates.addAll(merged);
         candPage = 0;
         updateCandidateView();
+        cloudAssocInsert = mruCount;       // v0.5.67：云端回填插 MRU 后（了解类字词搭配被挤后）
         if (GATEWAY_READY && !merged.isEmpty()) queryAssociateAsync(ch, ch);
     }
 
@@ -2504,6 +2508,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candPage = 0;
         updateCandidateView();
         // ③ 云端热点：上下文通道（整句上文→语境连续联想）+ 锚字前缀兜底
+        cloudAssocInsert = -1;   // v0.5.67：打字路径云端回填走原逻辑（末尾）
         if (GATEWAY_READY) queryAssociateAsync(chain, anchor);
     }
 
@@ -2567,8 +2572,18 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 // v0.5.5 反馈⑦：联想基准=上屏链 或 进入输入状态的光标前字，两者一致才回填
                 if (!chain.equals(lastCommittedText) && !chain.equals(enterAssociateChar)) return;
                 boolean changed = false;
+                int ins = cloudAssocInsert;
                 for (String s : result) {
-                    if (!candidates.contains(s)) { candidates.add(s); changed = true; }
+                    if (!candidates.contains(s)) {
+                        // v0.5.67：联想路径插 MRU 后（语义衔接>字词搭配）；打字路径插末尾
+                        if (ins >= 0 && ins <= candidates.size()) {
+                            candidates.add(ins, s);
+                            ins++;
+                        } else {
+                            candidates.add(s);
+                        }
+                        changed = true;
+                    }
                 }
                 if (changed) updateCandidateView();
             });
