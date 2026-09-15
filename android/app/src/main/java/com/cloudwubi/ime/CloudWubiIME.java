@@ -409,8 +409,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.14 反馈③：工具栏加"删除"（删光标前字符/选区，与退格同功能）
         // v0.5.36 反馈③：取消/删除只用图标节省空间（✕=删除、↺=取消、↻=重做）
         toolRow.addView(makeToolButton("✕", v -> handleBackspace()));
-        toolRow.addView(makeToolButton("↺", v -> doUndo()));
-        toolRow.addView(makeToolButton("↻", v -> doRedo()));
+        toolRow.addView(makeToolButton("←", v -> doUndo()));   // v0.5.74 反馈②：取消改向左箭头
+        toolRow.addView(makeToolButton("→", v -> doRedo()));   // v0.5.74 反馈②：重做改向右箭头
         toolRow.addView(makeToolButton("亖", v -> {
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
@@ -2495,11 +2495,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void triggerAssociate() {
         // v0.5.0 反馈③：联想锚字取光标前一字（删除光标前字、移动光标后自动重新联想）
         String anchor = getCursorPrevChar();
-        if (anchor.isEmpty()) {
-            if (lastCommittedText.isEmpty()) return;
-            anchor = lastCommittedText.substring(lastCommittedText.length() - 1);
+        // v0.5.74：联想基准=光标前整词（母亲节→康乃馨/快乐），非"最近上屏字"——外部文本变化也正确
+        String chain = cursorPrevWord();
+        if (chain.isEmpty() && !lastCommittedText.isEmpty()) chain = lastCommittedText;
+        if (anchor.isEmpty() && !chain.isEmpty()) {
+            anchor = chain.substring(chain.length() - 1);
         }
-        String chain = lastCommittedText;   // v0.5.1：联想基准=整个已上屏词组（整词，非单字）
+        if (chain.isEmpty() && anchor.isEmpty()) return;
         List<String> merged = new ArrayList<>();
         // ① MRU：最近选中的词组（以整词开头 或 含整词）置顶
         for (String p : recentPhrases) {
@@ -2586,20 +2588,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     public void onUpdateSelection(int oldSelStart, int oldSelEnd, int newSelStart, int newSelEnd,
                                   int candidatesStart, int candidatesEnd) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
-        if (!chineseMode || composingCode.length() > 0 || !associateActive || isPassword) return;
+        // v0.5.74：去掉 associateActive 拦截——外部文本变化（搜索建议点击/粘贴/预填）也刷新翻译+联想
+        //   打码中不联想（候选栏用于打字）；翻译打码中也刷新（光标前已提交文本）
+        if (!chineseMode || isPassword) return;
         if (oldSelStart != newSelStart || oldSelEnd != newSelEnd) {
-            String prev = getCursorPrevChar();
-            if (!prev.isEmpty()) {
-                String lastCharOfChain = lastCommittedText.isEmpty()
-                        ? "" : lastCommittedText.substring(lastCommittedText.length() - 1);
-                if (!prev.equals(lastCharOfChain)) {
-                    lastCommittedText = prev;   // 光标移到新字前 → 联想链重置为新锚字
-                    lastEnHint = "";
+            if (composingCode.length() == 0) {
+                String prev = getCursorPrevChar();
+                if (!prev.isEmpty()) {
+                    String lastCharOfChain = lastCommittedText.isEmpty()
+                            ? "" : lastCommittedText.substring(lastCommittedText.length() - 1);
+                    if (!prev.equals(lastCharOfChain)) {
+                        lastCommittedText = prev;   // 光标移到新字前 → 联想链重置为新锚字
+                        lastEnHint = "";
+                    }
                 }
+                triggerAssociate();   // v0.5.74：基于光标整词重新联想（外部变化也触发）
             }
-            triggerAssociate();   // 以新光标前字重新联想
-            // v0.5.73：光标移动 → 同步刷新翻译（整词→字→空不译）
-            refreshTranslation();
+            refreshTranslation();   // v0.5.73：光标移动 → 同步刷新翻译（整词→字→空不译）
         }
     }
 
@@ -2849,7 +2854,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         t.start();
     }
 
-    /** v0.5.73：翻译基于光标——候选数组（整句+逐位去首→末字）整词优先，云端逐个命中；
+    /** v0.5.73：翻译基于光标——候选数组（整句+光标前中文整词+末字）整词优先，云端逐个命中；
      *  非词组→末字；文本框空→不翻译（与打不打字无关） */
     private void queryTranslationByCursor(final String ctx) {
         if (ctx.trim().isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
@@ -2860,12 +2865,21 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 HttpURLConnection c = (HttpURLConnection) new URL(GATEWAY_URL).openConnection();
                 c.setRequestMethod("POST"); c.setRequestProperty("Content-Type", "application/json");
                 c.setDoOutput(true); c.setConnectTimeout(6000); c.setReadTimeout(6000);
-                StringBuilder w = new StringBuilder("[\"").append(jsonEscape(ctx)).append("\"");
-                String s = ctx;
-                while (s.length() > 1) { s = s.substring(1); w.append(",\"").append(jsonEscape(s)).append("\""); }
-                w.append("]");
+                // v0.5.74：候选=整句 + 光标前中文整词（母亲节2026→母亲节）+ 末字（去重）
+                java.util.List<String> cs = new java.util.ArrayList<>();
+                cs.add(ctx);
+                String w = cursorPrevWord();
+                if (!w.isEmpty() && !cs.contains(w)) cs.add(w);
+                String lastc = ctx.substring(ctx.length() - 1);
+                if (!cs.contains(lastc)) cs.add(lastc);
+                StringBuilder wb = new StringBuilder("[");
+                for (int i = 0; i < cs.size(); i++) {
+                    if (i > 0) wb.append(',');
+                    wb.append('"').append(jsonEscape(cs.get(i))).append('"');
+                }
+                wb.append("]");
                 try (OutputStream os = c.getOutputStream()) {
-                    os.write(("{\"word\":\"" + jsonEscape(ctx) + "\",\"words\":" + w + ",\"en\":true}").getBytes("UTF-8"));
+                    os.write(("{\"word\":\"" + jsonEscape(ctx) + "\",\"words\":" + wb + ",\"en\":true}").getBytes("UTF-8"));
                 }
                 if (c.getResponseCode() == 200) {
                     try (InputStream is = c.getInputStream()) {
@@ -2883,6 +2897,29 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 lastEnHint = hint; updateCandidateView();
             });
         }).start();
+    }
+
+    /** v0.5.74：光标前最后一个连续中文整词（"母亲节2026"→"母亲节"；"今天是国庆节"→"国庆节"）
+     *  联想基准=光标所在位置的整词，非"最近上屏字" */
+    private String cursorPrevWord() {
+        String ctx = cursorBeforeText();
+        if (ctx.isEmpty()) return "";
+        int i = ctx.length();
+        while (i > 0) {
+            char ch = ctx.charAt(i - 1);
+            if (!(ch >= 0x4E00 && ch <= 0x9FFF)) break;
+            i--;
+        }
+        String w = ctx.substring(i);
+        if (!w.isEmpty()) return w;
+        // 光标前无中文（数字/符号结尾）→ 回退到最近的中文段
+        int j = i;
+        while (j > 0) {
+            char ch = ctx.charAt(j - 1);
+            if (ch >= 0x4E00 && ch <= 0x9FFF) j--;
+            else break;
+        }
+        return ctx.substring(j, i);
     }
 
     /** v0.5.73：光标移动/上屏后刷新翻译（整词→字→空不译）；密码框不译 */
