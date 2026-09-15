@@ -428,9 +428,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         TextView tv = new TextView(this);
         tv.setText(text);
         // v0.5.54 反馈：取消↺/重做↻ 仍偏小 → 放大至 22；其余统一 15——工具栏图标视觉统一
-        float ts = (text.equals("↺") || text.equals("↻")) ? 22f : 15f;
+        boolean isRound = text.equals("↺") || text.equals("↻");
+        float ts = isRound ? 22f : 15f;
         tv.setTextSize(ts);
         tv.setGravity(android.view.Gravity.CENTER);
+        if (isRound) tv.setIncludeFontPadding(false);   // v0.5.56：↺↻ 大字符基线偏下 → 去字体内边距视觉行居中
         tv.setOnClickListener(listener);
         // v0.5.40 反馈④：固定宽度放置工具栏按钮（44dp），避免文字宽度差异导致位移晃动
         tv.setLayoutParams(new LinearLayout.LayoutParams(
@@ -1182,6 +1184,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             String prev = getCursorPrevChar();
             if (!prev.isEmpty() && prev.equals(committedLast)) committedLast = "";
             pushUndo();   // v0.4.9 取消↺ 可恢复删除
+            // v0.5.56：删除上屏文本=放弃计算续算基准（根治"2*3=6删除后再输2*3变22*3"：
+            //  lastCalcResult/lastCalcInput 残留累积导致删除后输入数字错乱）
+            lastCalcResult = "";
+            lastCalcInput = "";
             ic.deleteSurroundingText(1, 0);
         }
     }
@@ -2075,7 +2081,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (calcBuffer.isEmpty() && !lastCalcInput.isEmpty()) {
             InputConnection cic = getCurrentInputConnection();
             try {
-                if (cic != null) cic.deleteSurroundingText(lastCalcInput.length(), 0);
+                if (cic != null) {
+                    cic.deleteSurroundingText(lastCalcInput.length(), 0);
+                    // v0.5.56：删除后验证——若仍残留（编辑器时序/兼容差异），重删一次防"22*3"式重复累积
+                    try {
+                        CharSequence tb = cic.getTextBeforeCursor(lastCalcInput.length(), 0);
+                        if (tb != null && tb.toString().equals(lastCalcInput)) {
+                            cic.deleteSurroundingText(lastCalcInput.length(), 0);
+                        }
+                    } catch (Exception ignored) { }
+                }
             } catch (Exception ignored) { }
             calcBuffer = lastCalcInput + op;
             lastCalcInput = "";
