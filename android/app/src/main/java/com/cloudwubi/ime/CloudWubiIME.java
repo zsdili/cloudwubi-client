@@ -2690,7 +2690,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 List<String> rs = postGateway("{\"comma\":\"" + jsonEscape(q) + "\"}");
                 if (rs == null || rs.isEmpty()) return;
                 final List<String> result = rs;
-                new Handler(Looper.getMainLooper()).post(() -> {
+                idleHandler.post(() -> {   // 复用既有主线程 Handler，省体积
                     pendingComma = result;
                     for (int i = result.size() - 1; i >= 0; i--) {
                         String w = result.get(i);
