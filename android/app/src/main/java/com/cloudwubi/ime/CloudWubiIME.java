@@ -2670,40 +2670,36 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         t.start();
     }
 
-    /** v0.6.6 逗号补全联想：上屏含中文逗号 → 取光标前末句 → 云端查下半句 → 候选置顶
+    /** v0.6.6 逗号补全联想：上屏中文逗号 → 光标前末句 → 云端查下半句 → 候选置顶
      *  数据源为公共知识（诗词/俗语/名言），非个人语料 */
     private void maybeTriggerComma(String s) {
         if (s == null || !s.contains("，")) return;
-        Thread t = new Thread(() -> {
+        new Thread(() -> {
             try {
                 InputConnection ic = getCurrentInputConnection();
                 if (ic == null) return;
-                CharSequence before = ic.getTextBeforeCursor(2000, 0);
-                if (before == null) return;
-                String txt = before.toString().replace("，", "").replace(",", "").replace("、", "").trim();
-                if (txt.length() < 2) return;
-                int cut = Math.max(txt.lastIndexOf("。"), Math.max(txt.lastIndexOf("！"), txt.lastIndexOf("？")));
+                String txt = ic.getTextBeforeCursor(2000, 0).toString().replace("，", "").trim();
+                if (txt.length() < 2 || txt.length() > 12) return;
+                int cut = txt.lastIndexOf("。"), c2 = txt.lastIndexOf("！");
+                if (c2 > cut) cut = c2;
+                c2 = txt.lastIndexOf("？");
+                if (c2 > cut) cut = c2;
                 if (cut >= 0 && cut < txt.length() - 1) txt = txt.substring(cut + 1);
                 if (txt.length() < 2 || txt.length() > 12) return;
-                final String query = txt;
-                String body = "{\"comma\":\"" + jsonEscape(query) + "\"}";
-                List<String> rs = postGateway(body);
-                if (rs != null && !rs.isEmpty()) {
-                    final List<String> result = rs;
-                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
-                        synchronized (this) {
-                            pendingComma = result;
-                            for (int i = result.size() - 1; i >= 0; i--) {
-                                String w = result.get(i);
-                                if (w != null && !candidates.contains(w)) candidates.add(0, w);
-                            }
-                        }
-                        updateCandidateView();
-                    });
-                }
+                final String q = txt;
+                List<String> rs = postGateway("{\"comma\":\"" + jsonEscape(q) + "\"}");
+                if (rs == null || rs.isEmpty()) return;
+                final List<String> result = rs;
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    pendingComma = result;
+                    for (int i = result.size() - 1; i >= 0; i--) {
+                        String w = result.get(i);
+                        if (w != null && !candidates.contains(w)) candidates.add(0, w);
+                    }
+                    updateCandidateView();
+                });
             } catch (Exception ignored) { }
-        });
-        t.start();
+        }).start();
     }
 
     /** 云端 POST 请求（返回 phrases 数组，失败返回 null） */
