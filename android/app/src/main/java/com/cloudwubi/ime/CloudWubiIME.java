@@ -2612,7 +2612,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private String cursorBeforeText() {
         try {
             InputConnection ic = getCurrentInputConnection();
-            CharSequence cb = ic == null ? null : ic.getTextBeforeCursor(50, 0);
+            // v0.5.75：取消 50 字限制——取光标前 2000 字（整句完整传入云端，云端按整句→词组→字→空降级）
+            CharSequence cb = ic == null ? null : ic.getTextBeforeCursor(2000, 0);
             if (cb == null) return "";
             String s = cb.toString().trim();
             int cut = Math.max(s.lastIndexOf('。'), Math.max(s.lastIndexOf('！'), s.lastIndexOf('？')));
