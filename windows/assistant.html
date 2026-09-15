@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>云五笔 Windows 助手</title>
+<style>
+:root{--bg:#f5f5f7;--card:#ffffff;--text:#1a1a1a;--sub:#666;--acc:#c62828;--line:#e0e0e0;--btn:#f0f0f2;--btn-a:#e0e0e4}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1e;--card:#2c2c2e;--text:#f2f2f7;--sub:#98989f;--line:#3a3a3c;--btn:#3a3a3c;--btn-a:#48484a}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);padding:20px;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:24px;margin-bottom:4px}
+.sub{color:var(--sub);font-size:13px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+.card h2{font-size:17px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.badge{background:var(--acc);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+/* 计算器 */
+.calc{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.calc .disp{grid-column:1/-1;background:var(--btn);border-radius:10px;padding:12px 14px;font-size:22px;text-align:right;font-variant-numeric:tabular-nums;min-height:52px;word-break:break-all}
+.calc .disp .sub2{display:block;font-size:13px;color:var(--sub);min-height:18px}
+.calc button{border:none;background:var(--btn);color:var(--text);font-size:17px;padding:14px 0;border-radius:10px;cursor:pointer;transition:background .15s}
+.calc button:active{background:var(--btn-a)}
+.calc .op{color:var(--acc);font-weight:700}
+.calc .eq{background:var(--acc);color:#fff}
+.calc .eq:active{background:#a02323}
+.steps{list-style:none;counter-reset:s}
+.steps li{counter-increment:s;padding:8px 0 8px 34px;position:relative;border-bottom:1px solid var(--line);font-size:14px;line-height:1.6}
+.steps li:last-child{border-bottom:none}
+.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:24px;height:24px;background:var(--acc);color:#fff;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+code{background:var(--btn);padding:2px 6px;border-radius:5px;font-size:12px}
+a{color:var(--acc)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+td,th{border:1px solid var(--line);padding:7px 9px;text-align:left}
+th{background:var(--btn);font-weight:600}
+.footer{text-align:center;color:var(--sub);font-size:12px;margin:20px 0 40px;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>云五笔 Windows 助手</h1>
+<div class="sub">v0.5.64 · 开源免费 · 作者：zsdili（微信 175571）· <a href="https://github.com/zsdili">github.com/zsdili</a></div>
+
+<div class="card">
+<h2>🧮 智能计算器 <span class="badge">与 Android 版同引擎</span></h2>
+<div class="calc">
+  <div class="disp"><span class="sub2" id="formula">&nbsp;</span><span id="result">0</span></div>
+  <button class="op" onclick="press('C')">C</button>
+  <button class="op" onclick="press('(')">(</button>
+  <button class="op" onclick="press(')')">)</button>
+  <button class="op" onclick="press('÷')">÷</button>
+  <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button>
+  <button class="op" onclick="press('×')">×</button>
+  <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button>
+  <button class="op" onclick="press('-')">−</button>
+  <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button>
+  <button class="op" onclick="press('+')">+</button>
+  <button onclick="press('0')">0</button><button onclick="press('.')">.</button>
+  <button onclick="press('⌫')">⌫</button>
+  <button class="eq" onclick="press('=')">=</button>
+</div>
+<p style="font-size:12px;color:var(--sub);margin-top:10px">支持：四则运算、括号、小数、连续计算（上屏后继续加减乘除不粘连）。点击 <b>=</b> 显示带公式与结果。</p>
+</div>
+
+<div class="card">
+<h2>📥 微软五笔词典导入 <span class="badge">Win10/11 自带五笔增强</span></h2>
+<ol class="steps">
+<li>下载词典文件 <a href="cloudwubi_ud.txt" download>cloudwubi_ud.txt</a>（891 条常用词组，编码为 86 五笔规则）</li>
+<li>打开 <b>设置 → 时间和语言 → 语言和区域 → 中文（简体）→ 键盘图标 → 微软五笔</b></li>
+<li>点击 <b>词典 → 用户自定义词典 → 导入</b>，选择刚下载的 txt 文件</li>
+<li>导入完成后，用微软五笔打词（如 <code>aahw</code> → 工具）即可出词</li>
+<li>若个别词条格式不被识别，可尝试将 txt 每行改为 <code>词语 编码</code>（空格分隔）再导入</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>☁️ 云端词库 <span class="badge">每日自动更新</span></h2>
+<table>
+<tr><th>模块</th><th>规模</th><th>说明</th></tr>
+<tr><td>分类词库</td><td>40 类 11516 词</td><td>军事科技地缘/网红打卡旅游/客服话术/权威热评/百强企业品牌/热搜名人/口头禅/经典名句/全国省市县</td></tr>
+<tr><td>每日热词</td><td>120 条（自动）</td><td>百度+头条热榜 → 安全过滤 → 自动入库，每日 06:30 更新</td></tr>
+<tr><td>中英词典</td><td>5.6MB</td><td>云端翻译：词典 → 腾讯 TMT → 百度 三层兜底</td></tr>
+<tr><td>基础词库</td><td>27492 单字 + 891 词组</td><td>五笔 86 版：字根/一~三级简码/全码</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>💡 使用建议</h2>
+<ul style="font-size:14px;line-height:2;padding-left:20px">
+<li>系统自带微软五笔已支持 <b>五笔+拼音无缝混输</b>，配合本词典导入即可获得云五笔词库增强</li>
+<li>连续计算：如 <code>1+2=3</code> 后再输 <code>×4</code>，结果为 <code>1+2=3×4=12</code>（不粘连）</li>
+<li>本助手为静态 HTML，双击即可使用，无需联网、无需安装</li>
+</ul>
+</div>
+
+<div class="footer">云五笔 · 为全网与全人类贡献智慧与力量<br>开源协议 MIT · <a href="https://github.com/zsdili/cloudwubi-client">GitHub</a> · <a href="https://gitee.com/zsdili/cloudwubi-client">Gitee</a> · 微信 175571</div>
+</div>
+
+<script>
+// 与 Android CalcEngine 同规则：乘除优先、括号、连续计算不粘连
+let buf = "";
+const fmt = n => { const r = Math.round(n * 1e8) / 1e8; return String(r); };
+function evalExpr(s) {
+  s = s.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
+  if (!/^[\d+\-*/().]+$/.test(s) || /[+\-*/.]$/.test(s)) return null;
+  // v0.5.64 测试修复：括号必须配对；负数开头补 0（-3+5 → 0-3+5）
+  const openN = (s.match(/\(/g)||[]).length, closeN = (s.match(/\)/g)||[]).length;
+  if (openN !== closeN) return null;
+  if (/^[+\-]/.test(s)) s = "0" + s;
+  try {
+    // 安全求值：自己实现四则+括号（乘除优先）
+    function parse(str){
+      let i=0;
+      function skip(){ while(i<str.length && (str[i]===' '||str[i]==='\t')) i++; }
+      function num(){ skip(); let s=""; while(i<str.length && /[\d.]/.test(str[i])) s+=str[i++]; return s===""?NaN:parseFloat(s); }
+      function factor(){
+        skip();
+        if(str[i]==='-'||str[i]==='+'){ const sgn = str[i++]==='-'?-1:1; return sgn*factor(); }  // 一元负号
+        if(str[i]==='('){ i++; const v=expr(); skip(); if(str[i]===')') i++; return v; }
+        const v=num(); if(isNaN(v)) throw 0; return v;
+      }
+      function term(){
+        let v=factor();
+        while(i<str.length && (str[i]==='*'||str[i]==='/')){
+          const op=str[i++]; const r=factor();
+          v = op==='*' ? v*r : (r===0?NaN:v/r);
+        }
+        return v;
+      }
+      function expr(){
+        let v=term();
+        while(i<str.length && (str[i]==='+'||str[i]==='-')){
+          const op=str[i++]; const r=term(); v = op==='+'?v+r:v-r;
+        }
+        return v;
+      }
+      const v=expr(); return (i<str.length||!isFinite(v))?NaN:v;
+    }
+    const v = parse(s);
+    return isNaN(v) ? null : v;
+  } catch(e){ return null; }
+}
+function press(k){
+  const f=document.getElementById("formula"), r=document.getElementById("result");
+  if(k==="C"){ buf=""; f.innerHTML="&nbsp;"; r.textContent="0"; return; }
+  if(k==="⌫"){ buf=buf.slice(0,-1); }
+  else if(k==="="){ const v=evalExpr(buf); if(v!==null){ f.textContent=buf+" ="; r.textContent=fmt(v); } return; }
+  else buf+=k;
+  f.textContent=buf.replace(/\*/g,"×").replace(/\//g,"÷") || "&nbsp;";
+  const v=evalExpr(buf);
+  r.textContent = v===null ? (buf||"0") : fmt(v);
+}
+</script>
+</body>
+</html>
