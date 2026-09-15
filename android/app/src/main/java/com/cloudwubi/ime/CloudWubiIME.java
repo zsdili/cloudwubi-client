@@ -1544,7 +1544,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
                 if (inserted > 0 || hotChanged) {
                     // v0.5.47 顽疾根治：hot 回填后重跑一级简码置顶——hot 异步覆盖此前双保险（如 r 查询 hot=[白,的] 把白插到的前）
-                    if (composingCode.length() == 1) applySimple1Top(composingCode.toString());
+                    // v0.5.49：hot 回填后同时重跑 MRU 置顶——上次上屏字（如"呢"=knx）不被云端 hot 挤下（截图 1.叫 2.绝 3.呢 → 呢 必须回第 1）
+                    String cur = composingCode.toString();
+                    applyMruTop(cur);
+                    if (cur.length() == 1) applySimple1Top(cur);
                     updateCandidateView();
                 }
             });
@@ -2145,6 +2148,28 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // 简码字被过滤（isJustCommitted）——重新加回第一位
         candidates.add(0, s1);
+    }
+
+    /** v0.5.49：MRU 置顶防云端覆盖——上次上屏字/词（编码精确匹配）在 hot/云端回填后强制移回第一位 */
+    private void applyMruTop(String code) {
+        if (code == null || code.isEmpty() || lastSelected == null || lastSelected.isEmpty()) return;
+        String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
+        boolean match = (lc != null && lc.equals(code));
+        if (!match && lastSelected.length() == 1 && code.length() == 1) {
+            String s1 = WubiDb.simple1Char(code.charAt(0));
+            match = (s1 != null && s1.equals(lastSelected));
+        }
+        if (match) {
+            for (int i = 0; i < candidates.size(); i++) {
+                if (candidates.get(i).equals(lastSelected)) {
+                    if (i != 0) {
+                        candidates.remove(i);
+                        candidates.add(0, lastSelected);
+                    }
+                    return;
+                }
+            }
+        }
     }
 
     private boolean isJustCommitted(String c) {
