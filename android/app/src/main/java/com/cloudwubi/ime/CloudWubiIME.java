@@ -378,7 +378,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(statusInfo);
         android.widget.Space spacer = new android.widget.Space(this);
         toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
-        toolRow.addView(makeToolButton("⭕️", v -> selectAll()));
+        // v0.5.55 反馈：全选图标⭕️→〇（⭕️为红色字符，与取消/删除等工具栏图标颜色不统一；〇为普通字符跟随主题色）
+        toolRow.addView(makeToolButton("〇", v -> selectAll()));
         // v0.5.14 反馈③：工具栏加"删除"（删光标前字符/选区，与退格同功能）
         // v0.5.36 反馈③：取消/删除只用图标节省空间（✕=删除、↺=取消、↻=重做）
         toolRow.addView(makeToolButton("✕", v -> handleBackspace()));
@@ -1790,8 +1791,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (pages <= 1) return;
         int pagerColor = dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT;
         int pStart = sb.length();
-        sb.append("  ").append(String.valueOf(candPage + 1)).append("/").append(String.valueOf(pages)).append(" · 左右滑动查看");
-        sb.setSpan(new ForegroundColorSpan(pagerColor), pStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // v0.5.55 反馈：去掉翻页提示"1/3·左右滑动查看"（翻页功能保留，仅不显示指示文本）
+        // sb.append("  ").append(String.valueOf(candPage + 1)).append("/").append(String.valueOf(pages)).append(" · 左右滑动查看");
+        // sb.setSpan(new ForegroundColorSpan(pagerColor), pStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     private boolean dark() {
@@ -1872,27 +1874,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             };
             css.setSpan(cs, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            // v0.5.34 反馈⑧：每项末尾加"✕"删除链接（点击删除该项）
-            int xs = end;
-            css.append(" ✕");
+            // v0.5.55 反馈：去掉行末"✕"删除链接（保留长按删除），避免误触
             final int fi = i;
-            css.setSpan(new ClickableSpan() {
-                @Override
-                public void onClick(View widget) {
-                    removeClipItem(fi);
-                    updateCandidateView();
-                }
-                @Override
-                public void updateDrawState(android.text.TextPaint ds) {
-                    ds.setColor(0xFFDC2626);
-                    ds.setUnderlineText(false);
-                }
-            }, xs, end + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             // v0.5.34 反馈⑧：ClipTagSpan 标记整项（长按定位删除）
-            css.setSpan(new ClipTagSpan(fi), idx, end + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            css.setSpan(new ClipTagSpan(fi), idx, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             // v0.5.9 反馈⑨：浅色相间背景（隔行着色）替代虚横线，视觉区分且不增加行高
             if (i % 2 == 1) {
-                css.setSpan(new android.text.style.BackgroundColorSpan(altBg), idx, end + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                css.setSpan(new android.text.style.BackgroundColorSpan(altBg), idx, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
         candidateView.setText(css);
