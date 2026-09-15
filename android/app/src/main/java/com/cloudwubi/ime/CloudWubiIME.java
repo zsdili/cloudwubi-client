@@ -1726,11 +1726,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
         if (code.isEmpty()) {
-            // v0.5.8 反馈①：编码清空 → 状态栏同步（空闲时无编码，翻译如存在则上移状态栏）
+            // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
             if (statusInfo != null) statusInfo.setText(lastEnHint.isEmpty() ? "" : lastEnHint);
-            // v0.5.20：联想已去除——上屏后不显示"最近上屏 ▸ 联想词"（renderAssociateHint 不再调用）
-            // v0.5.48 反馈：去掉"空闲态自动显示剪贴板项"——剪贴板内容只点击亖 时显示（复制过就每次弹出=用户眼中的"垃圾"）
-            if (candidates.isEmpty()) candidateView.setText("");
+            // v0.5.55：恢复上下文联想渲染——联想态且有候选时显示"最近上屏 ▸ 联想词"
+            if (associateActive && !candidates.isEmpty()) {
+                renderAssociateHint();
+            } else {
+                candidateView.setText("");
+            }
             return;
         }
         renderCandidates();
@@ -2270,7 +2273,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (!lastChar.isEmpty()) {
             queryTranslation(lastChar);   // 仅保留状态栏英文翻译（v0.5.13 要求，非联想）
         }
-        updateCandidateView();
+        // v0.5.55：恢复上下文联想（用户强化要求：光标前字/整词上下文联想——MRU置顶+整词前缀+锚字+成语+云端顺承）
+        associateActive = true;
+        triggerAssociate();
     }
 
     /** v0.4.9 反馈① + v0.5.1 反馈⑤：联想基准=整个上屏词组（如"前进"→"前进浪潮/前进号角"），
