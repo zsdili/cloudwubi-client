@@ -237,6 +237,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 clipManager.addPrimaryClipChangedListener(clipListener);
             }
         } catch (Exception ignored) { }
+        fetchCloudLinks();   // v0.6.3 CCA 联动：异步拉取云端衔接映射表（实时生效免发版）
     }
 
     @Override
@@ -726,6 +727,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         ASSOC_LINK.put("下午好", new String[]{"钟总", "大家"});
         ASSOC_LINK.put("晚上好", new String[]{"钟总", "大家"});
         ASSOC_LINK.put("辛苦了", new String[]{"钟总", "大家", "你"});
+    }
+
+    /** v0.6.3 CCA 联动增强：云端衔接映射表缓存（云端规则实时生效，免发版）
+     *  打字/联想路径双表查锚定：内置 ASSOC_LINK + 云端 ngram_link 缓存 */
+    private static java.util.Map<String, java.util.List<String>> CLOUD_LINKS = new java.util.HashMap<>();
+    private static java.util.List<String> getLinks(String chain) {
+        java.util.List<String> r = new java.util.ArrayList<>();
+        String[] local = ASSOC_LINK.get(chain);
+        if (local != null) java.util.Collections.addAll(r, local);
+        synchronized (CLOUD_LINKS) {
+            java.util.List<String> cloud = CLOUD_LINKS.get(chain);
+            if (cloud != null) r.addAll(cloud);
+        }
+        return r;
     }
 
     /** v0.5.65 反馈③：光标前字符是否为数字（决定"+"等运算符进计算缓冲还是直接上屏）
@@ -1556,8 +1571,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         String ccaChain = lastCommittedText;
         if (ccaChain != null && !ccaChain.trim().isEmpty() && !code.isEmpty()) {
             ccaChain = ccaChain.trim();
-            String[] links = ASSOC_LINK.get(ccaChain);
-            if (links != null) {
+            java.util.List<String> links = getLinks(ccaChain);   // v0.6.3：内置+云端双表
+            if (!links.isEmpty()) {
                 for (String lk : links) {
                     String lc = WubiDb.phraseCode(lk);
                     if (lc == null) lc = WubiDb.singleCode(lk);   // 单字衔接词（饭/亏/你/了）回退单字码
@@ -1565,8 +1580,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             }
             String anchor1 = ccaChain.substring(ccaChain.length() - 1);
-            String[] links2 = ASSOC_LINK.get(anchor1);
-            if (links2 != null) {
+            java.util.List<String> links2 = getLinks(anchor1);   // v0.6.3：内置+云端双表
+            if (!links2.isEmpty()) {
                 for (String lk : links2) {
                     String lc = WubiDb.phraseCode(lk);
                     if (lc == null) lc = WubiDb.singleCode(lk);
@@ -2450,16 +2465,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // ②d v0.5.65 反馈②：意思衔接词表（前进→方向/道路/号角——"衔接"非"组词"，让人少打很多字）
         //   先整词精确衔接（前进→方向），再尾字衔接（进→一步/取/来）；排位=MRU 之后、词库前缀之前
         if (!chain.isEmpty()) {
-            String[] links = ASSOC_LINK.get(chain);
-            if (links != null) {
+            java.util.List<String> links = getLinks(chain);   // v0.6.3：内置+云端双表
+            if (!links.isEmpty()) {
                 for (String lk : links) {
                     if (!merged.contains(lk)) merged.add(lk);
                 }
             }
         }
         if (merged.size() < 12 && !anchor.isEmpty()) {
-            String[] links2 = ASSOC_LINK.get(anchor);
-            if (links2 != null) {
+            java.util.List<String> links2 = getLinks(anchor);   // v0.6.3：内置+云端双表
+            if (!links2.isEmpty()) {
                 for (String lk : links2) {
                     if (!merged.contains(lk)) merged.add(lk);
                     if (merged.size() >= 12) break;
@@ -2603,6 +2618,51 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.6：JSON 字符串转义（上文可能含引号/反斜杠） */
     private String jsonEscape(String s) {
         return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    /** v0.6.3 CCA 联动增强：异步拉取云端全量衔接映射表（{"linkmap":true} → ngram_link 1981 条）
+     *  云端规则实时生效免发版；失败降级为内置 ASSOC_LINK */
+    private void fetchCloudLinks() {
+        Thread t = new Thread(() -> {
+            try {
+                String body = "{\"linkmap\":true}";
+                URL url = new URL(GATEWAY_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(body.getBytes("UTF-8"));
+                }
+                if (conn.getResponseCode() == 200) {
+                    try (InputStream is = conn.getInputStream()) {
+                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = r.readLine()) != null) sb.append(line);
+                        JSONObject obj = new JSONObject(sb.toString());
+                        JSONObject links = obj.optJSONObject("links");
+                        if (links != null) {
+                            java.util.Map<String, java.util.List<String>> map = new java.util.HashMap<>();
+                            java.util.Iterator<String> keys = links.keys();
+                            while (keys.hasNext()) {
+                                String k = keys.next();
+                                JSONArray arr = links.optJSONArray(k);
+                                java.util.List<String> lst = new java.util.ArrayList<>();
+                                if (arr != null) {
+                                    for (int i = 0; i < arr.length(); i++) lst.add(arr.getString(i));
+                                }
+                                map.put(k, lst);
+                            }
+                            synchronized (CLOUD_LINKS) { CLOUD_LINKS = map; }
+                        }
+                    }
+                }
+            } catch (Exception ignored) { }
+        });
+        t.start();
     }
 
     /** 云端 POST 请求（返回 phrases 数组，失败返回 null） */
