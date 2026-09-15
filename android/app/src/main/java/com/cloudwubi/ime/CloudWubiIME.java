@@ -88,6 +88,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int KEY_CALC_MUL = -203; // 数字面板 ×
     private static final int KEY_UNDO = -209;     // v0.4.9 取消↺
     private static final int KEY_REDO = -210;     // v0.4.9 重做↻
+    // v0.5.70 反馈：86 版字根图字根字键序（首字母=键位，其后=一级简码+键名+字根，严格按图顺序）
+    private static final String[] KEY_ROOT_ORDER = {
+        "q我金勹鱼儿夕氏犬乂", "w人亻八", "e有月舟用彡豕乃", "r的白手扌斤厂", "t和禾竹夂攵",
+        "y主言讠文方广圭", "u产立六辛疒门", "i不水氵小业", "o为火灬米办", "p这之辶廴宀",
+        "a工匚七艹廿弋戈", "s要木丁西", "d在大犬古石三厂", "f地土士二干十寸雨", "g一王丰五戋",
+        "h上目具止卜虎皮", "j是日曰早虫", "k中口川", "l国田甲囗皿车力", "m同山由贝门几",
+        "x经乡幺弓匕", "c以又巴马", "v发女刀九巛彐", "b了子孑也凵阝卩", "n民已巳己尸乙心忄"
+    };
     private static final int KEY_SEARCH = -211;   // v0.5.0 搜索键（数字面板）
     private static final int KEY_SPACE = 32;
     private static final int KB_DELETE = -5;      // Keyboard.KEYCODE_DELETE
@@ -1624,6 +1632,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidates.addAll(merged);
         // v0.5.46 反馈③：1 码一级简码双保险——云端/本地任何回填后，简码字强制置顶（打 r=的/i=不/w=人/p=这）
         applySimple1Top(code);
+        // v0.5.70 反馈：字根字按 86 图序（简码后、MRU 前）
+        applyRootOrderTop(code);
         // v0.5.61 写死规则：本地查询收尾必调 MRU 置顶（上屏过的字/词最前）——
         //   旧版只在云端 hot 回填后调，本地查询路径漏调 + 动态词反查失败 → 用户实测"从未前移"
         applyMruTop(code);
@@ -2355,6 +2365,26 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // 简码字被过滤（isJustCommitted）——重新加回第一位
         candidates.add(0, s1);
+    }
+
+    /** v0.5.70 反馈：字根字按 86 图序置顶（简码→键名→字根，MRU 由 applyMruTop 最后兜底）
+     *  顺序链：MRU(上屏过) > 字根图序 > 词频/其他——"除非调了词频/联想上屏后再动态显示" */
+    private void applyRootOrderTop(String code) {
+        if (code == null || code.isEmpty() || candidates == null) return;
+        char k = Character.toLowerCase(code.charAt(0));
+        String row = null;
+        for (String r : KEY_ROOT_ORDER) {
+            if (r.charAt(0) == k) { row = r; break; }
+        }
+        if (row == null) return;
+        java.util.List<String> ordered = new java.util.ArrayList<>();
+        for (int i = 1; i < row.length(); i++) {
+            String ch = String.valueOf(row.charAt(i));
+            if (candidates.contains(ch) && !ordered.contains(ch)) ordered.add(ch);
+        }
+        if (ordered.isEmpty()) return;
+        candidates.removeAll(ordered);
+        candidates.addAll(0, ordered);   // 插最前；MRU 置顶随后兜底（上屏过的仍居首位）
     }
 
     /** v0.5.49/50 写死规则：MRU 置顶防云端覆盖——同码打过的字/词（新上屏第一、旧的按序）强制前移

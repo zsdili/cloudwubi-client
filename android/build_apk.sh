@@ -42,7 +42,19 @@ echo "== 1/6 编译资源（aapt2）=="
     --dir app/src/main/res \
     -o "$OUT/res.zip"
 
-echo "== 2/6 链接资源+Manifest =="
+echo "== 2/6 同步版本号（build.gradle → Manifest，根治"版本号不更新"）=="
+VER_NAME=$(grep -o 'versionName "[^"]*"' app/build.gradle | head -1 | cut -d'"' -f2)
+VER_CODE=$(grep -o 'versionCode [0-9]*' app/build.gradle | head -1 | awk '{print $2}')
+if [ -n "$VER_NAME" ] && [ -n "$VER_CODE" ]; then
+    sed -i "s/android:versionCode=\"[0-9]*\"/android:versionCode=\"$VER_CODE\"/" app/src/main/AndroidManifest.xml
+    sed -i "s/android:versionName=\"[^\"]*\"/android:versionName=\"$VER_NAME\"/" app/src/main/AndroidManifest.xml
+    echo "✅ 版本同步: $VER_NAME (code $VER_CODE)"
+else
+    echo "❌ 从 build.gradle 读取版本失败，中止"
+    exit 1
+fi
+
+echo "== 3/6 链接资源+Manifest =="
 "$BT/aapt2" link \
     -o "$OUT/base.apk" \
     -I "$ANDROID_JAR" \
@@ -52,14 +64,14 @@ echo "== 2/6 链接资源+Manifest =="
     --target-sdk-version 33 \
     "$OUT/res.zip"
 
-echo "== 3/6 编译 Java（javac，含 aapt2 生成的 R.java）=="
+echo "== 4/6 编译 Java（javac，含 aapt2 生成的 R.java）=="
 find app/src/main/java "$OUT/gen" -name "*.java" > "$OUT/sources.txt"
 javac -source 1.8 -target 1.8 \
     -classpath "$ANDROID_JAR" \
     -d "$OUT/classes" \
     @"$OUT/sources.txt"
 
-echo "== 4/6 转 dex（R8 混淆+裁剪，v0.5.6 腾体积用于词库扩容）=="
+echo "== 5/6 转 dex（R8 混淆+裁剪，v0.5.6 腾体积用于词库扩容）=="
 find "$OUT/classes" -name "*.class" > "$OUT/classes.txt"
 # R8 jar 位置探测：build-tools/lib → cmdline-tools/latest/lib → 任意 cmdline-tools/lib
 R8_JAR=""
@@ -81,7 +93,7 @@ else
         $(cat "$OUT/classes.txt")
 fi
 
-echo "== 5/6 打包 dex + assets 进 APK =="
+echo "== 6/6 打包 dex + assets 进 APK =="
 cd "$OUT"
 # v0.5.11：zip -9 最优压缩 + -X 去 extra field（腾体积，保证 ≤100KB 硬门禁）
 echo "   dex bytes: $(stat -c%s classes.dex)"
@@ -98,7 +110,7 @@ else
     exit 1
 fi
 
-echo "== 6/6 对齐 + 签名（固定发布签名，保证各版本可覆盖安装）=="
+echo "== 7/6 对齐 + 签名（固定发布签名，保证各版本可覆盖安装）=="
 "$BT/zipalign" -f 4 base.apk aligned.apk
 # v0.5.5 反馈②：优先使用固定签名 keystore（android/keystore/cloudwubi.jks，公开开源），
 # 保证每个版本签名一致 → 用户可直接覆盖安装，无需卸载；无固定 keystore 时回退 debug key
