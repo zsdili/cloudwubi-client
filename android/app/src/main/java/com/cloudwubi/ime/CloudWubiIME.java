@@ -182,6 +182,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private String calcBuffer = "";         // v0.4.8 数字面板计算表达式
     private String lastCalcResult = "";     // v0.5.3 反馈②：上次计算结果（上屏后接运算符可继续计算）
     private boolean calcFormula = true;     // v0.4.8 默认带公式上屏（长按=仅结果）
+    /** v0.5.58：真实计算引擎（纯 Java 可测——测试对象=线上对象；主类字段仅作 UI 快照） */
+    private final CalcEngine calcEngine = new CalcEngine();
+    /** CalcEngine 操作后同步快照字段（供 UI 读取） */
+    private void syncCalcState() {
+        this.calcBuffer = calcEngine.calcBuffer;
+        this.lastCalcInput = calcEngine.lastCalcInput;
+        this.lastCalcResult = calcEngine.lastCalcResult;
+        this.calcAuto = calcEngine.calcAuto;
+    }
 
     // Shift / Caps（反馈③）
     private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
@@ -681,54 +690,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     // ===== v0.4.8 数字面板四则计算（先乘除后加减，左结合） =====
 
-    private static double calcEval(String expr) {
-        expr = expr.replace('×', '*').replace('÷', '/');
-        List<Double> nums = new ArrayList<>();
-        List<Character> ops = new ArrayList<>();
-        StringBuilder cur = new StringBuilder();
-        for (int i = 0; i < expr.length(); i++) {
-            char c = expr.charAt(i);
-            if (c == '+' || c == '-' || c == '*' || c == '/') {
-                if (cur.length() == 0) return Double.NaN;
-                nums.add(Double.parseDouble(cur.toString()));
-                cur.setLength(0);
-                ops.add(c);
-            } else if (c >= '0' && c <= '9' || c == '.') {
-                cur.append(c);
-            } else {
-                return Double.NaN;
-            }
-        }
-        if (cur.length() == 0) return Double.NaN;
-        nums.add(Double.parseDouble(cur.toString()));
-        // 先乘除
-        for (int i = 0; i < ops.size(); i++) {
-            char op = ops.get(i);
-            if (op == '*' || op == '/') {
-                double a = nums.get(i), b = nums.get(i + 1);
-                double r = (op == '*') ? a * b : (b == 0 ? Double.NaN : a / b);
-                if (Double.isNaN(r)) return Double.NaN;
-                nums.set(i, r);
-                nums.remove(i + 1);
-                ops.remove(i);
-                i--;
-            }
-        }
-        // 再加减（左结合）
-        double acc = nums.get(0);
-        for (int i = 0; i < ops.size(); i++) {
-            char op = ops.get(i);
-            double b = nums.get(i + 1);
-            acc = (op == '+') ? acc + b : acc - b;
-        }
-        return acc;
-    }
+    private static double calcEval(String expr) { return CalcEngine.calcEval(expr); }
 
-    private static String fmtResult(double v) {
-        if (Double.isNaN(v)) return "错误";
-        if (v == Math.rint(v) && Math.abs(v) < 1e15) return String.valueOf((long) v);
-        return String.valueOf(Math.round(v * 1e8) / 1e8);
-    }
+    private static String fmtResult(double v) { return CalcEngine.fmtResult(v); }
 
     // ===== 键盘文字：中文「中」/ 英文「EN」及功能键英文（反馈②） =====
 
@@ -875,15 +839,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (primaryCode >= '0' && primaryCode <= '9') {
             // v0.5.41 反馈⑤：数字键即时触感（消除"粘粘"卡顿感——按键即有反馈）
             keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
-            if (panelMode == 1 && hasCalcOp(calcBuffer)) {
-                calcBuffer += (char) primaryCode;
-                updateCandidateView();
-            } else {
-                commitText(String.valueOf((char) primaryCode));
-                // v0.5.54：连续数字/小数点累积到 lastCalcInput（"1.6" 整体回收），并清残留表达式防混入
-                lastCalcInput += String.valueOf((char) primaryCode);
-                calcBuffer = "";
-            }
+            // v0.5.58：统一走真实计算引擎（CalcEngine，JVM 单元测试直接测线上逻辑）
+            CalcEngine.Action ca = calcEngine.onDigit((char) primaryCode);
+            syncCalcState();
+            if (ca.commit != null) commitText(ca.commit);
+            else updateCandidateView();
             return;
         }
         switch (primaryCode) {
@@ -1156,27 +1116,29 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     private void handleBackspace() {
-        // v0.4.8：数字面板优先删计算表达式
-        if (panelMode == 1 && !calcBuffer.isEmpty()) {
-            calcBuffer = calcBuffer.substring(0, calcBuffer.length() - 1);
+        // v0.4.8：数字面板优先删计算表达式（v0.5.58 走 CalcEngine）
+        if (panelMode == 1 && !calcEngine.calcBuffer.isEmpty()) {
+            calcEngine.calcBuffer = calcEngine.calcBuffer.substring(0, calcEngine.calcBuffer.length() - 1);
+            syncCalcState();
             updateCandidateView();
             return;
         }
         InputConnection ic = getCurrentInputConnection();
         // v0.5.11 反馈⑥：文本框有选区（全选/部分选中）→ 优先删除选区（而非备选栏编码）
+        boolean hasSelection = false;
         if (ic != null) {
             try {
                 CharSequence sel = ic.getSelectedText(0);
-                if (sel != null && sel.length() > 0) {
-                    pushUndo();
-                    // v0.5.57：选区删除（全选/部分选中）同样清计算续算基准
-                    //  （根治"2*3=6全选删除后再输2*3把6带进来"：lastCalcResult/lastCalcInput 残留）
-                    lastCalcResult = "";
-                    lastCalcInput = "";
-                    ic.commitText("", 0);
-                    return;
-                }
+                if (sel != null && sel.length() > 0) hasSelection = true;
             } catch (Exception ignored) { }
+        }
+        if (hasSelection) {
+            pushUndo();
+            // v0.5.58：CalcEngine.onBackspace 统一清计算续算基准（选区删除清 lastCalcResult/lastCalcInput）
+            CalcEngine.Action ca = calcEngine.onBackspace(panelMode == 1, true);
+            syncCalcState();
+            if (ca.commit != null) ic.commitText(ca.commit, 0);
+            return;
         }
         if (composingCode.length() > 0) {
             composingCode.deleteCharAt(composingCode.length() - 1);
@@ -1188,11 +1150,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             String prev = getCursorPrevChar();
             if (!prev.isEmpty() && prev.equals(committedLast)) committedLast = "";
             pushUndo();   // v0.4.9 取消↺ 可恢复删除
-            // v0.5.56：删除上屏文本=放弃计算续算基准（根治"2*3=6删除后再输2*3变22*3"：
-            //  lastCalcResult/lastCalcInput 残留累积导致删除后输入数字错乱）
-            lastCalcResult = "";
-            lastCalcInput = "";
-            ic.deleteSurroundingText(1, 0);
+            // v0.5.58：CalcEngine.onBackspace 统一清计算状态（删除上屏文本=放弃续算基准）
+            CalcEngine.Action ca = calcEngine.onBackspace(panelMode == 1, false);
+            syncCalcState();
+            if (ca.delBefore > 0) ic.deleteSurroundingText(ca.delBefore, 0);
         }
     }
 
@@ -1916,10 +1877,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.35 反馈①：表达式是否已含运算符（决定数字是否进缓冲） */
-    private boolean hasCalcOp(String expr) {
-        return expr.indexOf('+') >= 0 || expr.indexOf('-') >= 0 || expr.indexOf('*') >= 0
-                || expr.indexOf('/') >= 0 || expr.indexOf('×') >= 0 || expr.indexOf('÷') >= 0;
-    }
+    private boolean hasCalcOp(String expr) { return CalcEngine.hasCalcOp(expr); }
 
     /** v0.5.34 反馈①：数字面板实时计算候选（带式 / 仅结果，点选上屏，上屏后可续算）
      *  v0.5.35 反馈①：表达式不含运算符（纯数字直接上屏）时清空候选，不弹"1.5=5 2.5" */
@@ -1972,23 +1930,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.5.34 反馈①：计算候选上屏（withFormula=带式/仅结果），结果保留供运算符续算 */
     private void commitCalcAs(boolean withFormula) {
-        if (calcBuffer.isEmpty()) return;
-        double v = calcEval(calcBuffer);
-        if (Double.isNaN(v)) {
-            commitText(calcBuffer);
-            lastCalcResult = "";
-        } else {
-            String res = fmtResult(v);
-            lastCalcResult = res;
-            if (withFormula) {
-                commitText(calcBuffer + "=" + res);
-            } else {
-                commitText(res);
-            }
+        if (calcEngine.calcBuffer.isEmpty()) return;
+        // v0.5.58：统一走真实计算引擎（CalcEngine.onEq）
+        boolean textEndsWithResult = false;
+        if (!calcEngine.lastCalcResult.isEmpty()) {
+            InputConnection cic = getCurrentInputConnection();
+            try {
+                CharSequence tb = cic == null ? null : cic.getTextBeforeCursor(calcEngine.lastCalcResult.length(), 0);
+                if (tb != null && tb.toString().equals(calcEngine.lastCalcResult)) textEndsWithResult = true;
+            } catch (Exception ignored) { }
         }
-        calcBuffer = "";
-        calcAuto = false;
-        if (!lastCalcResult.isEmpty()) lastCalcInput = lastCalcResult;
+        calcEngine.calcFormula = withFormula;
+        CalcEngine.Action ca = calcEngine.onEq(textEndsWithResult);
+        if (ca.commit != null) commitText(ca.commit);
+        syncCalcState();
         updateCandidateView();
     }
 
@@ -2079,33 +2034,25 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.4.8 数字面板：= 或退出时上屏。带公式（默认）上屏 "1+2=3"；纯数字直接上屏 */
     /** v0.5.3 反馈②：数字面板运算符——上次结果上屏后接运算符自动续算（8 → +2 → 8+2=10） */
     private void calcAppendOp(String op) {
-        // v0.5.54 反馈：刚上屏的数字（lastCalcInput）必须优先于上次结果（lastCalcResult）
-        //   ——否则 2(上屏)→* → 续接上次结果"6*" → "6*3"（2*3 错成 6*3 的根因）
-        //   同时：删除已上屏的数字/小数（"1.6"），避免表达式上屏时重复（1.6*3=4.8 重复成 1.66*3）
-        if (calcBuffer.isEmpty() && !lastCalcInput.isEmpty()) {
+        // v0.5.58：统一走真实计算引擎（CalcEngine.onOp——含 lastCalcInput 优先 + 删除已上屏数字）
+        String savedInput = calcEngine.lastCalcInput;
+        CalcEngine.Action ca = calcEngine.onOp(op);
+        if (ca.delBefore > 0) {
             InputConnection cic = getCurrentInputConnection();
             try {
                 if (cic != null) {
-                    cic.deleteSurroundingText(lastCalcInput.length(), 0);
+                    cic.deleteSurroundingText(ca.delBefore, 0);
                     // v0.5.56：删除后验证——若仍残留（编辑器时序/兼容差异），重删一次防"22*3"式重复累积
                     try {
-                        CharSequence tb = cic.getTextBeforeCursor(lastCalcInput.length(), 0);
-                        if (tb != null && tb.toString().equals(lastCalcInput)) {
-                            cic.deleteSurroundingText(lastCalcInput.length(), 0);
+                        CharSequence tb = cic.getTextBeforeCursor(ca.delBefore, 0);
+                        if (tb != null && tb.toString().equals(savedInput)) {
+                            cic.deleteSurroundingText(ca.delBefore, 0);
                         }
                     } catch (Exception ignored) { }
                 }
             } catch (Exception ignored) { }
-            calcBuffer = lastCalcInput + op;
-            lastCalcInput = "";
-            calcAuto = true;    // 直接上屏数字回收为表达式起点（5 → + → "5+"）
-        } else if (calcBuffer.isEmpty() && !lastCalcResult.isEmpty()) {
-            calcBuffer = lastCalcResult + op;
-            calcAuto = true;    // 上屏结果后直接按运算符 → 续算（8+2=10 后 → + → "10+"）
-        } else {
-            calcBuffer += op;
-            calcAuto = false;   // 手动完整输入 → 不去重（3*2 不以结果 3 开头省略）
         }
+        syncCalcState();
         updateCandidateView();
     }
 
@@ -2125,45 +2072,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     private void commitCalc(boolean fromEq) {
-        if (calcBuffer.isEmpty()) return;
-        double v = calcEval(calcBuffer);
-        if (Double.isNaN(v)) {
-            commitText(calcBuffer);
-            lastCalcResult = "";
-        } else {
-            String res = fmtResult(v);
-            // v0.5.11 反馈③：★先保存上一次结果作为去重基准，再更新 lastCalcResult
-            // （原代码先覆盖 lastCalcResult=新结果，导致 expr.startsWith(新结果) 恒 false → 不去重 → 1+2=33*4=12）
-            String oldResult = lastCalcResult;
-            lastCalcResult = res;
-            if (calcBuffer.matches("^[0-9.]+$")) {
-                commitText(calcBuffer);
-            } else if (calcFormula) {
-                // v0.5.32 计算器去重科学化（根治"1+2=33*4=12"反复复发）：
-                //   不再依赖 calcAuto 标志（易被面板切换等路径破坏）——直接读文本框末尾验证
-                //   "上次结果是否已在屏"，在屏则省略重复（1+2=3 上屏后 *4 → 上屏"*4=12"，
-                //   文本框拼接 = "1+2=3*4=12"）；不在屏（手动完整输入 3*2）则完整上屏"3*2=6"
-                String expr = calcBuffer;
-                boolean hasResult = false;
-                if (!oldResult.isEmpty()) {
-                    InputConnection cic = getCurrentInputConnection();
-                    try {
-                        CharSequence tb = cic == null ? null : cic.getTextBeforeCursor(oldResult.length(), 0);
-                        if (tb != null && tb.toString().equals(oldResult)) hasResult = true;
-                    } catch (Exception ignored) { }
-                }
-                if (hasResult && expr.startsWith(oldResult)) {
-                    expr = expr.substring(oldResult.length());
-                    if (expr.isEmpty()) expr = res;
-                }
-                commitText(expr + "=" + res);
-            } else {
-                commitText(res);
-            }
+        if (calcEngine.calcBuffer.isEmpty()) return;
+        // 读文本框末尾判断"上次结果是否已在屏"（CalcEngine.onEq 去重依据）
+        boolean textEndsWithResult = false;
+        if (!calcEngine.lastCalcResult.isEmpty()) {
+            InputConnection cic = getCurrentInputConnection();
+            try {
+                CharSequence tb = cic == null ? null : cic.getTextBeforeCursor(calcEngine.lastCalcResult.length(), 0);
+                if (tb != null && tb.toString().equals(calcEngine.lastCalcResult)) textEndsWithResult = true;
+            } catch (Exception ignored) { }
         }
-        calcBuffer = "";
-        calcAuto = false;
-        if (!lastCalcResult.isEmpty()) lastCalcInput = lastCalcResult;   // v0.5.35 续算起点
+        // v0.5.58：统一走真实计算引擎（CalcEngine.onEq——去重 + 带式上屏 + 状态更新）
+        CalcEngine.Action ca = calcEngine.onEq(textEndsWithResult);
+        if (ca.commit != null) commitText(ca.commit);
+        syncCalcState();
         // v0.5.4 反馈⑥：结果上屏后保留数字面板——继续按运算符接续计算（2+3=5 → + → 5+）
         panelMode = 1;
         keyboardView.setKeyboard(keyboardNum);
