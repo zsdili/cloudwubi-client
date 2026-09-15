@@ -132,6 +132,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private android.view.GestureDetector candFlingDetector;   // v0.5.35 反馈③：候选左右滑动翻页
     private static final String PREFS_PHRASES = "recent_phrases";  // v0.4.8 MRU 词组
     private static final String PREFS_LAST_SEL = "last_selected";  // v0.5.9 反馈⑧：上次选中字/词持久化（字频调整跨会话生效）
+    private static final String PREFS_MRU = "mru_list";   // v0.5.50：同码 MRU 历史（写死规则：之前打过的字/词前置）
 
     private final StringBuilder composingCode = new StringBuilder();
     private List<String> candidates = new ArrayList<>();
