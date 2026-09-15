@@ -168,7 +168,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private boolean clipMode = false;       // 候选条是否显示剪贴板历史
     private boolean infoPanelMode = false;  // v0.5.13 反馈①：候选条是否显示 app 信息面板
     private int candViewH = 0;              // v0.5.14 反馈⑤：备选栏固定高度（正常态单行不抖动）
-    private String lastSelected = "";       // MRU 置顶
+    private String lastSelected = "";       // MRU 置顶（最近一个，写死规则：上屏必置顶）
+    // v0.5.50 写死规则固化：同码打过的字/词全部前置（按时间倒序）——"之前打过的字或词就要放最前面，
+    //   除非有其他同码的字或词新上屏了"（新上屏的排第一，旧的依次在后）
+    private final java.util.List<String> mruList = new java.util.ArrayList<>();
     private String lastCommittedChar = "";  // v0.4.8 最近上屏单字（触发联想）
     private String lastEnHint = "";         // v0.4.8 最近选字英文翻译提示
     private android.widget.TextView statusInfo;   // v0.5.8 状态栏：编码 + 英文翻译（左侧"云五笔"固定）
@@ -203,6 +206,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         loadFreq();   // v0.5.14 反馈②：加载端侧词频缓存
         // v0.5.9 反馈⑧：恢复上次选中字/词（字频调整跨会话生效，重启仍记忆）
         lastSelected = prefs.getString(PREFS_LAST_SEL, "");
+        // v0.5.50：加载同码 MRU 历史（写死规则：之前打过的字/词前置）
+        String mruSaved = prefs.getString(PREFS_MRU, "");
+        if (!mruSaved.isEmpty()) {
+            String[] parts = mruSaved.split("\u0001");
+            for (int i = parts.length - 1; i >= 0; i--) {
+                if (!parts[i].isEmpty()) mruList.add(parts[i]);
+            }
+        }
         try {
             clipManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             if (clipManager != null) {
@@ -1358,15 +1369,26 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.8 反馈③⑧：排序硬规则——1 码一级简码字最前、4 码词组最前；2/3 码 MRU 置顶
         // v0.5.9 反馈⑧：MRU 精确匹配（编码==code）置顶最优先（字频调整：上次上屏的字/词永远第一位）
         // v0.5.17 反馈④（举一反三）：MRU 置顶不受 isJustCommitted 限制——重打同码时"最近打过的字"必须置顶
+        // v0.5.50 写死规则：之前打过的字或词全部前置（新上屏第一，旧的按序在后）——
+        //   遍历 mruList（最近 N 个上屏，时间倒序），编码匹配（全码/简码）的依次加入
         if (!lastSelected.isEmpty()) {
             String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
-            // v0.5.47 反馈③④：MRU 也支持一级简码匹配——上屏"的"后打 r，"的"必须置顶（singleCode 返回全码 rqyy 不匹配 r）
             boolean mruMatch = (lc != null && lc.equals(code));
             if (!mruMatch && lastSelected.length() == 1 && code.length() == 1) {
                 String s1 = WubiDb.simple1Char(code.charAt(0));
                 mruMatch = (s1 != null && s1.equals(lastSelected));
             }
             if (mruMatch && !merged.contains(lastSelected)) merged.add(lastSelected);
+        }
+        for (String m : mruList) {
+            if (m.equals(lastSelected)) continue;   // lastSelected 已置顶
+            String mc = m.length() >= 2 ? WubiDb.phraseCode(m) : WubiDb.singleCode(m);
+            boolean m2 = (mc != null && mc.equals(code));
+            if (!m2 && m.length() == 1 && code.length() == 1) {
+                String s1 = WubiDb.simple1Char(code.charAt(0));
+                m2 = (s1 != null && s1.equals(m));
+            }
+            if (m2 && !merged.contains(m)) merged.add(m);
         }
         for (String p : recentPhrases) {
             String pc = WubiDb.phraseCode(p);
@@ -2150,26 +2172,44 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidates.add(0, s1);
     }
 
-    /** v0.5.49：MRU 置顶防云端覆盖——上次上屏字/词（编码精确匹配）在 hot/云端回填后强制移回第一位 */
+    /** v0.5.49/50 写死规则：MRU 置顶防云端覆盖——同码打过的字/词（新上屏第一、旧的按序）在 hot/云端回填后强制前移 */
     private void applyMruTop(String code) {
-        if (code == null || code.isEmpty() || lastSelected == null || lastSelected.isEmpty()) return;
-        String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
-        boolean match = (lc != null && lc.equals(code));
-        if (!match && lastSelected.length() == 1 && code.length() == 1) {
-            String s1 = WubiDb.simple1Char(code.charAt(0));
-            match = (s1 != null && s1.equals(lastSelected));
+        if (code == null || code.isEmpty()) return;
+        java.util.List<String> ordered = new java.util.ArrayList<>();
+        if (lastSelected != null && !lastSelected.isEmpty()) ordered.add(lastSelected);
+        for (String m : mruList) {
+            if (!ordered.contains(m)) ordered.add(m);
         }
-        if (match) {
-            for (int i = 0; i < candidates.size(); i++) {
-                if (candidates.get(i).equals(lastSelected)) {
-                    if (i != 0) {
-                        candidates.remove(i);
-                        candidates.add(0, lastSelected);
-                    }
-                    return;
-                }
+        for (String m : ordered) {
+            String mc = m.length() >= 2 ? WubiDb.phraseCode(m) : WubiDb.singleCode(m);
+            boolean match = (mc != null && mc.equals(code));
+            if (!match && m.length() == 1 && code.length() == 1) {
+                String s1 = WubiDb.simple1Char(code.charAt(0));
+                match = (s1 != null && s1.equals(m));
             }
+            if (!match) continue;
+            candidates.remove(m);
+            int pos = 0;
+            // 排在已置顶的同码 MRU 之后（保持"新上屏在前"）
+            for (int i = 0; i < candidates.size() && i < ordered.indexOf(m); i++) {
+                if (ordered.subList(0, ordered.indexOf(m)).contains(candidates.get(i))) pos = i + 1;
+            }
+            candidates.add(Math.min(pos, candidates.size()), m);
         }
+    }
+
+    /** v0.5.50 写死规则：记录同码 MRU 历史（新上屏排头，去重，最多 10 个，持久化） */
+    private void rememberMru(String text) {
+        if (text == null || text.isEmpty()) return;
+        mruList.remove(text);
+        mruList.add(0, text);
+        while (mruList.size() > 10) mruList.remove(mruList.size() - 1);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < mruList.size(); i++) {
+            if (i > 0) sb.append("\u0001");
+            sb.append(mruList.get(i));
+        }
+        try { prefs.edit().putString(PREFS_MRU, sb.toString()).apply(); } catch (Exception ignored) { }
     }
 
     private boolean isJustCommitted(String c) {
@@ -2209,6 +2249,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         commitText(text);   // v0.4.9 自动记录 undo 快照
         lastSelected = text;   // MRU 置顶
+        rememberMru(text);   // v0.5.50：同码 MRU 历史（写死规则）
         prefs.edit().putString(PREFS_LAST_SEL, text).apply();   // v0.5.9 反馈⑧：持久化字频调整
         bumpFreq(text);   // v0.5.14 反馈②：端侧词频累计（最近 3 个月输入记录）
         // v0.5.3 反馈①：记录最近一次上屏的字/词（仅滤紧接着的重复出现）
