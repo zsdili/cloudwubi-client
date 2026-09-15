@@ -69,6 +69,9 @@ chk "基础库 全码：我=trnt（拼我们）" "android/app/src/main/assets/wu
 chk "基础库 简码：你=wq（二级简码）" "android/app/src/main/assets/wubi_single.txt" "^wq你$"
 # 9) 一级简码高频字（的在前）——v0.5.7 反馈⑧/v0.5.17（词库分行格式：a工…r的…y主）
 chk "一级简码高频：的" "android/app/src/main/assets/wubi_single.txt" "^r的$"
+# 9b) 备选栏高度一致性（v0.5.62：状态规范化根治空/打字切换闪屏）
+chk "备选栏状态规范化：resetCandidateStyle" "$IME" "resetCandidateStyle"
+chk "备选栏统一复位：render前调用" "$IME" "resetCandidateStyle\\(\\);   // v0.5.62"
 # 10) 体积门禁
 APK="${1:-}"
 if [ -n "$APK" ] && [ -f "$APK" ]; then

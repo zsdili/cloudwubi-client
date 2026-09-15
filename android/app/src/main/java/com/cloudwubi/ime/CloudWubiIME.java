@@ -1708,8 +1708,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         safeStatusText(t);
     }
 
+    /** v0.5.62 备选栏状态规范化：每次渲染前强制复位（46dp 固定高/单行/18f 字号/1f 行距）
+     *  根治"不打字与打字时备选栏高度不一致闪屏"：此前 renderInfoPanel 残留 16f+1.25f 行距、
+     *  renderClipboardList 残留 80dp+10 行+1.3f 行距，正常态只恢复 MinHeight → 各路径退出后状态不一致 */
+    private void resetCandidateStyle() {
+        if (candidateView == null) return;
+        candidateView.setMinHeight(candViewH);
+        candidateView.setMaxHeight(candViewH);
+        candidateView.setMaxLines(1);
+        candidateView.setSingleLine(true);
+        candidateView.setTextSize(18);
+        candidateView.setLineSpacing(0f, 1f);
+        candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+    }
+
     private void updateCandidateView() {
         if (candidateView == null) return;
+        resetCandidateStyle();   // v0.5.62：状态规范化——所有分支渲染前统一复位
         // v0.5.13 反馈①：app 信息面板优先渲染
         if (infoPanelMode) {
             renderInfoPanel();
