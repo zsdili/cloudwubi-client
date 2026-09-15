@@ -1,0 +1,3129 @@
+云五笔（CloudWubi）输入法软件 源程序（共 60 页，每页 50 行）
+软件名称：云五笔（CloudWubi）五笔输入法软件
+编程语言：Java
+源码总行数：3408
+
+===== 前 30 页（第 1-1500 行） =====
+第1页
+    1  package com.cloudwubi.ime;
+    2  
+    3  import android.content.ClipData;
+    4  import android.content.ClipboardManager;
+    5  import android.content.Context;
+    6  import android.content.SharedPreferences;
+    7  import android.inputmethodservice.InputMethodService;
+    8  import android.inputmethodservice.Keyboard;
+    9  import android.inputmethodservice.KeyboardView;
+   10  import android.os.Handler;
+   11  import android.os.Looper;
+   12  import android.text.SpannableString;
+   13  import android.text.SpannableStringBuilder;
+   14  import android.text.Spanned;
+   15  import android.text.style.ClickableSpan;
+   16  import android.text.style.ForegroundColorSpan;
+   17  import android.view.KeyEvent;
+   18  import android.view.View;
+   19  import android.view.inputmethod.EditorInfo;
+   20  import android.view.inputmethod.InputConnection;
+   21  import android.widget.LinearLayout;
+   22  import android.widget.TextView;
+   23  
+   24  import org.json.JSONArray;
+   25  import org.json.JSONObject;
+   26  
+   27  import java.io.BufferedReader;
+   28  import java.io.InputStream;
+   29  import java.io.InputStreamReader;
+   30  import java.io.OutputStream;
+   31  import java.net.HttpURLConnection;
+   32  import java.net.URL;
+   33  import java.util.ArrayList;
+   34  import java.util.HashMap;
+   35  import java.util.HashSet;
+   36  import java.util.List;
+   37  import java.util.Map;
+   38  import java.util.Set;
+   39  
+   40  /**
+   41   * CloudWubiIME - 云五笔 Android 输入法服务（v0.4.8）
+   42   *
+   43   * v0.4.8 修复清单（真机第四轮 8 项反馈）：
+   44   *   ① 词组智能联想：上屏单字后，最近 3 个选中词组置顶 + 带此字的词组（本地+云端热点）
+   45   *   ② 退格：全选/部分选中时正确删除选区（此前全选无反应、部分选中只删末字）
+   46   *   ③ 剪贴板历史行间距加大，易点选
+   47   *   ④ 回车键无候选时上屏换行（此前误上屏空格）
+   48   *   ⑤ 🎤 键改为空格键（上屏空格/选首选），移除语音占位提示
+   49   *   ⑥ 键帽深色边框改为羽化渐变边框
+   50   *   ⑦ 编码括号移至候选末尾（1.钟 2.鈡（qkhh））；选字后云端提示英文翻译
+
+第2页
+   51   *   ⑧ 数字面板 4 列（左侧 + - × ÷），实时计算并默认「带公式上屏」，长按 = 仅上屏结果
+   52   */
+   53  public class CloudWubiIME extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
+   54  
+   55      /** 云端网关地址（腾讯云 SCF 函数 URL，v0.4.7 启用） */
+   56      private static final String GATEWAY_URL =
+   57              "https://1251037126-bglnivgmaf.ap-guangzhou.tencentscf.com";
+   58      private static final boolean GATEWAY_READY = true;
+   59  
+   60      // ===== 功能键编码（与 XML 严格对应，v0.4.6 按截图 / v0.4.8 数字面板） =====
+   61      private static final int KEY_123 = -101;      // 数字面板
+   62      private static final int KEY_LANG = -102;     // 中/英
+   63      private static final int KEY_SYMBOL = -103;   // 面板返回主键盘
+   64      private static final int KEY_SYM_IN = -104;   // 符号面板
+   65      // v0.5.34 符号面板分类式（参考用户截图：最近/中文/英文/表情/网络 + 底部导航）
+   66      private static final int KEY_SYM_RECENT = -311;
+   67      private static final int KEY_SYM_CN = -312;
+   68      private static final int KEY_SYM_EN = -313;
+   69      private static final int KEY_SYM_EMOJI = -314;
+   70      private static final int KEY_SYM_NET = -315;
+   71      private static final int KEY_SYM_LOCK = -321;
+   72      private static final int KEY_SYM_UP = -322;
+   73      private static final int KEY_SYM_DOWN = -323;
+   74      private static final int KEY_NET_COM = -341;
+   75      private static final int KEY_NET_NET = -342;
+   76      private static final int KEY_NET_CN = -343;
+   77      private static final int KEY_NET_WWW = -344;
+   78      private static final int KEY_NET_HTTP = -345;
+   79      private static final int KEY_NET_HTTPS = -346;
+   80      private static final int KEY_NET_SLASH2 = -347;
+   81      private static final int KEY_NET_COMSLASH = -348;
+   82      private static final int KEY_SHIFT = -105;    // ↑ Shift（单击切换/双击锁定大写）
+   83      private static final int KEY_PUNCT_BANG = -106; // !，双标点循环
+   84      private static final int KEY_MIC = -107;      // v0.4.8: 空格键（原🎤语音占位已移除）
+   85      private static final int KEY_PUNCT_QM = -108; // ？。双标点循环
+   86      private static final int KEY_CALC_EQ = -201;  // 数字面板 = 计算上屏
+   87      private static final int KEY_CALC_DIV = -202; // 数字面板 ÷
+   88      private static final int KEY_CALC_MUL = -203; // 数字面板 ×
+   89      private static final int KEY_UNDO = -209;     // v0.4.9 取消↺
+   90      private static final int KEY_REDO = -210;     // v0.4.9 重做↻
+   91      private static final int KEY_SEARCH = -211;   // v0.5.0 搜索键（数字面板）
+   92      private static final int KEY_SPACE = 32;
+   93      private static final int KB_DELETE = -5;      // Keyboard.KEYCODE_DELETE
+   94      private static final int KB_ENTER = -4;       // Keyboard.KEYCODE_ENTER
+   95  
+   96      // ===== v0.4.9 FLAT 主题（跟随系统浅色/深色） =====
+   97      private static final int THEME_LIGHT = 0;
+   98      private static final int THEME_DARK = 1;
+   99      private static final int THEME_LIGHT_KB_BG = 0xFFE8EBEF;   // 键盘底色（浅）
+  100      private static final int THEME_LIGHT_CAND_BG = 0xFFFFFFFF; // 候选条背景（浅）
+
+第3页
+  101      private static final int THEME_LIGHT_TEXT = 0xFF1F2937;    // 主文字（浅）
+  102      private static final int THEME_LIGHT_HINT = 0xFF9CA3AF;    // 上滑标注/弱文字（浅）
+  103      private static final int THEME_DARK_KB_BG = 0xFF1B1F24;    // 键盘底色（深）
+  104      private static final int THEME_DARK_CAND_BG = 0xFF23272E;  // 候选条背景（深）
+  105      private static final int THEME_DARK_TEXT = 0xFFF3F4F6;     // 主文字（深）
+  106      private static final int THEME_DARK_HINT = 0xFF6B7280;     // 弱文字（深）
+  107      private static final int THEME_ACCENT = 0xFF3B82F6;        // 主题蓝
+  108      private static final int THEME_FIRST = 0xFFF59E0B;         // 首选橙色
+  109      private static final int THEME_ERROR = 0xFFDC2626;         // 计算错误红
+  110      private int theme = THEME_LIGHT;
+  111  
+  112      // ===== v0.4.9 连续联想（陈→胜→吴广） =====
+  113      private String lastCommittedText = "";   // 最近上屏的连续文本（联想链拼接）
+  114  
+  115      // ===== v0.4.9 候选翻页 =====
+  116      private static final int CAND_PAGE_SIZE = 5;
+  117      private int candPage = 0;
+  118      private int pinyinInsertPos = 0;   // v0.5.36 反馈⑨：拼音候选插入位置（本地五笔候选之后）
+  119  
+  120      // ===== v0.4.9 取消↺ / 重做↻（编辑快照栈） =====
+  121      private final java.util.ArrayDeque<String> undoStack = new java.util.ArrayDeque<>();
+  122      private final java.util.ArrayDeque<String> redoStack = new java.util.ArrayDeque<>();
+  123      private static final int UNDO_MAX = 30;
+  124  
+  125      // ===== 剪贴板历史（仅复制文本，v0.4.5） =====
+  126      private static final int CLIP_MAX = 20;
+  127      private static final String PREFS_NAME = "cloudwubi";
+  128      private static final String PREFS_CLIP = "clip_history";
+  129      /** v0.5.34 反馈⑧：剪贴板项标记 span（长按定位删除） */
+  130      private static class ClipTagSpan { int index; ClipTagSpan(int i) { index = i; } }
+  131      private float lastTouchX = 0f, lastTouchY = 0f;   // v0.5.34 长按定位坐标
+  132      private android.view.GestureDetector candFlingDetector;   // v0.5.35 反馈③：候选左右滑动翻页
+  133      private static final String PREFS_PHRASES = "recent_phrases";  // v0.4.8 MRU 词组
+  134      private static final String PREFS_LAST_SEL = "last_selected";  // v0.5.9 反馈⑧：上次选中字/词持久化（字频调整跨会话生效）
+  135      private static final String PREFS_MRU = "mru_list";   // v0.5.50：同码 MRU 历史（写死规则：之前打过的字/词前置）
+  136  
+  137      private final StringBuilder composingCode = new StringBuilder();
+  138      private List<String> candidates = new ArrayList<>();
+  139      private TextView candidateView;
+  140      private CloudKeyboardView keyboardView;
+  141      private LinearLayout rootView;
+  142      private LinearLayout toolRow;   // v0.5.0 反馈①：工具行（全选/取消↺/重做↻）
+  143      private android.widget.TextView hideBtn;   // v0.5.4 反馈⑨：闲置 2 秒后出现的收起键盘按钮
+  144      /** v0.5.5：闲置定时器——2 秒出现收起按钮（反馈④，INVISIBLE 占位不跳动）
+  145       *  v0.5.8 反馈⑤：取消状态栏/备选栏自动清空（原 1 秒清空候选已移除，候选保留待用户操作） */
+  146      private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+  147      private final Runnable idleRunnable = new Runnable() {
+  148          @Override
+  149          public void run() {
+  150              // v0.5.10 反馈③：下隐常显，不再计时显示
+
+第4页
+  151          }
+  152      };
+  153      /** v0.5.5 反馈①：密码框模式（禁用联想/剪贴板/翻译，保证可输入） */
+  154      private boolean isPassword = false;
+  155      /** v0.5.5 反馈⑤：符号面板来源面板（0=主键盘，1=数字面板），用于"返回"逐层回退 */
+  156      private int prevPanel = 0;
+  157      /** v0.5.5 反馈⑦：进入输入状态时联想基准字（光标前一字），云端回填校验用 */
+  158      private String enterAssociateChar = "";
+  159      private Keyboard keyboardMain;
+  160      private Keyboard keyboardNum;
+  161      private Keyboard keyboardSymRecent;   // v0.5.34 符号面板分类：最近
+  162      private Keyboard keyboardSymCn;       // 中文
+  163      private Keyboard keyboardSymEn;       // 英文
+  164      private Keyboard keyboardSymEmoji;    // 表情
+  165      private Keyboard keyboardSymNet;      // 网络
+  166      private boolean chineseMode = true;
+  167      private boolean fromChineseShift = false;   // v0.5.10 反馈①：记录 shift 是否从中文切入英文大写
+  168      private int panelMode = 0;              // 0=主键盘 1=数字 2=符号
+  169      private boolean clipMode = false;       // 候选条是否显示剪贴板历史
+  170      private boolean infoPanelMode = false;  // v0.5.13 反馈①：候选条是否显示 app 信息面板
+  171      private int candViewH = 0;              // v0.5.14 反馈⑤：备选栏固定高度（正常态单行不抖动）
+  172      private String lastSelected = "";       // MRU 置顶（最近一个，写死规则：上屏必置顶）
+  173      // v0.5.50 写死规则固化：同码打过的字/词全部前置（按时间倒序）——"之前打过的字或词就要放最前面，
+  174      //   除非有其他同码的字或词新上屏了"（新上屏的排第一，旧的依次在后）
+  175      private final java.util.List<String> mruList = new java.util.ArrayList<>();
+  176      private String lastCommittedChar = "";  // v0.4.8 最近上屏单字（触发联想）
+  177      private String lastEnHint = "";         // v0.4.8 最近选字英文翻译提示
+  178      private android.widget.TextView statusInfo;   // v0.5.8 状态栏：编码 + 英文翻译（左侧"云五笔"固定）
+  179      private boolean calcAuto = false;       // v0.5.8 反馈⑥：续算去重仅用于运算符自动续接（防误伤手动输入）
+  180      private String lastCalcInput = "";      // v0.5.35 反馈①：最近一次直接上屏的数字（运算符按下时回收为表达式起点）
+  181      private List<String> recentPhrases = new ArrayList<>();  // v0.4.8 最近3个选中词组
+  182      private String calcBuffer = "";         // v0.4.8 数字面板计算表达式
+  183      private String lastCalcResult = "";     // v0.5.3 反馈②：上次计算结果（上屏后接运算符可继续计算）
+  184      private boolean calcFormula = true;     // v0.4.8 默认带公式上屏（长按=仅结果）
+  185  
+  186      // Shift / Caps（反馈③）
+  187      private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
+  188      private long lastShiftTap = 0L;
+  189  
+  190      private ClipboardManager clipManager;
+  191      private SharedPreferences prefs;
+  192      private List<String> clipHistory = new ArrayList<>();
+  193      // v0.5.36 反馈④：剪贴板长按删除 → 点"取消↺"恢复还原（防误操作）
+  194      private String clipUndoItem = null;
+  195      private int clipUndoIndex = -1;
+  196      /** v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录——上屏词→次数，联想排序权重） */
+  197      private static final String PREFS_FREQ = "cw_freq";
+  198      private final Map<String, Integer> freqMap = new HashMap<>();
+  199  
+  200      @Override
+
+第5页
+  201      public void onCreate() {
+  202          super.onCreate();
+  203          WubiDb.init(this);   // 加载离线词库（res/raw）
+  204          prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+  205          loadClipHistory();
+  206          loadRecentPhrases();
+  207          loadFreq();   // v0.5.14 反馈②：加载端侧词频缓存
+  208          // v0.5.9 反馈⑧：恢复上次选中字/词（字频调整跨会话生效，重启仍记忆）
+  209          lastSelected = prefs.getString(PREFS_LAST_SEL, "");
+  210          // v0.5.50：加载同码 MRU 历史（写死规则：之前打过的字/词前置）
+  211          String mruSaved = prefs.getString(PREFS_MRU, "");
+  212          if (!mruSaved.isEmpty()) {
+  213              String[] parts = mruSaved.split("\u0001");
+  214              for (int i = parts.length - 1; i >= 0; i--) {
+  215                  if (!parts[i].isEmpty()) mruList.add(parts[i]);
+  216              }
+  217          }
+  218          try {
+  219              clipManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+  220              if (clipManager != null) {
+  221                  clipManager.addPrimaryClipChangedListener(clipListener);
+  222              }
+  223          } catch (Exception ignored) { }
+  224      }
+  225  
+  226      @Override
+  227      public void onDestroy() {
+  228          try {
+  229              if (clipManager != null) clipManager.removePrimaryClipChangedListener(clipListener);
+  230          } catch (Exception ignored) { }
+  231          super.onDestroy();
+  232      }
+  233  
+  234      @Override
+  235      public View onCreateInputView() {
+  236          candidateView = new TextView(this);
+  237          candidateView.setTextSize(18);   // v0.5.14 反馈⑥：备选词组大字显示（透明背景默认）
+  238          candidateView.setPadding(14, 12, 14, 12);
+  239          // v0.5.14 反馈⑤：固定备选栏高度（单行）→ 不撑大显示范围、无画面抖动
+  240          candViewH = Math.round(46 * getResources().getDisplayMetrics().density);
+  241          candidateView.setMinHeight(candViewH);
+  242          candidateView.setMaxHeight(candViewH);
+  243          candidateView.setMaxLines(1);
+  244          candidateView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+  245          candidateView.setHighlightColor(0x00000000);
+  246          // v0.5.35 反馈③：候选条左右滑动翻页（替代点击翻页）
+  247          candFlingDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
+  248              @Override
+  249              public boolean onFling(android.view.MotionEvent e1, android.view.MotionEvent e2, float velocityX, float velocityY) {
+  250                  // v0.5.36 反馈①：所有翻页都用滑动——左右/上下滑动均翻页
+
+第6页
+  251                  float vx = Math.abs(velocityX), vy = Math.abs(velocityY);
+  252                  if (Math.max(vx, vy) > 200) {
+  253                      if (vx > vy) {
+  254                          if (velocityX < 0) { nextCandidatePage(); return true; }
+  255                          prevCandidatePage(); return true;
+  256                      } else {
+  257                          if (velocityY < 0) { nextCandidatePage(); return true; }
+  258                          prevCandidatePage(); return true;
+  259                      }
+  260                  }
+  261                  return false;
+  262              }
+  263          });
+  264          // v0.5.10 反馈②：点击候选区空白（非条目/非返回）→ 关闭剪贴板回正常输入
+  265          candidateView.setOnClickListener(v -> {
+  266              if (clipMode) {
+  267                  clipMode = false;
+  268                  updateCandidateView();
+  269              }
+  270          });
+  271          // v0.5.34 反馈⑧：长按剪贴板列表某一项 = 删除该项（通过触摸坐标定位）
+  272          candidateView.setOnLongClickListener(v -> {
+  273              if (clipMode) {
+  274                  try {
+  275                      int off = candidateView.getOffsetForPosition(lastTouchX, lastTouchY);
+  276                      ClipTagSpan[] tags = candidateView.getText() == null ? null
+  277                              : (ClipTagSpan[]) ((android.text.Spanned) candidateView.getText()).getSpans(off, off, ClipTagSpan.class);
+  278                      if (tags != null && tags.length > 0) {
+  279                          removeClipItem(tags[0].index);
+  280                          updateCandidateView();
+  281                          return true;
+  282                      }
+  283                  } catch (Exception ignored) { }
+  284              }
+  285              return false;
+  286          });
+  287          // v0.5.34 反馈⑧：记录触摸坐标（长按定位用）+ v0.5.35 反馈③：左右滑动翻页
+  288          // v0.5.39 反馈②⑤⑥：点候选条任何部位——若为 app 信息面板则关闭；若为剪贴板且点非列表项则关闭
+  289          candidateView.setOnTouchListener((v, ev) -> {
+  290              if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+  291                  lastTouchX = ev.getX();
+  292                  lastTouchY = ev.getY();
+  293                  if (infoPanelMode) {
+  294                      // v0.5.47 反馈②：点中 github 链接 span 时保留面板（让 LinkMovementMethod 在 ACTION_UP 触发跳转）
+  295                      boolean onGithub = false;
+  296                      try {
+  297                          int off = candidateView.getOffsetForPosition(lastTouchX, lastTouchY);
+  298                          if (candidateView.getText() instanceof android.text.Spanned) {
+  299                              android.text.style.ClickableSpan[] cs = ((android.text.Spanned) candidateView.getText())
+  300                                      .getSpans(off, off, android.text.style.ClickableSpan.class);
+
+第7页
+  301                              onGithub = (cs != null && cs.length > 0);
+  302                          }
+  303                      } catch (Exception ignored) { }
+  304                      if (!onGithub) {
+  305                          infoPanelMode = false;
+  306                          updateCandidateView();
+  307                      }
+  308                  } else if (clipMode) {
+  309                      try {
+  310                          int off = candidateView.getOffsetForPosition(lastTouchX, lastTouchY);
+  311                          ClipTagSpan[] tags = candidateView.getText() == null ? null
+  312                                  : (ClipTagSpan[]) ((android.text.Spanned) candidateView.getText()).getSpans(off, off, ClipTagSpan.class);
+  313                          if (tags == null || tags.length == 0) {
+  314                              clipMode = false;
+  315                              updateCandidateView();
+  316                          }
+  317                      } catch (Exception ignored) {
+  318                          clipMode = false;
+  319                          updateCandidateView();
+  320                      }
+  321                  }
+  322              }
+  323              candFlingDetector.onTouchEvent(ev);
+  324              return false;   // 不消费：让 LinkMovementMethod 处理点击/长按
+  325          });
+  326  
+  327          keyboardMain = new Keyboard(this, R.xml.keyboard_qwerty);
+  328          keyboardNum = new Keyboard(this, R.xml.keyboard_num);
+  329          keyboardSymRecent = new Keyboard(this, R.xml.keyboard_sym_recent);
+  330          keyboardSymCn = new Keyboard(this, R.xml.keyboard_sym_cn);
+  331          keyboardSymEn = new Keyboard(this, R.xml.keyboard_sym_en);
+  332          keyboardSymEmoji = new Keyboard(this, R.xml.keyboard_sym_emoji);
+  333          keyboardSymNet = new Keyboard(this, R.xml.keyboard_sym_net);
+  334          keyboardView = new CloudKeyboardView(this, null);
+  335          keyboardView.setKeyboard(keyboardMain);
+  336          keyboardView.setOnKeyboardActionListener(this);
+  337          keyboardView.setPreviewEnabled(false);
+  338          keyboardView.setHapticFeedbackEnabled(false);   // v0.5.8 反馈②：去掉击键感应（震动）
+  339          // 反馈④：键盘左右留边（截图约 4.5% 屏宽）
+  340          int dp12 = Math.round(12 * getResources().getDisplayMetrics().density);
+  341          int dp6 = Math.round(6 * getResources().getDisplayMetrics().density);
+  342          keyboardView.setPadding(dp12, dp6, dp12, dp6);
+  343          // v0.5.44 反馈⑦：固定键盘高度（主键盘 4 行 × 56dp + padding 12dp ≈ 236dp）——切数字/符号面板不跳动
+  344          keyboardView.setMinimumHeight(Math.round(236 * getResources().getDisplayMetrics().density));
+  345          keyboardView.setMinimumWidth(Math.round(340 * getResources().getDisplayMetrics().density));
+  346  
+  347          LinearLayout root = new LinearLayout(this);
+  348          root.setOrientation(LinearLayout.VERTICAL);
+  349          // v0.5.0 反馈①：输入状态条工具行（全选 / 取消↺ / 重做↻）+ v0.5.1 反馈⑦：亖剪贴板置前
+  350          // v0.5.8 反馈①：状态栏左侧"云五笔"固定 + 编码 + 英文翻译；右侧 全选|取消↺|重做↻|亖|下隐
+
+第8页
+  351          toolRow = new LinearLayout(this);
+  352          toolRow.setOrientation(LinearLayout.HORIZONTAL);
+  353          toolRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+  354          toolRow.setPadding(10, 3, 4, 3);
+  355          android.widget.TextView brand = new android.widget.TextView(this);
+  356          brand.setText("云五笔");
+  357          brand.setTextSize(14);   // v0.5.34 反馈④：状态栏字体调大（参考截图）
+  358          brand.setTextColor(dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
+  359          // v0.5.13 反馈①：去掉 ⓘ 按钮（AlertDialog 在 IME 服务 Context 无法显示）→ 点"云五笔"文字打开 app 信息面板
+  360          brand.setPadding(6, 6, 6, 6);
+  361          brand.setOnClickListener(v -> showInfoPanel());
+  362          toolRow.addView(brand);
+  363          statusInfo = new android.widget.TextView(this);
+  364          statusInfo.setTextSize(14);   // v0.5.34 反馈④
+  365          statusInfo.setPadding(8, 0, 0, 0);
+  366          statusInfo.setSingleLine(true);
+  367          statusInfo.setEllipsize(android.text.TextUtils.TruncateAt.END);
+  368          statusInfo.setMaxWidth(Math.round(140 * getResources().getDisplayMetrics().density));   // v0.5.40 反馈⑤：限定显示宽度
+  369          statusInfo.setTextColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
+  370          // v0.5.9 反馈⑦：点击状态栏英文翻译 → 上屏翻译内容
+  371          statusInfo.setOnClickListener(v -> {
+  372              if (!lastEnHint.isEmpty()) {
+  373                  commitText(lastEnHint);
+  374                  lastEnHint = "";
+  375                  updateCandidateView();
+  376              }
+  377          });
+  378          toolRow.addView(statusInfo);
+  379          android.widget.Space spacer = new android.widget.Space(this);
+  380          toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
+  381          toolRow.addView(makeToolButton("⭕️", v -> selectAll()));
+  382          // v0.5.14 反馈③：工具栏加"删除"（删光标前字符/选区，与退格同功能）
+  383          // v0.5.36 反馈③：取消/删除只用图标节省空间（✕=删除、↺=取消、↻=重做）
+  384          toolRow.addView(makeToolButton("✕", v -> handleBackspace()));
+  385          toolRow.addView(makeToolButton("↺", v -> doUndo()));
+  386          toolRow.addView(makeToolButton("↻", v -> doRedo()));
+  387          toolRow.addView(makeToolButton("亖", v -> {
+  388              // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
+  389              if (isPassword) return;
+  390              infoPanelMode = false;   // v0.5.13：切剪贴板时关闭信息面板
+  391              clipMode = true;
+  392              updateCandidateView();
+  393          }));
+  394          // v0.5.10 反馈③：下隐功能键常显（取消闲置计时），图标 🔽
+  395          hideBtn = makeToolButton("🔽", v -> {
+  396              try { requestHideSelf(0); } catch (Exception ignored) { }
+  397          });
+  398          hideBtn.setVisibility(android.view.View.VISIBLE);
+  399          toolRow.addView(hideBtn);
+  400          // v0.5.8 反馈①：第一行状态栏（云五笔|编码|翻译 | 工具），第二行备选栏，第三行键盘
+
+第9页
+  401          root.addView(toolRow);
+  402          root.addView(candidateView);
+  403          root.addView(keyboardView);
+  404          rootView = root;
+  405          // v0.5.4 反馈③：回车键长按 → 强制换行（单行/多行均生效）
+  406          keyboardView.setOnLongPressListener(key -> {
+  407              if (key != null && key.codes != null && key.codes.length > 0 && key.codes[0] == KB_ENTER) {
+  408                  commitText("\n");
+  409              }
+  410          });
+  411          resetIdleTimers();
+  412          applyTheme();   // v0.4.9 反馈③：FLAT + 跟随系统深浅色
+  413          applyLangLabels();
+  414          applyLetterCase();   // 中文模式默认大写显示
+  415          updateCandidateView();
+  416          return root;
+  417      }
+  418  
+  419      @Override
+  420      public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+  421          super.onConfigurationChanged(newConfig);
+  422          applyTheme();   // v0.4.9 反馈③：系统切换浅/深色时实时跟随
+  423      }
+  424  
+  425      /** v0.5.0 反馈①：工具行按钮（全选/取消↺/重做↻） */
+  426      private TextView makeToolButton(String text, View.OnClickListener listener) {
+  427          TextView tv = new TextView(this);
+  428          tv.setText(text);
+  429          tv.setTextSize(14);   // v0.5.34 反馈④：工具栏字体调大
+  430          tv.setGravity(android.view.Gravity.CENTER);
+  431          tv.setOnClickListener(listener);
+  432          // v0.5.40 反馈④：固定宽度放置工具栏按钮（44dp），避免文字宽度差异导致位移晃动
+  433          tv.setLayoutParams(new LinearLayout.LayoutParams(
+  434                  Math.round(44 * getResources().getDisplayMetrics().density),
+  435                  LinearLayout.LayoutParams.MATCH_PARENT));
+  436          return tv;
+  437      }
+  438  
+  439      /** v0.5.13 反馈①：app 信息面板（IME 内嵌，候选条区域渲染，点任意键关闭）
+  440       *  原因：AlertDialog 在 InputMethodService Context 下被系统拦截无法显示（v0.5.11 弹窗未出现的根因） */
+  441      private void showInfoPanel() {
+  442          // v0.5.28 反馈①：点一次显示 app 信息，再点消失（toggle）
+  443          infoPanelMode = !infoPanelMode;
+  444          if (!infoPanelMode) {
+  445              candidateView.setSingleLine(true);
+  446              candidateView.setMaxLines(1);
+  447              candidateView.setMinHeight(candViewH);
+  448              candidateView.setMaxHeight(candViewH);
+  449          }
+  450          clipMode = false;
+
+第10页
+  451          updateCandidateView();
+  452      }
+  453  
+  454      private String currentVersion() {
+  455          try {
+  456              return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+  457          } catch (Exception e) {
+  458              return "0.5.28";
+  459          }
+  460      }
+  461  
+  462      private void renderInfoPanel() {
+  463          int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
+  464          SpannableStringBuilder sb = new SpannableStringBuilder();
+  465          // v0.5.40 反馈①：app 信息只显示 版本号 + github(可点击跳转) + 微信，不得显示其他内容
+  466          sb.append("v").append(currentVersion());
+  467          sb.append("   github");
+  468          int gStart = sb.length() - 6;   // github 起始（"   github" 末尾 6 位）
+  469          int gEnd = sb.length();
+  470          sb.append("   微信：175571");
+  471          ClickableSpan gh = new ClickableSpan() {
+  472              @Override
+  473              public void onClick(View widget) {
+  474                  try {
+  475                      android.content.Intent i = new android.content.Intent(android.content.Intent.ACTION_VIEW,
+  476                              android.net.Uri.parse("https://github.com/zsdili"));
+  477                      i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+  478                      startActivity(i);
+  479                  } catch (Exception ignored) { }
+  480              }
+  481              @Override
+  482              public void updateDrawState(android.text.TextPaint ds) {
+  483                  ds.setColor(c);
+  484                  ds.setUnderlineText(true);
+  485              }
+  486          };
+  487          sb.setSpan(gh, gStart, gEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+  488          sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+  489          candidateView.setSingleLine(false);
+  490          candidateView.setLineSpacing(0f, 1.25f);
+  491          candidateView.setTextSize(16f);
+  492          candidateView.setText(sb);
+  493      }
+  494  
+  495      /** v0.5.0 反馈①：全选当前文本框内容 */
+  496      private void selectAll() {        InputConnection ic = getCurrentInputConnection();
+  497          if (ic == null) return;
+  498          try {
+  499              CharSequence b = ic.getTextBeforeCursor(2000, 0);
+  500              CharSequence a = ic.getTextAfterCursor(2000, 0);
+
+第11页
+  501              int len = (b == null ? 0 : b.length()) + (a == null ? 0 : a.length());
+  502              ic.setSelection(0, len);
+  503          } catch (Exception ignored) { }
+  504      }
+  505  
+  506      /** v0.4.9 反馈③：FLAT 风格 + 深浅色主题（键帽/键盘底/候选条/文字全部跟随系统外观） */
+  507      private void applyTheme() {
+  508          boolean dark = (getResources().getConfiguration().uiMode
+  509                  & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+  510                  == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+  511          theme = dark ? THEME_DARK : THEME_LIGHT;
+  512          if (keyboardView == null || candidateView == null) return;
+  513          // 键帽：v0.4.9 纯色 FLAT 全自绘（无立体/渐变），深浅两套实时切换
+  514          keyboardView.applyTheme(dark);
+  515          keyboardView.setBackgroundColor(dark ? THEME_DARK_KB_BG : THEME_LIGHT_KB_BG);
+  516          keyboardView.setHintColor(dark ? THEME_DARK_HINT : THEME_LIGHT_HINT);
+  517          // 候选条
+  518          candidateView.setBackgroundColor(dark ? THEME_DARK_CAND_BG : THEME_LIGHT_CAND_BG);
+  519          candidateView.setTextColor(dark ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
+  520          // 工具行（v0.5.0 反馈①）
+  521          if (toolRow != null) {
+  522              int tc = dark ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
+  523              for (int i = 0; i < toolRow.getChildCount(); i++) {
+  524                  View v = toolRow.getChildAt(i);
+  525                  if (v instanceof TextView) ((TextView) v).setTextColor(tc);
+  526              }
+  527          }
+  528          if (rootView != null) rootView.setBackgroundColor(dark ? THEME_DARK_KB_BG : THEME_LIGHT_KB_BG);
+  529      }
+  530  
+  531      private android.graphics.drawable.Drawable getDrawableCompat(int resId) {
+  532          if (android.os.Build.VERSION.SDK_INT >= 21) {
+  533              return getResources().getDrawable(resId, getTheme());
+  534          }
+  535          return getResources().getDrawable(resId);
+  536      }
+  537  
+  538      // ===== 生命周期 =====
+  539  
+  540      @Override
+  541      public void onFinishInput() {
+  542          resetComposing();
+  543          // v0.5.17 反馈⑤（举一反三：窗口生命周期完整感知）：离开输入触点（焦点转移/输入结束）→
+  544          //   主动收起输入界面，符合"科学、合理"的输入法基础规范
+  545          hideWindow();
+  546          super.onFinishInput();
+  547      }
+  548  
+  549      @Override
+  550      public void onStartInput(android.view.inputmethod.EditorInfo attribute, boolean restarting) {
+
+第12页
+  551          // v0.5.5 反馈①：标准会话入口（密码框/WebView 等必须重写，保证输入可用）
+  552          super.onStartInput(attribute, restarting);
+  553      }
+  554  
+  555      public void onStartInputView(EditorInfo info, boolean restarting) {
+  556          resetComposing();
+  557          panelMode = 0;
+  558          clipMode = false;
+  559          prevPanel = 0;
+  560          keyboardView.setKeyboard(keyboardMain);
+  561          applyLetterCase();
+  562          // v0.5.3 反馈①：新输入会话重置"最近上屏"记录
+  563          committedLast = "";
+  564          // v0.5.5 反馈①：密码框检测（密码/网络密码）——禁联想/剪贴板/翻译，保证可输入
+  565          isPassword = (info.inputType & android.text.InputType.TYPE_MASK_VARIATION)
+  566                  == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+  567                  || (info.inputType & android.text.InputType.TYPE_MASK_VARIATION)
+  568                  == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD;
+  569          // v0.5.5 反馈④⑧：新会话隐藏收起按钮（INVISIBLE 占位）+ 重启双闲置计时
+  570          if (hideBtn != null) hideBtn.setVisibility(android.view.View.INVISIBLE);
+  571          resetIdleTimers();
+  572          // v0.5.5 反馈⑦：进入输入状态时，识别光标前一字进行联想（不自动上屏）
+  573          // v0.5.20（用户指令）：联想已去除——不再做"进入输入状态时光标前字联想"
+  574          enterAssociateChar = "";
+  575          super.onStartInputView(info, restarting);
+  576      }
+  577  
+  578      /** v0.5.5 反馈⑦：进入输入状态/光标前字联想（本地 MRU + 含字词组 + 云端前缀） */
+  579      private void showAssociateForChar(String ch) {
+  580          candidates.clear();
+  581          List<String> merged = new ArrayList<>();
+  582          for (String p : recentPhrases) {
+  583              if (p.startsWith(ch) && !merged.contains(p)) merged.add(p);
+  584          }
+  585          List<String> byChar = WubiDb.queryByChar(ch);
+  586          if (byChar != null) {
+  587              for (String p : byChar) {
+  588                  if (!merged.contains(p)) merged.add(p);
+  589                  if (merged.size() >= 12) break;
+  590              }
+  591          }
+  592          pinyinInsertPos = merged.size();   // v0.5.36 反馈⑨：拼音候选插到本地五笔候选之后
+  593          candidates.addAll(merged);
+  594          candPage = 0;
+  595          updateCandidateView();
+  596          if (GATEWAY_READY && !merged.isEmpty()) queryAssociateAsync(ch, ch);
+  597      }
+  598  
+  599      private void resetComposing() {
+  600          composingCode.setLength(0);
+
+第13页
+  601          candidates.clear();
+  602          clipMode = false;
+  603          lastCommittedChar = "";
+  604          lastCommittedText = "";
+  605          lastEnHint = "";
+  606          associateActive = false;
+  607          candPage = 0;
+  608          updateCandidateView();
+  609      }
+  610  
+  611      // ===== 剪贴板历史（仅复制触发） =====
+  612  
+  613      private final ClipboardManager.OnPrimaryClipChangedListener clipListener = () -> {
+  614          try {
+  615              ClipData cd = clipManager.getPrimaryClip();
+  616              if (cd != null && cd.getItemCount() > 0) {
+  617                  CharSequence t = cd.getItemAt(0).coerceToText(CloudWubiIME.this);
+  618                  if (t != null && t.length() > 0 && t.length() <= 5000) {
+  619                      addClipHistory(t.toString());
+  620                      // v0.5.47 反馈⑦：复制后不自动打开剪贴板（只记录历史；需要时点亖 查看）——避免无意义弹出
+  621                  }
+  622              }
+  623          } catch (Exception ignored) { }
+  624      };
+  625  
+  626      /** v0.5.34 反馈⑧：删除剪贴板历史某一项（长按/点✕） */
+  627      private void removeClipItem(int index) {
+  628          if (index < 0 || index >= clipHistory.size()) return;
+  629          clipUndoItem = clipHistory.get(index);   // v0.5.36 反馈④：记录待撤销项
+  630          clipUndoIndex = index;
+  631          clipHistory.remove(index);
+  632          saveClipHistory();
+  633      }
+  634  
+  635      private void addClipHistory(String text) {
+  636          if (text == null || text.trim().isEmpty()) return;
+  637          String norm = text.replace('\u0001', ' ');
+  638          clipHistory.remove(norm);
+  639          clipHistory.add(0, norm);
+  640          while (clipHistory.size() > CLIP_MAX) clipHistory.remove(clipHistory.size() - 1);
+  641          saveClipHistory();
+  642      }
+  643  
+  644      private void saveClipHistory() {
+  645          StringBuilder sb = new StringBuilder();
+  646          for (String s : clipHistory) sb.append(s).append('\u0001');
+  647          prefs.edit().putString(PREFS_CLIP, sb.toString()).apply();
+  648      }
+  649  
+  650      private void loadClipHistory() {
+
+第14页
+  651          clipHistory.clear();
+  652          String raw = prefs.getString(PREFS_CLIP, "");
+  653          if (!raw.isEmpty()) {
+  654              String[] arr = raw.split("\u0001", -1);
+  655              for (String s : arr) if (!s.isEmpty()) clipHistory.add(s);
+  656          }
+  657      }
+  658  
+  659      // ===== v0.4.8 最近选中词组（MRU，最多 3 个，用于字后联想置顶） =====
+  660  
+  661      private void loadRecentPhrases() {
+  662          recentPhrases.clear();
+  663          Set<String> set = prefs.getStringSet(PREFS_PHRASES, new HashSet<>());
+  664          List<String> tmp = new ArrayList<>(set);
+  665          for (int i = tmp.size() - 1; i >= 0; i--) recentPhrases.add(tmp.get(i));
+  666          while (recentPhrases.size() > 3) recentPhrases.remove(recentPhrases.size() - 1);
+  667      }
+  668  
+  669      private void rememberPhrase(String phrase) {
+  670          if (phrase == null || phrase.length() < 2) return;
+  671          recentPhrases.remove(phrase);
+  672          recentPhrases.add(0, phrase);
+  673          while (recentPhrases.size() > 3) recentPhrases.remove(recentPhrases.size() - 1);
+  674          prefs.edit().putStringSet(PREFS_PHRASES, new HashSet<>(recentPhrases)).apply();
+  675      }
+  676  
+  677      // ===== v0.4.8 数字面板四则计算（先乘除后加减，左结合） =====
+  678  
+  679      private static double calcEval(String expr) {
+  680          expr = expr.replace('×', '*').replace('÷', '/');
+  681          List<Double> nums = new ArrayList<>();
+  682          List<Character> ops = new ArrayList<>();
+  683          StringBuilder cur = new StringBuilder();
+  684          for (int i = 0; i < expr.length(); i++) {
+  685              char c = expr.charAt(i);
+  686              if (c == '+' || c == '-' || c == '*' || c == '/') {
+  687                  if (cur.length() == 0) return Double.NaN;
+  688                  nums.add(Double.parseDouble(cur.toString()));
+  689                  cur.setLength(0);
+  690                  ops.add(c);
+  691              } else if (c >= '0' && c <= '9' || c == '.') {
+  692                  cur.append(c);
+  693              } else {
+  694                  return Double.NaN;
+  695              }
+  696          }
+  697          if (cur.length() == 0) return Double.NaN;
+  698          nums.add(Double.parseDouble(cur.toString()));
+  699          // 先乘除
+  700          for (int i = 0; i < ops.size(); i++) {
+
+第15页
+  701              char op = ops.get(i);
+  702              if (op == '*' || op == '/') {
+  703                  double a = nums.get(i), b = nums.get(i + 1);
+  704                  double r = (op == '*') ? a * b : (b == 0 ? Double.NaN : a / b);
+  705                  if (Double.isNaN(r)) return Double.NaN;
+  706                  nums.set(i, r);
+  707                  nums.remove(i + 1);
+  708                  ops.remove(i);
+  709                  i--;
+  710              }
+  711          }
+  712          // 再加减（左结合）
+  713          double acc = nums.get(0);
+  714          for (int i = 0; i < ops.size(); i++) {
+  715              char op = ops.get(i);
+  716              double b = nums.get(i + 1);
+  717              acc = (op == '+') ? acc + b : acc - b;
+  718          }
+  719          return acc;
+  720      }
+  721  
+  722      private static String fmtResult(double v) {
+  723          if (Double.isNaN(v)) return "错误";
+  724          if (v == Math.rint(v) && Math.abs(v) < 1e15) return String.valueOf((long) v);
+  725          return String.valueOf(Math.round(v * 1e8) / 1e8);
+  726      }
+  727  
+  728      // ===== 键盘文字：中文「中」/ 英文「EN」及功能键英文（反馈②） =====
+  729  
+  730      private void applyLangLabels() {
+  731          if (keyboardMain == null) return;
+  732          for (Keyboard.Key k : keyboardMain.getKeys()) {
+  733              int c = k.codes[0];
+  734              if (c == KEY_LANG) {
+  735                  k.label = chineseMode ? "中" : "en";   // v0.5.27 反馈④：英文切换显示小写 en
+  736              } else if (c == KEY_SYM_IN) {
+  737                  k.label = chineseMode ? "符" : "SYM";
+  738              } else if (c == KEY_PUNCT_BANG) {
+  739                  // v0.5.3 反馈⑤：上下两行（上行！下行，）——CloudKeyboardView 识别 \n 分行绘制
+  740                  k.label = chineseMode ? "！\n，" : "!\n,";
+  741              } else if (c == KEY_PUNCT_QM) {
+  742                  k.label = chineseMode ? "？\n。" : "?\n.";
+  743              } else if (c == KEY_MIC) {
+  744                  k.label = chineseMode ? "空格" : "space";   // v0.4.8 反馈⑤：空格键
+  745              }
+  746          }
+  747          keyboardView.invalidateAllKeys();
+  748      }
+  749  
+  750      // ===== 字母大小写显示（反馈③：不依赖 shiftLabel，直接切换 label） =====
+
+第16页
+  751  
+  752      private void applyLetterCase() {
+  753          if (keyboardMain == null) return;
+  754          boolean upper = chineseMode || shiftState > 0;
+  755          for (Keyboard.Key k : keyboardMain.getKeys()) {
+  756              int c = k.codes[0];
+  757              if (c >= 'a' && c <= 'z') {
+  758                  k.label = upper ? String.valueOf(Character.toUpperCase((char) c))
+  759                                  : String.valueOf((char) c);
+  760              } else if (c == KEY_SHIFT) {
+  761                  // v0.5.41 反馈③：shift 激活视觉——大写模式显示实心 ⇧（明确"已切换"），否则 ↑
+  762                  k.label = shiftState > 0 ? "⇧" : "↑";
+  763              }
+  764          }
+  765          keyboardView.invalidateAllKeys();
+  766          keyboardView.invalidate();   // v0.5.40 反馈②：双保险重绘，确保键面大小写跟随切换
+  767      }
+  768  
+  769      // ===== Shift / Caps 逻辑（反馈③） =====
+  770  
+  771      private void handleShift() {
+  772          // v0.5.10 反馈①：单击切换"持续大写"模式（Caps 锁定式，非单次复位）
+  773          // 中文 → 英文大写；从中文切来的英文大写 → 回中文；纯英文 → 大写/小写切换
+  774          if (chineseMode) {
+  775              chineseMode = false;
+  776              composingCode.setLength(0);
+  777              candidates.clear();
+  778              shiftState = 2;                 // 英文大写模式
+  779              fromChineseShift = true;        // 记录"从中文切来"，再单击回中文
+  780              lastCommittedChar = "";
+  781              lastCommittedText = "";
+  782              lastEnHint = "";
+  783              associateActive = false;
+  784              candPage = 0;
+  785          } else if (fromChineseShift) {
+  786              chineseMode = true;             // 恢复中文输入
+  787              shiftState = 0;
+  788              fromChineseShift = false;
+  789          } else if (shiftState == 0) {
+  790              shiftState = 2;                 // 英文小写 → 持续大写
+  791          } else {
+  792              shiftState = 0;                 // 英文大写 → 恢复小写
+  793          }
+  794          lastShiftTap = System.currentTimeMillis();
+  795          applyLetterCase();
+  796          applyLangLabels();
+  797          updateCandidateView();
+  798      }
+  799  
+  800      // ===== KeyboardView.OnKeyboardActionListener =====
+
+第17页
+  801  
+  802      /** v0.5.4 反馈⑨ + v0.5.5 反馈④⑧：重置双闲置计时器（每次按键触发；1 秒清空备选栏、2 秒显示收起按钮） */
+  803      private void resetIdleTimers() {
+  804          // v0.5.10 反馈③：下隐常显，取消闲置计时
+  805          idleHandler.removeCallbacks(idleRunnable);
+  806      }
+  807  
+  808      @Override
+  809      public void onKey(int primaryCode, int[] keyCodes) {
+  810          // v0.5.44 反馈①：任何按键（打字/符号/删除）→ 关闭剪贴板面板（点选或点其他部位即消失）
+  811          if (clipMode) {
+  812              clipMode = false;
+  813              updateCandidateView();
+  814          }
+  815          resetIdleTimers();   // v0.5.4 反馈⑨ + v0.5.5 反馈⑧：任何按键重置双闲置计时
+  816          // v0.5.13 反馈①：信息面板点任意键关闭
+  817          if (infoPanelMode) {
+  818              infoPanelMode = false;
+  819              updateCandidateView();
+  820          }
+  821          // v0.5.9 反馈⑩：剪贴板界面有键盘点击 → 自动收回剪贴板到正常输入界面
+  822          if (clipMode) {
+  823              clipMode = false;
+  824              updateCandidateView();
+  825          }
+  826          // v0.5.17 反馈①（举一反三：InputType 完整感知）：密码框直通模式——
+  827          //   字母/数字/空格/回车/运算符直接上屏，不进编码缓冲/候选/联想（密码可见性 + 输入体验根本保障）
+  828          //   v0.5.21 修复：Shift/面板切换/退格/中英/标点等控制键不再被吞——只对已直通键 return，
+  829          //   其余继续走正常逻辑（否则密码框无法切换大小写、无法进数字/符号面板）
+  830          if (isPassword) {
+  831              if (primaryCode >= 'a' && primaryCode <= 'z') {
+  832                  boolean upper = shiftState > 0;
+  833                  commitText(String.valueOf(upper ? Character.toUpperCase((char) primaryCode)
+  834                                                   : (char) primaryCode));
+  835                  return;
+  836              } else if (primaryCode >= '0' && primaryCode <= '9') {
+  837                  commitText(String.valueOf((char) primaryCode));
+  838                  return;
+  839              } else if (primaryCode == KEY_SPACE || primaryCode == KEY_MIC) {
+  840                  commitText(" ");
+  841                  return;
+  842              } else if (primaryCode == KB_ENTER) {
+  843                  sendDefaultEditorAction(true);   // 执行输入框的"完成/搜索/前往"等动作
+  844                  return;
+  845              } else if (primaryCode == KEY_CALC_DIV) {
+  846                  commitText("÷"); return;
+  847              } else if (primaryCode == KEY_CALC_MUL) {
+  848                  commitText("×"); return;
+  849              } else if (primaryCode == KEY_CALC_EQ) {
+  850                  commitText("="); return;
+
+第18页
+  851              } else if (primaryCode == 43 || primaryCode == 45 || primaryCode == 42) {
+  852                  commitText(String.valueOf((char) primaryCode)); return;
+  853              } else if (primaryCode >= 32 && primaryCode <= 126) {
+  854                  // v0.5.24 修复③：密码框 ASCII 可见字符兜底直通（特殊字符在密码模式直接上屏）
+  855                  commitText(String.valueOf((char) primaryCode)); return;
+  856              }
+  857              // 其余键（Shift/123/符号/退格/中英/返回）→ 不拦截，走正常逻辑（面板切换/大小写/删除可用）
+  858          }
+  859          // 字母键
+  860          if (primaryCode >= 'a' && primaryCode <= 'z') {
+  861              if (chineseMode) {
+  862                  appendCode((char) primaryCode);
+  863              } else {
+  864                  // v0.5.0 反馈⑤：英文输入进编码 → 自动补全候选（@邮箱、ht→https:// 等）
+  865                  appendEnglishCode((char) primaryCode);
+  866              }
+  867              return;
+  868          }
+  869          // 数字（v0.5.35 反馈①：纯数字直接上屏——只有表达式已含运算符时才进缓冲，根治"打5出1.5=5 2.5"）
+  870          if (primaryCode >= '0' && primaryCode <= '9') {
+  871              // v0.5.41 反馈⑤：数字键即时触感（消除"粘粘"卡顿感——按键即有反馈）
+  872              keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
+  873              if (panelMode == 1 && hasCalcOp(calcBuffer)) {
+  874                  calcBuffer += (char) primaryCode;
+  875                  updateCandidateView();
+  876              } else {
+  877                  commitText(String.valueOf((char) primaryCode));
+  878                  lastCalcInput = String.valueOf((char) primaryCode);   // 回收点：运算符按下时作为表达式起点
+  879              }
+  880              return;
+  881          }
+  882          switch (primaryCode) {
+  883              case KEY_123:
+  884                  // v0.5.27 反馈③：数字面板↔主键盘切换时，未上屏的表达式先带式上屏（防计算结果丢失/上不了屏）
+  885                  if (panelMode == 1 && !calcBuffer.isEmpty()) commitCalc(true);
+  886                  panelMode = 1;
+  887                  calcBuffer = "";
+  888                  keyboardView.setKeyboard(keyboardNum);
+  889                  updateCandidateView();
+  890                  return;
+  891              case KEY_SYM_IN:   // v0.5.34 符号面板分类式：进入"最近"分类（参考用户截图）
+  892                  if (panelMode < 2 || panelMode > 6) {
+  893                      prevPanel = panelMode;
+  894                  }
+  895                  panelMode = 2;
+  896                  keyboardView.setKeyboard(keyboardSymRecent);
+  897                  return;
+  898              case KEY_SYM_RECENT:   // v0.5.34 分类切换（左栏）
+  899                  panelMode = 2;
+  900                  keyboardView.setKeyboard(keyboardSymRecent);
+
+第19页
+  901                  return;
+  902              case KEY_SYM_CN:
+  903                  panelMode = 3;
+  904                  keyboardView.setKeyboard(keyboardSymCn);
+  905                  return;
+  906              case KEY_SYM_EN:
+  907                  panelMode = 4;
+  908                  keyboardView.setKeyboard(keyboardSymEn);
+  909                  return;
+  910              case KEY_SYM_EMOJI:
+  911                  panelMode = 5;
+  912                  keyboardView.setKeyboard(keyboardSymEmoji);
+  913                  return;
+  914              case KEY_SYM_NET:
+  915                  panelMode = 6;
+  916                  keyboardView.setKeyboard(keyboardSymNet);
+  917                  return;
+  918              case KEY_SYM_LOCK:   // 🔒 面板锁定（占位：不自动收起）
+  919                  return;
+  920              case KEY_SYM_UP:     // ⌃ 无多页翻页（占位）
+  921              case KEY_SYM_DOWN:   // ⌄
+  922                  return;
+  923              case KEY_NET_COM: commitText(".com"); return;
+  924              case KEY_NET_NET: commitText(".net"); return;
+  925              case KEY_NET_CN: commitText(".cn"); return;
+  926              case KEY_NET_WWW: commitText("www."); return;
+  927              case KEY_NET_HTTP: commitText("http://"); return;
+  928              case KEY_NET_HTTPS: commitText("https://"); return;
+  929              case KEY_NET_SLASH2: commitText("//"); return;
+  930              case KEY_NET_COMSLASH: commitText(".com/"); return;
+  931              case KEY_SYMBOL:   // v0.5.34 符号面板返回：分类 → 来源面板/主键盘；数字面板有表达式先带式上屏
+  932                  if (panelMode >= 2 && panelMode <= 6) {
+  933                      if (prevPanel == 1) {
+  934                          panelMode = 1;
+  935                          keyboardView.setKeyboard(keyboardNum);
+  936                      } else {
+  937                          panelMode = 0;
+  938                          keyboardView.setKeyboard(keyboardMain);
+  939                      }
+  940                      updateCandidateView();
+  941                      return;
+  942                  }
+  943                  if (panelMode == 1 && !calcBuffer.isEmpty()) commitCalc(true);
+  944                  panelMode = 0;
+  945                  calcBuffer = "";
+  946                  keyboardView.setKeyboard(keyboardMain);
+  947                  applyLetterCase();
+  948                  updateCandidateView();
+  949                  return;
+  950              case KEY_LANG:
+
+第20页
+  951                  if (panelMode != 0) {
+  952                      panelMode = 0;
+  953                      calcBuffer = "";
+  954                      keyboardView.setKeyboard(keyboardMain);
+  955                      applyLetterCase();
+  956                  } else {
+  957                      toggleLang();
+  958                  }
+  959                  return;
+  960              case KEY_SHIFT:
+  961                  handleShift();
+  962                  return;
+  963              case KEY_PUNCT_BANG:   // v0.5.1：点击默认"，"/","（英文态），上滑"！"
+  964                  commitText(chineseMode ? "，" : ",");
+  965                  return;
+  966              case KEY_PUNCT_QM:     // v0.5.1：点击默认"。" / "."（英文态），上滑"？"
+  967                  commitText(chineseMode ? "。" : ".");
+  968                  return;
+  969              case KEY_MIC:          // v0.5.4 反馈⑦：空格键——备选栏有候选则上屏首选，否则输出空格
+  970              case KEY_SPACE:
+  971                  commitSpaceOrFirst();
+  972                  return;
+  973              case KEY_CALC_EQ:      // = 计算上屏（旧面板键，保留兼容）
+  974                  commitCalc(true);
+  975                  return;
+  976              case KEY_CALC_DIV:     // ÷
+  977                  if (panelMode == 1) { calcAppendOp("÷"); } else commitText("÷");
+  978                  return;
+  979              case KEY_CALC_MUL:     // ×
+  980                  if (panelMode == 1) { calcAppendOp("×"); } else commitText("×");
+  981                  return;
+  982              case 43:               // +
+  983                  if (panelMode == 1) { calcAppendOp("+"); } else commitText("+");
+  984                  return;
+  985              case 45:               // -
+  986                  if (panelMode == 1) { calcAppendOp("-"); } else commitText("-");
+  987                  return;
+  988              case 42:               // *（数字面板计算）
+  989                  if (panelMode == 1) { calcAppendOp("*"); } else commitText("*");
+  990                  return;
+  991              case 47:               // /（数字面板计算）
+  992                  if (panelMode == 1) { calcAppendOp("/"); } else commitText("/");
+  993                  return;
+  994              case 64:               // @（数字面板邮箱直上屏）
+  995                  commitText("@");
+  996                  return;
+  997              case KEY_UNDO:         // v0.4.9 取消↺
+  998                  doUndo();
+  999                  return;
+ 1000              case KEY_REDO:         // v0.4.9 重做↻
+
+第21页
+ 1001                  doRedo();
+ 1002                  return;
+ 1003              case KEY_SEARCH:       // v0.5.0 搜索键（数字面板）：有表达式→带式上屏；否则执行搜索动作
+ 1004                  if (panelMode == 1 && !calcBuffer.isEmpty()) {
+ 1005                      commitCalc(true);
+ 1006                      return;
+ 1007                  }
+ 1008                  InputConnection sic = getCurrentInputConnection();
+ 1009                  if (sic != null) {
+ 1010                      try { sic.performEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH); } catch (Exception ignored) { }
+ 1011                  }
+ 1012                  return;
+ 1013              case KB_DELETE:
+ 1014              case KeyEvent.KEYCODE_DEL:
+ 1015                  handleBackspace();
+ 1016                  return;
+ 1017              case KB_ENTER:
+ 1018              case KeyEvent.KEYCODE_ENTER:
+ 1019                  commitFirstCandidate();
+ 1020                  return;
+ 1021              case 44:
+ 1022                  if (panelMode == 1) { calcBuffer += ","; updateCandidateView(); return; }
+ 1023                  commitText(chineseMode ? "，" : ",");
+ 1024                  return;
+ 1025              case 46:
+ 1026                  if (panelMode == 1) { calcBuffer += "."; updateCandidateView(); return; }
+ 1027                  commitText(chineseMode ? "。" : ".");
+ 1028                  return;
+ 1029              case 0xFF01:   // v0.5.17 修复回归：！，键上滑 → ！（CloudKeyboardView.swipeSymbol 直达）
+ 1030                  commitText("！");
+ 1031                  // v0.5.47 反馈①：上滑输入后清空输入状态（候选/编码不残留——"上滑不消失"根治）
+ 1032                  composingCode.setLength(0);
+ 1033                  candidates.clear();
+ 1034                  updateCandidateView();
+ 1035                  return;
+ 1036              case 0xFF1F:   // v0.5.17 修复回归：？。键上滑 → ？
+ 1037                  commitText("？");
+ 1038                  composingCode.setLength(0);
+ 1039                  candidates.clear();
+ 1040                  updateCandidateView();
+ 1041                  return;
+ 1042              default:
+ 1043                  // v0.5.24 修复②：符号键兜底——symbolToText 未覆盖的 ASCII 可见字符直接上屏
+ 1044                  //   （91[]/93]/123{/125}/35#/37%/94^/61= 等特殊字符，密码框与常规模式通用）
+ 1045                  String s = symbolToText(primaryCode);
+ 1046                  if (s != null) {
+ 1047                      commitText(s);
+ 1048                  } else if (primaryCode >= 32 && primaryCode <= 126) {
+ 1049                      commitText(String.valueOf((char) primaryCode));
+ 1050                  }
+
+第22页
+ 1051          }
+ 1052      }
+ 1053  
+ 1054      private int lastPressCode = 0;   // v0.5.1 上滑输出（！/？）
+ 1055  
+ 1056      @Override
+ 1057      public void onPress(int primaryCode) {
+ 1058          lastPressCode = primaryCode;
+ 1059      }
+ 1060  
+ 1061      @Override
+ 1062      public void onRelease(int primaryCode) { }
+ 1063  
+ 1064      @Override
+ 1065      public void onText(CharSequence text) { }
+ 1066  
+ 1067      @Override
+ 1068      public void swipeLeft() { }
+ 1069  
+ 1070      @Override
+ 1071      public void swipeRight() { }
+ 1072  
+ 1073      @Override
+ 1074      public void swipeDown() { }
+ 1075  
+ 1076      @Override
+ 1077      public void swipeUp() {
+ 1078          // v0.5.1 反馈④：！，键上滑→！，？。键上滑→？
+ 1079          if (lastPressCode == KEY_PUNCT_BANG) {
+ 1080              commitText("！");
+ 1081              lastPressCode = 0;
+ 1082          } else if (lastPressCode == KEY_PUNCT_QM) {
+ 1083              commitText("？");
+ 1084              lastPressCode = 0;
+ 1085          }
+ 1086      }
+ 1087  
+ 1088      // ===== 物理键盘支持 =====
+ 1089  
+ 1090      @Override
+ 1091      public boolean onKeyDown(int keyCode, KeyEvent event) {
+ 1092          int c = event.getUnicodeChar();
+ 1093          if (c >= 'a' && c <= 'y' && chineseMode) {
+ 1094              appendCode((char) c);
+ 1095              return true;
+ 1096          }
+ 1097          switch (keyCode) {
+ 1098              case KeyEvent.KEYCODE_DEL:
+ 1099                  handleBackspace();
+ 1100                  return true;
+
+第23页
+ 1101              case KeyEvent.KEYCODE_ENTER:
+ 1102                  commitFirstCandidate();
+ 1103                  return true;
+ 1104              case KeyEvent.KEYCODE_SPACE:
+ 1105                  commitFirstCandidate();
+ 1106                  return true;
+ 1107          }
+ 1108          return super.onKeyDown(keyCode, event);
+ 1109      }
+ 1110  
+ 1111      // ===== 核心逻辑 =====
+ 1112  
+ 1113      private void toggleLang() {
+ 1114          fromChineseShift = false;   // v0.5.10：手动中英键切换非 shift 切入
+ 1115          chineseMode = !chineseMode;
+ 1116          if (!chineseMode) {
+ 1117              composingCode.setLength(0);
+ 1118              candidates.clear();
+ 1119              shiftState = 0;
+ 1120              lastCommittedChar = "";
+ 1121              lastCommittedText = "";
+ 1122              lastEnHint = "";
+ 1123              associateActive = false;
+ 1124              candPage = 0;
+ 1125          }
+ 1126          applyLetterCase();
+ 1127          applyLangLabels();
+ 1128          updateCandidateView();
+ 1129      }
+ 1130  
+ 1131      private void appendCode(char c) {
+ 1132          // v0.5.35 反馈⑥：放宽到 8 码支持拼音全拼混打（五笔查询自动截前4，>4 码走拼音分支）
+ 1133          if (composingCode.length() >= 8) return;
+ 1134          associateActive = false;   // v0.4.9 开始新编码 → 联想链断开
+ 1135          candPage = 0;
+ 1136          composingCode.append(c);
+ 1137          queryCandidates();
+ 1138      }
+ 1139  
+ 1140      /** v0.5.0 反馈⑤：英文输入进编码（放宽到 24 字符，触发补全候选）
+ 1141       *  v0.5.16 反馈②：shift 大写生效——shiftState>0（大写锁定/中文切英文大写）时存大写，否则小写 */
+ 1142      private void appendEnglishCode(char c) {
+ 1143          if (composingCode.length() >= 24) return;
+ 1144          candPage = 0;
+ 1145          boolean upper = shiftState > 0;
+ 1146          composingCode.append(upper ? Character.toUpperCase(c) : Character.toLowerCase(c));
+ 1147          queryCandidates();
+ 1148      }
+ 1149  
+ 1150      private void handleBackspace() {
+
+第24页
+ 1151          // v0.4.8：数字面板优先删计算表达式
+ 1152          if (panelMode == 1 && !calcBuffer.isEmpty()) {
+ 1153              calcBuffer = calcBuffer.substring(0, calcBuffer.length() - 1);
+ 1154              updateCandidateView();
+ 1155              return;
+ 1156          }
+ 1157          InputConnection ic = getCurrentInputConnection();
+ 1158          // v0.5.11 反馈⑥：文本框有选区（全选/部分选中）→ 优先删除选区（而非备选栏编码）
+ 1159          if (ic != null) {
+ 1160              try {
+ 1161                  CharSequence sel = ic.getSelectedText(0);
+ 1162                  if (sel != null && sel.length() > 0) {
+ 1163                      pushUndo();
+ 1164                      ic.commitText("", 0);
+ 1165                      return;
+ 1166                  }
+ 1167              } catch (Exception ignored) { }
+ 1168          }
+ 1169          if (composingCode.length() > 0) {
+ 1170              composingCode.deleteCharAt(composingCode.length() - 1);
+ 1171              queryCandidates();
+ 1172          } else {
+ 1173              if (ic == null) return;
+ 1174              // v0.4.8 反馈②：全选/部分选中时删除整个选区（此分支现仅兜底，选区已在上面优先处理）
+ 1175              // v0.5.3 反馈①：删除刚上屏的字后允许重新输入（清空过滤键）
+ 1176              String prev = getCursorPrevChar();
+ 1177              if (!prev.isEmpty() && prev.equals(committedLast)) committedLast = "";
+ 1178              pushUndo();   // v0.4.9 取消↺ 可恢复删除
+ 1179              ic.deleteSurroundingText(1, 0);
+ 1180          }
+ 1181      }
+ 1182  
+ 1183      /** 上屏（v0.4.5：不写入剪贴板历史；v0.4.9：自动记录 undo 快照） */
+ 1184      private void commitText(String s) {
+ 1185          pushUndo();
+ 1186          InputConnection ic = getCurrentInputConnection();
+ 1187          if (ic != null) {
+ 1188              // v0.5.5 反馈①：先结束组合态再提交（密码框/WebView 兼容，避免吞字）
+ 1189              try { ic.finishComposingText(); } catch (Exception ignored) { }
+ 1190              ic.commitText(s, 1);
+ 1191          }
+ 1192      }
+ 1193  
+ 1194      // ===== v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录，联想排序权重） =====
+ 1195  
+ 1196      private void loadFreq() {
+ 1197          String j = prefs.getString(PREFS_FREQ, "");
+ 1198          if (j.isEmpty()) return;
+ 1199          try {
+ 1200              for (String kv : j.split(",")) {
+
+第25页
+ 1201                  int i = kv.indexOf(':');
+ 1202                  if (i > 0) freqMap.put(kv.substring(0, i), Integer.parseInt(kv.substring(i + 1)));
+ 1203              }
+ 1204          } catch (Exception ignored) { }
+ 1205      }
+ 1206  
+ 1207      private void saveFreq() {
+ 1208          StringBuilder sb = new StringBuilder();
+ 1209          for (Map.Entry<String, Integer> e : freqMap.entrySet()) {
+ 1210              if (sb.length() > 0) sb.append(',');
+ 1211              sb.append(e.getKey()).append(':').append(e.getValue());
+ 1212          }
+ 1213          prefs.edit().putString(PREFS_FREQ, sb.toString()).apply();
+ 1214      }
+ 1215  
+ 1216      private void bumpFreq(String text) {
+ 1217          if (text == null || text.isEmpty()) return;
+ 1218          freqMap.put(text, freqOf(text) + 1);
+ 1219          saveFreq();
+ 1220      }
+ 1221  
+ 1222      private int freqOf(String w) {
+ 1223          Integer n = freqMap.get(w);
+ 1224          return n == null ? 0 : n;
+ 1225      }
+ 1226  
+ 1227      // ===== v0.4.9 取消↺ / 重做↻（编辑快照栈，双向 30 层） =====
+ 1228  
+ 1229      /** 记录当前文档快照（光标前 2000 字 + 分隔符 + 光标后 2000 字） */
+ 1230      private String snapshotDoc() {
+ 1231          InputConnection ic = getCurrentInputConnection();
+ 1232          if (ic == null) return "";
+ 1233          String b = "", a = "";
+ 1234          try {
+ 1235              CharSequence cb = ic.getTextBeforeCursor(2000, 0);
+ 1236              CharSequence ca = ic.getTextAfterCursor(2000, 0);
+ 1237              b = cb == null ? "" : cb.toString();
+ 1238              a = ca == null ? "" : ca.toString();
+ 1239          } catch (Exception ignored) { }
+ 1240          return b + "\u0002" + a;
+ 1241      }
+ 1242  
+ 1243      /** 任意文档变更前调用：当前快照入 undo 栈，清空 redo 栈 */
+ 1244      private void pushUndo() {
+ 1245          String snap = snapshotDoc();
+ 1246          if (snap.isEmpty() || snap.equals("\u0002")) return;
+ 1247          undoStack.push(snap);
+ 1248          while (undoStack.size() > UNDO_MAX) undoStack.removeLast();
+ 1249          redoStack.clear();
+ 1250      }
+
+第26页
+ 1251  
+ 1252      private void doUndo() {
+ 1253          // v0.5.36 反馈④：剪贴板长按删除 → 点取消↺恢复还原
+ 1254          if (clipUndoItem != null) {
+ 1255              clipHistory.add(Math.min(clipUndoIndex, clipHistory.size()), clipUndoItem);
+ 1256              saveClipHistory();
+ 1257              clipUndoItem = null;
+ 1258              clipUndoIndex = -1;
+ 1259              if (clipMode) updateCandidateView();
+ 1260              return;
+ 1261          }
+ 1262          InputConnection ic = getCurrentInputConnection();
+ 1263          if (ic == null || undoStack.isEmpty()) return;
+ 1264          redoStack.push(snapshotDoc());
+ 1265          while (redoStack.size() > UNDO_MAX) redoStack.removeLast();
+ 1266          restoreDoc(undoStack.pop(), ic);
+ 1267      }
+ 1268  
+ 1269      private void doRedo() {
+ 1270          InputConnection ic = getCurrentInputConnection();
+ 1271          if (ic == null || redoStack.isEmpty()) return;
+ 1272          undoStack.push(snapshotDoc());
+ 1273          while (undoStack.size() > UNDO_MAX) undoStack.removeLast();
+ 1274          restoreDoc(redoStack.pop(), ic);
+ 1275      }
+ 1276  
+ 1277      /** 用快照整体恢复文档（先清光标两侧文本，再写入快照并定位光标） */
+ 1278      private void restoreDoc(String snap, InputConnection ic) {
+ 1279          int sep = snap.indexOf('\u0002');
+ 1280          String before = sep < 0 ? "" : snap.substring(0, sep);
+ 1281          String after = sep < 0 ? "" : snap.substring(sep + 1);
+ 1282          String curB = "", curA = "";
+ 1283          try {
+ 1284              CharSequence cb = ic.getTextBeforeCursor(2000, 0);
+ 1285              CharSequence ca = ic.getTextAfterCursor(2000, 0);
+ 1286              curB = cb == null ? "" : cb.toString();
+ 1287              curA = ca == null ? "" : ca.toString();
+ 1288          } catch (Exception ignored) { }
+ 1289          try {
+ 1290              ic.beginBatchEdit();
+ 1291              ic.deleteSurroundingText(curB.length(), curA.length());
+ 1292              ic.commitText(before + after, 1);
+ 1293              ic.setSelection(before.length(), before.length());
+ 1294              ic.endBatchEdit();
+ 1295          } catch (Exception ignored) { }
+ 1296      }
+ 1297  
+ 1298      /** 码点 -> 上屏文本（中文标点映射全角） */
+ 1299      private String symbolToText(int code) {
+ 1300          switch (code) {
+
+第27页
+ 1301              case 44: return "，";
+ 1302              case 46: return "。";
+ 1303              case 63: return "？";
+ 1304              case 33: return "！";
+ 1305              case 58: return "：";
+ 1306              case 59: return "；";
+ 1307              case 40: return "（";
+ 1308              case 41: return "）";
+ 1309              case 183: return "·";
+ 1310              case 8226: return "·";
+ 1311              case 34: return "\"";
+ 1312              case 39: return "'";
+ 1313              case 45: return "-";
+ 1314              case 47: return "/";
+ 1315              case 64: return "@";
+ 1316              case 35: return "#";
+ 1317              case 95: return "_";
+ 1318              case 38: return "&";
+ 1319              case 42: return "*";
+ 1320              case 37: return "%";
+ 1321              case 43: return "+";
+ 1322              case 61: return "=";
+ 1323              case 91: return "[";
+ 1324              case 93: return "]";
+ 1325              default:
+ 1326                  // v0.5.34 支持 emoji 码点（>0xFFFF 用 toChars 双字符）
+ 1327                  if (code >= 33 && code <= 0x10FFFF) {
+ 1328                      try {
+ 1329                          return String.valueOf(Character.toChars(code));
+ 1330                      } catch (Exception e) {
+ 1331                          return null;
+ 1332                      }
+ 1333                  }
+ 1334                  return null;
+ 1335          }
+ 1336      }
+ 1337  
+ 1338      /** 候选查询：v0.5.0 反馈②排序（①上次上屏+热点词组 ②传统五笔 ③预测/云端）+ 反馈⑤英文补全 */
+ 1339      private void queryCandidates() {
+ 1340          candidates.clear();
+ 1341          String code = composingCode.toString();
+ 1342          if (code.isEmpty()) {
+ 1343              updateCandidateView();
+ 1344              return;
+ 1345          }
+ 1346          // v0.5.0 反馈⑤：英文输入态 → 补全候选（@邮箱 / ht→https:// / .com 等）
+ 1347          if (!chineseMode) {
+ 1348              checkEnglishCompletion(code);
+ 1349              if (candidates.isEmpty()) candidates.add(code);
+ 1350              updateCandidateView();
+
+第28页
+ 1351              return;
+ 1352          }
+ 1353          // v0.5.35 反馈⑥：超 4 码 = 拼音全拼模式——五笔仅用前 4 码查词组，拼音候选云端异步置前
+ 1354          if (code.length() > 4) {
+ 1355              String wb = code.substring(0, 4);
+ 1356              List<String> pri = WubiDb.query(wb);
+ 1357              if (pri != null) {
+ 1358                  for (String c2 : pri) {
+ 1359                      if (c2.length() < 2) continue;
+ 1360                      if (!isJustCommitted(c2) && !candidates.contains(c2)) candidates.add(c2);
+ 1361                  }
+ 1362              }
+ 1363              updateCandidateView();
+ 1364              queryPinyin(code, true);
+ 1365              return;
+ 1366          }
+ 1367          List<String> merged = new ArrayList<>();
+ 1368          // v0.5.3 反馈①：只滤"最近一次上屏的同一字/词"（避免重复显示）；MRU 词组保留置顶
+ 1369          // v0.5.4 反馈②：上次选中的字/词置顶须"编码匹配当前输入"（避免错位霸榜挡住四码词组）
+ 1370          // v0.5.8 反馈③⑧：排序硬规则——1 码一级简码字最前、4 码词组最前；2/3 码 MRU 置顶
+ 1371          // v0.5.9 反馈⑧：MRU 精确匹配（编码==code）置顶最优先（字频调整：上次上屏的字/词永远第一位）
+ 1372          // v0.5.17 反馈④（举一反三）：MRU 置顶不受 isJustCommitted 限制——重打同码时"最近打过的字"必须置顶
+ 1373          // v0.5.50 写死规则：之前打过的字或词全部前置（新上屏第一，旧的按序在后）——
+ 1374          //   遍历 mruList（最近 N 个上屏，时间倒序），编码匹配（全码/简码）的依次加入
+ 1375          if (!lastSelected.isEmpty()) {
+ 1376              String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
+ 1377              boolean mruMatch = (lc != null && lc.equals(code));
+ 1378              if (!mruMatch && lastSelected.length() == 1 && code.length() == 1) {
+ 1379                  String s1 = WubiDb.simple1Char(code.charAt(0));
+ 1380                  mruMatch = (s1 != null && s1.equals(lastSelected));
+ 1381              }
+ 1382              if (mruMatch && !merged.contains(lastSelected)) merged.add(lastSelected);
+ 1383          }
+ 1384          for (String m : mruList) {
+ 1385              if (m.equals(lastSelected)) continue;   // lastSelected 已置顶
+ 1386              String mc = m.length() >= 2 ? WubiDb.phraseCode(m) : WubiDb.singleCode(m);
+ 1387              boolean m2 = (mc != null && mc.equals(code));
+ 1388              if (!m2 && m.length() == 1 && code.length() == 1) {
+ 1389                  String s1 = WubiDb.simple1Char(code.charAt(0));
+ 1390                  m2 = (s1 != null && s1.equals(m));
+ 1391              }
+ 1392              if (m2 && !merged.contains(m)) merged.add(m);
+ 1393          }
+ 1394          for (String p : recentPhrases) {
+ 1395              String pc = WubiDb.phraseCode(p);
+ 1396              if (pc != null && pc.equals(code) && !merged.contains(p)) merged.add(p);
+ 1397          }
+ 1398          if (code.length() == 1 || code.length() == 3 || code.length() == 4) {
+ 1399              List<String> pri = WubiDb.query(code);
+ 1400              if (pri != null) {
+
+第29页
+ 1401                  for (String c : pri) {
+ 1402                      // v0.5.37 反馈②：4 码单字不再过滤（WubiDb.query(4) 顺序=词组先单字后，词组仍优先）
+ 1403                      if (!isJustCommitted(c) && !merged.contains(c)) merged.add(c);
+ 1404                  }
+ 1405              }
+ 1406          }
+ 1407          // ① MRU：上次选中的字/词（编码前缀匹配，v0.5.44 反馈⑤：1 码只精确匹配——打 r 不提示"白"rrrr）+ 最近上屏词组
+ 1408          if (!lastSelected.isEmpty() && code.length() >= 2) {
+ 1409              String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
+ 1410              if (lc != null && lc.startsWith(code) && !lc.equals(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
+ 1411          }
+ 1412          for (String p : recentPhrases) {
+ 1413              String pc = WubiDb.phraseCode(p);
+ 1414              if (pc != null && pc.startsWith(code) && !pc.equals(code) && !merged.contains(p)) merged.add(p);
+ 1415          }
+ 1416          // v0.5.23 动态拼词（钟总核心思路）：基础库+86规则 → 4 码词组无限，
+ 1417          //   保障词置顶 + 2+2/1+1+2/1+1+1+1 动态组合（词组在前、单字殿后）
+ 1418          // v0.5.44 反馈④：禁用前端动态拼词（"战行/点行"类 2+2 噪声组合）
+ 1419          //   云端真词库 64,935 条覆盖；动态拼词噪声大且非词典词——回归"先科学后先进"
+ 1420          // ② 第二位：传统五笔（高频字/字根/一至四码简码词组，优先照顾老用户习惯）
+ 1421          List<String> local = WubiDb.query(code);
+ 1422          if (local != null) {
+ 1423              for (String c : local) {
+ 1424                  if (isJustCommitted(c)) continue;
+ 1425                  if ((code.length() == 1 || code.length() == 4) && merged.contains(c)) continue;   // 已在优先段
+ 1426                  if (!merged.contains(c)) merged.add(c);
+ 1427              }
+ 1428          }
+ 1429          // ③ 3码预测第4码高频词组
+ 1430          if (code.length() == 3) {
+ 1431              List<String> predict = WubiDb.queryPredict(code);
+ 1432              if (predict != null) {
+ 1433                  for (String p : predict) {
+ 1434                      if (isJustCommitted(p)) continue;
+ 1435                      if (!merged.contains(p)) merged.add(p);
+ 1436                  }
+ 1437              }
+ 1438          }
+ 1439          pinyinInsertPos = merged.size();   // v0.5.36 反馈⑨：拼音候选插到本地五笔候选之后
+ 1440          candidates.addAll(merged);
+ 1441          // v0.5.46 反馈③：1 码一级简码双保险——云端/本地任何回填后，简码字强制置顶（打 r=的/i=不/w=人/p=这）
+ 1442          applySimple1Top(code);
+ 1443          candPage = 0;
+ 1444          if (candidates.isEmpty()) candidates.add(code);
+ 1445          updateCandidateView();
+ 1446          // ④ 云端热点词组：异步回填，插到 MRU 段之后、五笔之前
+ 1447          if (GATEWAY_READY) {
+ 1448              cloudInsertPos = merged.size();
+ 1449              queryGatewayAsync(code);
+ 1450          }
+
+第30页
+ 1451          // v0.5.35 反馈⑥：≤4 码也异步查拼音（如 nihao 前 4 码 niha 期间，候选追加"你好"类辅助）
+ 1452          if (code.length() >= 2) queryPinyin(code, false);
+ 1453      }
+ 1454  
+ 1455      /** v0.5.0 反馈⑤：英文/HTML 自动补全（输入 ht→https://、@→邮箱后缀、.→域名后缀） */
+ 1456      // v0.5.41 反馈④：英文常用词表（真实常用英文单词，前缀匹配自动补全）
+ 1457      //   体积优化：单长字符串 + split（省数组常量池开销，APK≤100KB 门禁）
+ 1458      private static final String EN_WORDS_STR = "the and you hello world help home hope here have has how what when where who why which work with well will good great get go going come coming can could should would please thank thanks this that these those there their they them we our ours your yours my mine his her its not no yes ok okay sure sorry friend family love like life time today morning ; private static final String[] EN_WORDS = night a lot are welcome nice day see later problem at all is about much many me i take care luck best wishes happy birthday merry christmas congratulations keep never give up hard study everyday progress success health wealth happiness friends dream future peace";
+ 1459      private static final String[] EN_WORDS = EN_WORDS_STR.split(" ");
+ 1460  
+ 1461      private void checkEnglishCompletion(String code) {
+ 1462          String lower = code.toLowerCase();
+ 1463          if (lower.startsWith("ht") && lower.length() <= 5) {
+ 1464              candidates.add("https://");
+ 1465              candidates.add("http://");
+ 1466          } else if (code.endsWith("@")) {
+ 1467              candidates.add("@qq.com");
+ 1468              candidates.add("@163.com");
+ 1469              candidates.add("@gmail.com");
+ 1470              candidates.add("@outlook.com");
+ 1471              candidates.add("@foxmail.com");
+ 1472          } else if (code.endsWith(".")) {
+ 1473              candidates.add(".com");
+ 1474              candidates.add(".cn");
+ 1475              candidates.add(".net");
+ 1476              candidates.add(".org");
+ 1477              candidates.add(".io");
+ 1478          } else if (code.endsWith("/")) {
+ 1479              candidates.add("www.");
+ 1480          } else if (code.length() >= 2 && code.length() <= 6) {
+ 1481              // v0.5.41 反馈④：英文常用词表前缀补全（备选栏显示，点击上屏）
+ 1482              for (String w : EN_WORDS) {
+ 1483                  if (w.startsWith(lower) && !candidates.contains(w)) candidates.add(w);
+ 1484              }
+ 1485          }
+ 1486      }
+ 1487  
+ 1488      /** 云端网关查询（异步：后台请求，主线程回填，不阻塞输入） */
+ 1489      private void queryGatewayAsync(final String code) {
+ 1490          final Handler handler = new Handler(Looper.getMainLooper());
+ 1491          Thread t = new Thread(() -> {
+ 1492              List<String> cloud = new ArrayList<>();
+ 1493              try {
+ 1494                  URL url = new URL(GATEWAY_URL);
+ 1495                  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+ 1496                  conn.setRequestMethod("POST");
+ 1497                  conn.setRequestProperty("Content-Type", "application/json");
+ 1498                  conn.setDoOutput(true);
+ 1499                  conn.setConnectTimeout(6000);
+ 1500                  conn.setReadTimeout(6000);
+
+
+（中间 408 行略）
+
+===== 后 30 页（倒数 1500 行） =====
+第31页
+    1          if (candPage > 0) { candPage--; updateCandidateView(); }
+    2      }
+    3  
+    4      /** v0.5.35 反馈①：表达式是否已含运算符（决定数字是否进缓冲） */
+    5      private boolean hasCalcOp(String expr) {
+    6          return expr.indexOf('+') >= 0 || expr.indexOf('-') >= 0 || expr.indexOf('*') >= 0
+    7                  || expr.indexOf('/') >= 0 || expr.indexOf('×') >= 0 || expr.indexOf('÷') >= 0;
+    8      }
+    9  
+   10      /** v0.5.34 反馈①：数字面板实时计算候选（带式 / 仅结果，点选上屏，上屏后可续算）
+   11       *  v0.5.35 反馈①：表达式不含运算符（纯数字直接上屏）时清空候选，不弹"1.5=5 2.5" */
+   12      private void renderCalcCandidates() {
+   13          if (calcBuffer.isEmpty() || !hasCalcOp(calcBuffer)) {
+   14              candidateView.setText("");
+   15              return;
+   16          }
+   17          double v = calcEval(calcBuffer);
+   18          if (Double.isNaN(v)) {
+   19              candidateView.setSingleLine(true);
+   20              candidateView.setText(calcBuffer);
+   21              return;
+   22          }
+   23          final String res = fmtResult(v);
+   24          final String full = calcBuffer + "=" + res;
+   25          int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
+   26          SpannableStringBuilder csb = new SpannableStringBuilder();
+   27          int s0 = csb.length();
+   28          csb.append("1.").append(full).append("   ");
+   29          int e0 = csb.length();
+   30          csb.setSpan(new ClickableSpan() {
+   31              @Override
+   32              public void onClick(View widget) {
+   33                  commitCalcAs(true);
+   34              }
+   35              @Override
+   36              public void updateDrawState(android.text.TextPaint ds) {
+   37                  ds.setColor(textColor);
+   38                  ds.setUnderlineText(false);
+   39              }
+   40          }, s0, e0, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+   41          int s1 = csb.length();
+   42          csb.append("2.").append(res).append("   ");
+   43          int e1 = csb.length();
+   44          csb.setSpan(new ClickableSpan() {
+   45              @Override
+   46              public void onClick(View widget) {
+   47                  commitCalcAs(false);
+   48              }
+   49              @Override
+   50              public void updateDrawState(android.text.TextPaint ds) {
+
+第32页
+   51                  ds.setColor(textColor);
+   52                  ds.setUnderlineText(false);
+   53              }
+   54          }, s1, e1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+   55          candidateView.setSingleLine(true);
+   56          candidateView.setText(csb);
+   57      }
+   58  
+   59      /** v0.5.34 反馈①：计算候选上屏（withFormula=带式/仅结果），结果保留供运算符续算 */
+   60      private void commitCalcAs(boolean withFormula) {
+   61          if (calcBuffer.isEmpty()) return;
+   62          double v = calcEval(calcBuffer);
+   63          if (Double.isNaN(v)) {
+   64              commitText(calcBuffer);
+   65              lastCalcResult = "";
+   66          } else {
+   67              String res = fmtResult(v);
+   68              lastCalcResult = res;
+   69              if (withFormula) {
+   70                  commitText(calcBuffer + "=" + res);
+   71              } else {
+   72                  commitText(res);
+   73              }
+   74          }
+   75          calcBuffer = "";
+   76          calcAuto = false;
+   77          if (!lastCalcResult.isEmpty()) lastCalcInput = lastCalcResult;
+   78          updateCandidateView();
+   79      }
+   80  
+   81      private void renderCandidates() {
+   82          candidateView.setSingleLine(true);
+   83          candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+   84          String code = composingCode.toString();
+   85          int total = candidates.size();
+   86          int pages = Math.max(1, (total + CAND_PAGE_SIZE - 1) / CAND_PAGE_SIZE);
+   87          if (candPage >= pages) candPage = pages - 1;
+   88          int from = candPage * CAND_PAGE_SIZE;
+   89          int to = Math.min(total, from + CAND_PAGE_SIZE);
+   90          int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
+   91          SpannableStringBuilder sb = new SpannableStringBuilder();
+   92          // v0.5.8 反馈①：编码实时回显已移至状态栏（statusInfo），备选栏仅显示候选
+   93          for (int i = from; i < to; i++) {
+   94              String c = candidates.get(i);
+   95              int s = sb.length();
+   96              sb.append(String.valueOf(i + 1)).append(".").append(c).append("  ");
+   97              int e = sb.length();
+   98              final int idx = i;
+   99              ClickableSpan cs = new ClickableSpan() {
+  100                  @Override
+
+第33页
+  101                  public void onClick(View widget) {
+  102                      selectCandidate(idx);
+  103                  }
+  104                  @Override
+  105                  public void updateDrawState(android.text.TextPaint ds) {
+  106                      ds.setColor(textColor);
+  107                      ds.setUnderlineText(false);
+  108                  }
+  109              };
+  110              sb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+  111          }
+  112          // v0.4.9 翻页指示（跟随系统色）
+  113          appendPager(sb, pages);
+  114          candidateView.setText(sb);
+  115      }
+  116  
+  117      /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
+  118       *  v0.5.11 反馈④：按回车 → 上屏当前编码的小写英文（qq → qq），不再误选中文候选（多） */
+  119      private void commitFirstCandidate() {
+  120          // v0.5.35 反馈⑥：超 4 码（拼音全拼模式）回车上屏首选候选（nihao → 你好）
+  121          if (composingCode.length() > 4 && !candidates.isEmpty()) {
+  122              selectCandidate(0);
+  123              return;
+  124          }
+  125          if (composingCode.length() > 0) {
+  126              String raw = composingCode.toString();
+  127              composingCode.setLength(0);
+  128              candidates.clear();
+  129              candPage = 0;
+  130              commitText(raw);
+  131              updateCandidateView();
+  132          } else if (isMultiline()) {
+  133              commitText("\n");
+  134          }
+  135      }
+  136  
+  137      /** v0.5.3 反馈⑥：当前输入框是否多行（多行才允许回车换行） */
+  138      private boolean isMultiline() {
+  139          try {
+  140              EditorInfo ei = getCurrentInputEditorInfo();
+  141              return ei != null && (ei.inputType & android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE) != 0;
+  142          } catch (Exception e) {
+  143              return false;
+  144          }
+  145      }
+  146  
+  147      /** v0.5.11 反馈④：空格——备选栏第一个是中文候选则上中文；候选仅有编码本身（无中文命中）则输出空格 */
+  148      private void commitSpaceOrFirst() {
+  149          if (!chineseMode) {
+  150              // v0.5.40 反馈⑥：纯英文输入——全部输完才上屏：空格直接上屏空格（不选候选），单词由字母自然组成
+
+第34页
+  151              commitText(" ");
+  152              composingCode.setLength(0);
+  153              candidates.clear();
+  154              updateCandidateView();
+  155              return;
+  156          }
+  157          if (composingCode.length() > 0 && !candidates.isEmpty()
+  158                  && !candidates.get(0).equals(composingCode.toString())) {
+  159              selectCandidate(0);
+  160          } else {
+  161              commitText(" ");
+  162          }
+  163      }
+  164  
+  165      /** v0.4.8 数字面板：= 或退出时上屏。带公式（默认）上屏 "1+2=3"；纯数字直接上屏 */
+  166      /** v0.5.3 反馈②：数字面板运算符——上次结果上屏后接运算符自动续算（8 → +2 → 8+2=10） */
+  167      private void calcAppendOp(String op) {
+  168          // v0.5.35 反馈①：calcBuffer 空时——先续接"上次计算结果"，再回收"刚直接上屏的数字"（5 → + → "5+"）
+  169          if (calcBuffer.isEmpty() && !lastCalcResult.isEmpty()) {
+  170              calcBuffer = lastCalcResult + op;
+  171              calcAuto = true;    // v0.5.8 反馈⑥：运算符自动续接上次结果 → 去重合法（8 → +2 → 上屏"+2=10"）
+  172          } else if (calcBuffer.isEmpty() && !lastCalcInput.isEmpty()) {
+  173              calcBuffer = lastCalcInput + op;
+  174              lastCalcInput = "";
+  175              calcAuto = true;
+  176          } else {
+  177              calcBuffer += op;
+  178              calcAuto = false;   // 手动完整输入 → 不去重（3*2 不以结果 3 开头省略）
+  179          }
+  180          updateCandidateView();
+  181      }
+  182  
+  183      /** v0.5.27 反馈②：读取系统剪贴板文本（复制的文本→备选栏点选上屏） */
+  184      private String getClipboardText() {
+  185          if (clipManager == null || !clipManager.hasPrimaryClip()) return "";
+  186          try {
+  187              android.content.ClipData cd = clipManager.getPrimaryClip();
+  188              if (cd == null || cd.getItemCount() == 0) return "";
+  189              CharSequence t = cd.getItemAt(0).coerceToText(this);
+  190              if (t == null) return "";
+  191              String s = t.toString().trim();
+  192              return s.isEmpty() ? "" : s;
+  193          } catch (Exception e) {
+  194              return "";
+  195          }
+  196      }
+  197  
+  198      private void commitCalc(boolean fromEq) {
+  199          if (calcBuffer.isEmpty()) return;
+  200          double v = calcEval(calcBuffer);
+
+第35页
+  201          if (Double.isNaN(v)) {
+  202              commitText(calcBuffer);
+  203              lastCalcResult = "";
+  204          } else {
+  205              String res = fmtResult(v);
+  206              // v0.5.11 反馈③：★先保存上一次结果作为去重基准，再更新 lastCalcResult
+  207              // （原代码先覆盖 lastCalcResult=新结果，导致 expr.startsWith(新结果) 恒 false → 不去重 → 1+2=33*4=12）
+  208              String oldResult = lastCalcResult;
+  209              lastCalcResult = res;
+  210              if (calcBuffer.matches("^[0-9.]+$")) {
+  211                  commitText(calcBuffer);
+  212              } else if (calcFormula) {
+  213                  // v0.5.32 计算器去重科学化（根治"1+2=33*4=12"反复复发）：
+  214                  //   不再依赖 calcAuto 标志（易被面板切换等路径破坏）——直接读文本框末尾验证
+  215                  //   "上次结果是否已在屏"，在屏则省略重复（1+2=3 上屏后 *4 → 上屏"*4=12"，
+  216                  //   文本框拼接 = "1+2=3*4=12"）；不在屏（手动完整输入 3*2）则完整上屏"3*2=6"
+  217                  String expr = calcBuffer;
+  218                  boolean hasResult = false;
+  219                  if (!oldResult.isEmpty()) {
+  220                      InputConnection cic = getCurrentInputConnection();
+  221                      try {
+  222                          CharSequence tb = cic == null ? null : cic.getTextBeforeCursor(oldResult.length(), 0);
+  223                          if (tb != null && tb.toString().equals(oldResult)) hasResult = true;
+  224                      } catch (Exception ignored) { }
+  225                  }
+  226                  if (hasResult && expr.startsWith(oldResult)) {
+  227                      expr = expr.substring(oldResult.length());
+  228                      if (expr.isEmpty()) expr = res;
+  229                  }
+  230                  commitText(expr + "=" + res);
+  231              } else {
+  232                  commitText(res);
+  233              }
+  234          }
+  235          calcBuffer = "";
+  236          calcAuto = false;
+  237          if (!lastCalcResult.isEmpty()) lastCalcInput = lastCalcResult;   // v0.5.35 续算起点
+  238          // v0.5.4 反馈⑥：结果上屏后保留数字面板——继续按运算符接续计算（2+3=5 → + → 5+）
+  239          panelMode = 1;
+  240          keyboardView.setKeyboard(keyboardNum);
+  241          updateCandidateView();
+  242      }
+  243  
+  244      private boolean associateActive = false;   // v0.4.9 联想态标记（用于连续联想链）
+  245      private int cloudInsertPos = 0;            // v0.5.0 云端热点插入位（MRU 段后）
+  246      /** v0.5.3 反馈①：最近一次上屏的字/词（过滤键，仅滤"紧接着重复出现"，不累积，避免高频字消失） */
+  247      private String committedLast = "";
+  248  
+  249      /** v0.5.3 反馈①：候选是否为"刚上屏过"的同一内容（只滤最近一次，MRU/高频字不受影响） */
+  250      /** v0.5.47：1 码一级简码强制置顶（本地/云端/hot 任何回填后调用——顽疾根治） */
+
+第36页
+  251      private void applySimple1Top(String code) {
+  252          if (code == null || code.length() != 1 || candidates == null) return;
+  253          String s1 = WubiDb.simple1Char(code.charAt(0));
+  254          if (s1 == null) return;
+  255          for (int i = 0; i < candidates.size(); i++) {
+  256              if (candidates.get(i).equals(s1)) {
+  257                  if (i != 0) {
+  258                      candidates.remove(i);
+  259                      candidates.add(0, s1);
+  260                  }
+  261                  return;
+  262              }
+  263          }
+  264          // 简码字被过滤（isJustCommitted）——重新加回第一位
+  265          candidates.add(0, s1);
+  266      }
+  267  
+  268      /** v0.5.49/50 写死规则：MRU 置顶防云端覆盖——同码打过的字/词（新上屏第一、旧的按序）在 hot/云端回填后强制前移 */
+  269      private void applyMruTop(String code) {
+  270          if (code == null || code.isEmpty()) return;
+  271          java.util.List<String> ordered = new java.util.ArrayList<>();
+  272          if (lastSelected != null && !lastSelected.isEmpty()) ordered.add(lastSelected);
+  273          for (String m : mruList) {
+  274              if (!ordered.contains(m)) ordered.add(m);
+  275          }
+  276          for (String m : ordered) {
+  277              String mc = m.length() >= 2 ? WubiDb.phraseCode(m) : WubiDb.singleCode(m);
+  278              boolean match = (mc != null && mc.equals(code));
+  279              if (!match && m.length() == 1 && code.length() == 1) {
+  280                  String s1 = WubiDb.simple1Char(code.charAt(0));
+  281                  match = (s1 != null && s1.equals(m));
+  282              }
+  283              if (!match) continue;
+  284              candidates.remove(m);
+  285              int pos = 0;
+  286              // 排在已置顶的同码 MRU 之后（保持"新上屏在前"）
+  287              for (int i = 0; i < candidates.size() && i < ordered.indexOf(m); i++) {
+  288                  if (ordered.subList(0, ordered.indexOf(m)).contains(candidates.get(i))) pos = i + 1;
+  289              }
+  290              candidates.add(Math.min(pos, candidates.size()), m);
+  291          }
+  292      }
+  293  
+  294      /** v0.5.50 写死规则：记录同码 MRU 历史（新上屏排头，去重，最多 10 个，持久化） */
+  295      private void rememberMru(String text) {
+  296          if (text == null || text.isEmpty()) return;
+  297          mruList.remove(text);
+  298          mruList.add(0, text);
+  299          while (mruList.size() > 10) mruList.remove(mruList.size() - 1);
+  300          StringBuilder sb = new StringBuilder();
+
+第37页
+  301          for (int i = 0; i < mruList.size(); i++) {
+  302              if (i > 0) sb.append("\u0001");
+  303              sb.append(mruList.get(i));
+  304          }
+  305          try { prefs.edit().putString(PREFS_MRU, sb.toString()).apply(); } catch (Exception ignored) { }
+  306      }
+  307  
+  308      private boolean isJustCommitted(String c) {
+  309          return !committedLast.isEmpty() && c != null && c.equals(committedLast);
+  310      }
+  311  
+  312      private void selectCandidate(int idx) {
+  313          if (idx < 0 || idx >= candidates.size()) return;
+  314          String text = candidates.get(idx);
+  315          // v0.5.12 根治（用户已 5-6 次反馈）：前缀去重——候选以"刚上屏内容/上次结果"开头时，
+  316          //   先删除光标前的旧内容再上屏（所见即所得）：
+  317          //   · 上屏"宇"后点联想"宇宙" → 得"宇宙"（非"宇宇宙"）
+  318          //   · 上屏"陈"后点"陈胜" → 得"陈胜"；再点"陈胜吴广" → 得"陈胜吴广"（联想链正常）
+  319          //   · 计算 8*4=32 后点带式"32/16=2"（若走此路径）→ 得"/16=2"（非"32/16=2"重复）
+  320          if (chineseMode) {
+  321              String base = !committedLast.isEmpty() ? committedLast : lastCalcResult;
+  322              if (!base.isEmpty() && base.length() < text.length() && text.startsWith(base)) {
+  323                  InputConnection ic = getCurrentInputConnection();
+  324                  if (ic != null) {
+  325                      try {
+  326                          CharSequence before = ic.getTextBeforeCursor(base.length(), 0);
+  327                          if (before != null && before.toString().equals(base)) {
+  328                              pushUndo();
+  329                              ic.deleteSurroundingText(base.length(), 0);
+  330                          }
+  331                      } catch (Exception ignored) { }
+  332                  }
+  333              }
+  334          }
+  335          // v0.5.0 反馈⑤：英文补全——直接上屏补全串，不进五笔联想链
+  336          if (!chineseMode) {
+  337              commitText(text);
+  338              composingCode.setLength(0);
+  339              candPage = 0;
+  340              updateCandidateView();
+  341              return;
+  342          }
+  343          commitText(text);   // v0.4.9 自动记录 undo 快照
+  344          lastSelected = text;   // MRU 置顶
+  345          rememberMru(text);   // v0.5.50：同码 MRU 历史（写死规则）
+  346          prefs.edit().putString(PREFS_LAST_SEL, text).apply();   // v0.5.9 反馈⑧：持久化字频调整
+  347          bumpFreq(text);   // v0.5.14 反馈②：端侧词频累计（最近 3 个月输入记录）
+  348          // v0.5.3 反馈①：记录最近一次上屏的字/词（仅滤紧接着的重复出现）
+  349          committedLast = text;
+  350          if (GATEWAY_READY) reportSelection(text);
+
+第38页
+  351          composingCode.setLength(0);
+  352          candidates.clear();
+  353          // v0.5.20（用户指令）：联想功能暂时全部去除——不拼接联想链、不触发字后/连续/云端联想
+  354          lastCommittedText = text;
+  355          if (text.length() >= 2) rememberPhrase(text);   // MRU（最近 3 词组）保留（记忆，非联想）
+  356          lastEnHint = "";
+  357          // v0.5.5 反馈①：密码框禁翻译（隐私）
+  358          if (isPassword) {
+  359              updateCandidateView();
+  360              return;
+  361          }
+  362          String lastChar = lastCommittedText.isEmpty() ? "" : lastCommittedText.substring(lastCommittedText.length() - 1);
+  363          if (!lastChar.isEmpty()) {
+  364              queryTranslation(lastChar);   // 仅保留状态栏英文翻译（v0.5.13 要求，非联想）
+  365          }
+  366          updateCandidateView();
+  367      }
+  368  
+  369      /** v0.4.9 反馈① + v0.5.1 反馈⑤：联想基准=整个上屏词组（如"前进"→"前进浪潮/前进号角"），
+  370       *  不再按单字含字联想（避免"驶进/共进"式不合理联想）；MRU 置顶 + 整词前缀 + 锚字前缀 + 云端 */
+  371      private void triggerAssociate() {
+  372          // v0.5.0 反馈③：联想锚字取光标前一字（删除光标前字、移动光标后自动重新联想）
+  373          String anchor = getCursorPrevChar();
+  374          if (anchor.isEmpty()) {
+  375              if (lastCommittedText.isEmpty()) return;
+  376              anchor = lastCommittedText.substring(lastCommittedText.length() - 1);
+  377          }
+  378          String chain = lastCommittedText;   // v0.5.1：联想基准=整个已上屏词组（整词，非单字）
+  379          List<String> merged = new ArrayList<>();
+  380          // ① MRU：最近选中的词组（以整词开头 或 含整词）置顶
+  381          for (String p : recentPhrases) {
+  382              if (p.startsWith(chain) && !merged.contains(p)) merged.add(p);
+  383          }
+  384          // ② 整词前缀联想：本地词库以整词开头（前进→前进浪潮/前进号角）
+  385          if (!chain.isEmpty()) {
+  386              List<String> prefix = WubiDb.queryByPrefix(chain);
+  387              if (prefix != null) {
+  388                  for (String p : prefix) if (!merged.contains(p)) merged.add(p);
+  389              }
+  390          }
+  391          // ②b v0.5.11 反馈⑤：锚字前缀联想（进→进一步/进行/进入/进攻…，光标前一字开头的常用搭配）
+  392          //   （原 queryByChar 含字联想会返回"共进/驶进"等 X进 结尾词——方向错误，已废弃）
+  393          if (merged.size() < 12 && !anchor.isEmpty()) {
+  394              List<String> byPrefix = WubiDb.queryByPrefix(anchor);
+  395              if (byPrefix != null) {
+  396                  for (String p : byPrefix) {
+  397                      if (!merged.contains(p)) merged.add(p);
+  398                      if (merged.size() >= 12) break;
+  399                  }
+  400              }
+
+第39页
+  401          }
+  402          // ②c v0.5.9 反馈②：积极成语联想层（含锚字成语——阳光向上、有启发有感悟、眼前一亮）
+  403          if (merged.size() < 12 && !anchor.isEmpty()) {
+  404              List<String> idms = WubiDb.queryIdioms(anchor);
+  405              for (String p : idms) {
+  406                  if (!merged.contains(p)) merged.add(p);
+  407                  if (merged.size() >= 12) break;
+  408              }
+  409          }
+  410          // v0.5.14 反馈②：端侧词频排序（结合最近 3 个月输入记录——MRU 置顶保持，其余按上屏频次降序）
+  411          List<String> ordered = new ArrayList<>();
+  412          for (String p : recentPhrases) {
+  413              if (merged.contains(p) && !ordered.contains(p)) ordered.add(p);
+  414          }
+  415          List<String> rest = new ArrayList<>();
+  416          for (String p : merged) {
+  417              if (!ordered.contains(p)) rest.add(p);
+  418          }
+  419          // 稳定降序：频次高者前（同频保持原顺序——本地词库序/成语序不被打乱）
+  420          for (int i = 1; i < rest.size(); i++) {
+  421              String k = rest.get(i);
+  422              int j = i - 1;
+  423              while (j >= 0 && freqOf(rest.get(j)) < freqOf(k)) {
+  424                  rest.set(j + 1, rest.get(j));
+  425                  j--;
+  426              }
+  427              rest.set(j + 1, k);
+  428          }
+  429          ordered.addAll(rest);
+  430          candidates.clear();
+  431          candidates.addAll(ordered);
+  432          candPage = 0;
+  433          updateCandidateView();
+  434          // ③ 云端热点：上下文通道（整句上文→语境连续联想）+ 锚字前缀兜底
+  435          if (GATEWAY_READY) queryAssociateAsync(chain, anchor);
+  436      }
+  437  
+  438      /** v0.5.0 反馈③：读取光标前一个字（联想锚字来源） */
+  439      private String getCursorPrevChar() {
+  440          InputConnection ic = getCurrentInputConnection();
+  441          if (ic == null) return "";
+  442          try {
+  443              CharSequence cb = ic.getTextBeforeCursor(1, 0);
+  444              if (cb != null && cb.length() > 0) return cb.toString();
+  445          } catch (Exception ignored) { }
+  446          return "";
+  447      }
+  448  
+  449      /** v0.5.0 反馈③：光标移动/编辑后刷新联想（空闲态且中文模式） */
+  450      @Override
+
+第40页
+  451      public void onUpdateSelection(int oldSelStart, int oldSelEnd, int newSelStart, int newSelEnd,
+  452                                    int candidatesStart, int candidatesEnd) {
+  453          super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
+  454          if (!chineseMode || composingCode.length() > 0 || !associateActive) return;
+  455          if (oldSelStart != newSelStart || oldSelEnd != newSelEnd) {
+  456              String prev = getCursorPrevChar();
+  457              if (!prev.isEmpty()) {
+  458                  String lastCharOfChain = lastCommittedText.isEmpty()
+  459                          ? "" : lastCommittedText.substring(lastCommittedText.length() - 1);
+  460                  if (!prev.equals(lastCharOfChain)) {
+  461                      lastCommittedText = prev;   // 光标移到新字前 → 联想链重置为新锚字
+  462                      lastEnHint = "";
+  463                  }
+  464              }
+  465              triggerAssociate();   // 以新光标前字重新联想
+  466          }
+  467      }
+  468  
+  469      /** v0.6 反馈①②：云端上下文连续联想（{"context":"光标前8字上文"} → 语境连续联想）
+  470       *  革命性：不再单字联想，结合输入框上下文/前后文，参考主流输入法联想原理的云端实现 */
+  471      private void queryAssociateAsync(final String chain, final String lastChar) {
+  472          final Handler handler = new Handler(Looper.getMainLooper());
+  473          final String context = getContextBefore(8);   // 收集光标前 8 字整句上文
+  474          Thread t = new Thread(() -> {
+  475              List<String> cloud = new ArrayList<>();
+  476              try {
+  477                  // ① 上下文通道（主）：整句上文 → 成语启发 + 热词趋势 + bigram 顺承 + 学习词
+  478                  if (context != null && !context.isEmpty()) {
+  479                      List<String> p1 = postGateway("{\"context\":\"" + jsonEscape(context) + "\"}");
+  480                      if (p1 != null) cloud.addAll(p1);
+  481                  }
+  482                  // ② 锚字前缀通道（兜底）：光标前 1 字前缀联想
+  483                  if (cloud.size() < 12) {
+  484                      String query = lastChar == null || lastChar.isEmpty() ? chain : lastChar;
+  485                      List<String> p2 = postGateway("{\"prefix\":\"" + jsonEscape(query) + "\"}");
+  486                      if (p2 != null) {
+  487                          for (String s : p2) {
+  488                              if (!cloud.contains(s)) cloud.add(s);
+  489                          }
+  490                      }
+  491                  }
+  492              } catch (Exception ignored) { }
+  493              final List<String> result = cloud;
+  494              handler.post(() -> {
+  495                  // v0.5.5 反馈⑦：联想基准=上屏链 或 进入输入状态的光标前字，两者一致才回填
+  496                  if (!chain.equals(lastCommittedText) && !chain.equals(enterAssociateChar)) return;
+  497                  boolean changed = false;
+  498                  for (String s : result) {
+  499                      if (!candidates.contains(s)) { candidates.add(s); changed = true; }
+  500                  }
+
+第41页
+  501                  if (changed) updateCandidateView();
+  502              });
+  503          });
+  504          t.start();
+  505      }
+  506  
+  507      /** v0.6 反馈①：读取光标前 n 字（上下文连续联想输入） */
+  508      private String getContextBefore(int n) {
+  509          try {
+  510              InputConnection ic = getCurrentInputConnection();
+  511              CharSequence cb = ic == null ? null : ic.getTextBeforeCursor(n, 0);
+  512              return cb == null ? "" : cb.toString();
+  513          } catch (Exception e) { return ""; }
+  514      }
+  515  
+  516      /** v0.6：JSON 字符串转义（上文可能含引号/反斜杠） */
+  517      private String jsonEscape(String s) {
+  518          return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
+  519      }
+  520  
+  521      /** 云端 POST 请求（返回 phrases 数组，失败返回 null） */
+  522      private List<String> postGateway(String body) {
+  523          List<String> cloud = new ArrayList<>();
+  524          try {
+  525              URL url = new URL(GATEWAY_URL);
+  526              HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+  527              conn.setRequestMethod("POST");
+  528              conn.setRequestProperty("Content-Type", "application/json");
+  529              conn.setDoOutput(true);
+  530              conn.setConnectTimeout(6000);
+  531              conn.setReadTimeout(6000);
+  532              try (OutputStream os = conn.getOutputStream()) {
+  533                  os.write(body.getBytes("UTF-8"));
+  534              }
+  535              if (conn.getResponseCode() == 200) {
+  536                  try (InputStream is = conn.getInputStream()) {
+  537                      BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+  538                      StringBuilder sb = new StringBuilder();
+  539                      String line;
+  540                      while ((line = r.readLine()) != null) sb.append(line);
+  541                      JSONObject obj = new JSONObject(sb.toString());
+  542                      JSONArray ps = obj.optJSONArray("phrases");
+  543                      if (ps != null) {
+  544                          for (int i = 0; i < ps.length(); i++) {
+  545                              String p = ps.getString(i);
+  546                              if (p != null && p.length() >= 2) cloud.add(p);
+  547                          }
+  548                      }
+  549                  }
+  550              }
+
+第42页
+  551              conn.disconnect();
+  552          } catch (Exception ignored) { }
+  553          return cloud;
+  554      }
+  555  
+  556      /** v0.4.8 反馈⑦ + v0.4.9：选字后云端英文翻译（{"word":"钟","en":true} → "bell; clock"） */
+  557      /** v0.5.35 反馈⑥：云端拼音/简拼查询（异步；isLong>4 码时拼音候选插最前——回车即上屏拼音首选） */
+  558      private void queryPinyin(final String code, final boolean isLong) {
+  559          if (!GATEWAY_READY || code.length() < 2) return;
+  560          final int codeAtStart = composingCode.length();
+  561          Thread t = new Thread(() -> {
+  562              final java.util.List<String> cloud = new java.util.ArrayList<>();
+  563              try {
+  564                  URL url = new URL(GATEWAY_URL);
+  565                  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+  566                  conn.setRequestMethod("POST");
+  567                  conn.setRequestProperty("Content-Type", "application/json");
+  568                  conn.setDoOutput(true);
+  569                  conn.setConnectTimeout(4000);
+  570                  conn.setReadTimeout(4000);
+  571                  String body = "{\"py\":\"" + code + "\"}";
+  572                  try (OutputStream os = conn.getOutputStream()) { os.write(body.getBytes("UTF-8")); }
+  573                  if (conn.getResponseCode() == 200) {
+  574                      try (InputStream is = conn.getInputStream()) {
+  575                          BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+  576                          StringBuilder sb = new StringBuilder();
+  577                          String line;
+  578                          while ((line = r.readLine()) != null) sb.append(line);
+  579                          JSONArray ps = new JSONObject(sb.toString()).optJSONArray("phrases");
+  580                          if (ps != null) {
+  581                              for (int i = 0; i < ps.length(); i++) {
+  582                                  String p = ps.getString(i);
+  583                                  if (p != null && p.length() >= 2) cloud.add(p);
+  584                              }
+  585                          }
+  586                      }
+  587                  }
+  588                  conn.disconnect();
+  589              } catch (Exception ignored) { }
+  590              final boolean insertFront = isLong;
+  591              final Handler handler = new Handler(Looper.getMainLooper());
+  592              handler.post(() -> {
+  593                  if (composingCode.length() != codeAtStart) return;   // 输入已变化，丢弃过期结果
+  594                  if (cloud.isEmpty()) return;
+  595                  boolean changed = false;
+  596                  for (int i = cloud.size() - 1; i >= 0; i--) {
+  597                      String p = cloud.get(i);
+  598                      if (candidates.contains(p)) continue;
+  599                      // v0.5.37 反馈①：拼音候选恢复尾部（不抢位置）；仅 >4 码拼音模式插最前
+  600                      if (insertFront) candidates.add(0, p); else candidates.add(p);
+
+第43页
+  601                      changed = true;
+  602                  }
+  603                  if (changed) updateCandidateView();
+  604              });
+  605          });
+  606          t.start();
+  607      }
+  608  
+  609      private void queryTranslation(final String word) {
+  610          final Handler handler = new Handler(Looper.getMainLooper());
+  611          Thread t = new Thread(() -> {
+  612              final String chainAtStart = lastCommittedText;
+  613              String en2 = "";
+  614              try {
+  615                  URL url = new URL(GATEWAY_URL);
+  616                  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+  617                  conn.setRequestMethod("POST");
+  618                  conn.setRequestProperty("Content-Type", "application/json");
+  619                  conn.setDoOutput(true);
+  620                  conn.setConnectTimeout(6000);
+  621                  conn.setReadTimeout(6000);
+  622                  String body = "{\"word\":\"" + word + "\",\"en\":true}";
+  623                  try (OutputStream os = conn.getOutputStream()) {
+  624                      os.write(body.getBytes("UTF-8"));
+  625                  }
+  626                  if (conn.getResponseCode() == 200) {
+  627                      try (InputStream is = conn.getInputStream()) {
+  628                          BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+  629                          StringBuilder sb = new StringBuilder();
+  630                          String line;
+  631                          while ((line = r.readLine()) != null) sb.append(line);
+  632                          en2 = new JSONObject(sb.toString()).optString("en", "");
+  633                      }
+  634                  }
+  635                  conn.disconnect();
+  636              } catch (Exception ignored) { }
+  637              final String hint = en2;
+  638              handler.post(() -> {
+  639                  if (!chainAtStart.equals(lastCommittedText)) return;
+  640                  lastEnHint = hint;
+  641                  updateCandidateView();
+  642              });
+  643          });
+  644          t.start();
+  645      }
+  646  
+  647      /** 上报选词（云端 MRU 学习，尽力而为） */
+  648      private void reportSelection(final String phrase) {
+  649          if (!GATEWAY_READY) return;
+  650          Thread t = new Thread(() -> {
+
+第44页
+  651              try {
+  652                  URL url = new URL(GATEWAY_URL);
+  653                  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+  654                  conn.setRequestMethod("POST");
+  655                  conn.setRequestProperty("Content-Type", "application/json");
+  656                  conn.setDoOutput(true);
+  657                  conn.setConnectTimeout(1500);
+  658                  conn.setReadTimeout(1500);
+  659                  String body = "{\"learn\":\"" + phrase + "\"}";
+  660                  try (OutputStream os = conn.getOutputStream()) {
+  661                      os.write(body.getBytes("UTF-8"));
+  662                  }
+  663                  conn.getResponseCode();
+  664                  conn.disconnect();
+  665              } catch (Exception ignored) { }
+  666          });
+  667          t.start();
+  668      }
+  669  }
+  670  package com.cloudwubi.ime;
+  671  
+  672  import android.content.Context;
+  673  
+  674  import java.io.BufferedReader;
+  675  import java.io.InputStreamReader;
+  676  import java.util.ArrayList;
+  677  import java.util.HashMap;
+  678  import java.util.List;
+  679  import java.util.Map;
+  680  
+  681  /**
+  682   * WubiDb - 云五笔本地五笔86精简词库（离线可用，v0.4.4）
+  683   *
+  684   * 数据来源：cloudwubi-rules（Rime 官方五笔86码表 LGPL-3.0 派生）
+  685   *   单字 6563 条（GB2312 一级）+ 词组 4146 条（4000 常用二字节词 + 46 热词）
+  686   * 词库存于 res/raw 资源，运行时加载（规避 Java 64KB 方法字节码限制）
+  687   * 设计：端侧兜底保证"可打字"，云端负责无限扩展（先科学后先进）
+  688   */
+  689  public final class WubiDb {
+  690  
+  691      private static Map<String, List<String>> singleIndex;
+  692      private static Map<String, List<String>> phraseIndex;
+  693      /** v0.5.0 反馈②：词组→编码 反向索引（MRU 置顶排序用） */
+  694      private static Map<String, String> phraseCodeIndex;
+  695      /** v0.5.4 反馈②：单字→编码 反向索引（lastSelected 置顶需编码匹配，避免错位霸榜） */
+  696      private static Map<String, String> singleCodeIndex;
+  697      /** v0.5.13 反馈②：高频搭配+积极成语联想表键（associate.txt 纯文本，前缀匹配 + 含字启发双用） */
+  698      private static final String ASSOC_KEY = "zzzz";
+  699      // ==================== v0.5.23 动态拼词引擎（钟总核心思路） ====================
+  700      // 基础库（字根/一级/二级/三级简码单字全码）+ 86 版词组编码规则 → 动态生成词组
+
+第45页
+  701      // 不用大词库：体积小、速度快、词组无限（排列组合即创新）
+  702      // 86 规则：2字词=前字前2码+后字前2码；3字词=前2字各1码+末字前2码；4字词=前3字各1码+末字1码
+  703      /** 前缀索引：编码前缀(1-3码) -> 字列表（简码精确 + 全码前缀匹配，遍历序保证精确在前） */
+  704      private static Map<String, List<String>> prefixIndex;
+  705      /** v0.5.45 反馈④：86 版 25 键一级简码（Q我 W人 E有 R的 T和 Y主 U产 I不 O为 P这 /
+  706       *  A工 S要 D在 F地 G一 H上 J是 K中 L国 M同 N民 B了 V发 C以 X经）——1 码查询强制置顶 */
+  707      /** v0.5.46 反馈③：取某键的一级简码字（无则 null） */
+  708      public static String simple1Char(char key) {
+  709          for (String s : SIMPLE1) if (s.charAt(0) == key) return s.substring(1);
+  710          return null;
+  711      }
+  712  
+  713      private static final String[] SIMPLE1 = {
+  714          "g一","f地","d在","s要","a工","h上","j是","k中","l国","m同",
+  715          "t和","r的","e有","w人","q我","y主","u产","i不","o为","p这",
+  716          "n民","b了","v发","c以","x经"
+  717      };
+  718  
+  719      /** 单字全码索引：字 -> 全码（拼词取码用；构建时 4 码/最长优先） */
+  720      private static Map<String, String> fullCodeIndex;
+  721      /** 保障词（特例置顶）：动态规则易错或用户必查的常用词，按编码精确置顶 */
+  722          private static final String[] GUARANTEED = {
+  723          "dgqe三角", "dgqe感触", "ilif没办法", "imlf没办法", "uabn辛苦了", "ytyt谢谢", "trwu我们", "vbrq好的",
+  724          "ddgj大理", "uefj前进", "wqvb你好", "aawt工作", "qiuj乐意", "thtc怎么", "wftc什么", "ywtc为什么", "ypsu这样",
+  725          "vfsu那样", "wygd今天", "jegd明天", "jtgd昨天", "gmdh现在", "cnhh马上", "ggfh一起", "ddpe大家",
+  726          "jfwh时候", "fbyy地方", "eedc朋友", "peww家人", "bybb孩子", "tgit生活", "ipnu学习", "jney电脑",
+  727          "rtsm手机", "tmwy微信", "gdrn天气", "uyad辛苦", "imde没有", "gide还有", "ldyl因为", "rnny所以",
+  728          "wjjg但是", "vkjs如果", "kjqd虽然", "dmeg而且", "akft或者", "qdrg然后", "jbrg最后", "uttf首先",
+  729          "mgjf同时", "djip非常", "trkl特别", "tgsv重要", "tuuj简单", "yywg方便", "nnqi快乐", "lkim加油",
+  730          "pvwg安全", "wvyv健康", "ntna发展", "khlg中国", "wwna人民", "jhvb早上好", "jhvb晚上好", "iutx没关系",
+  731          "yguk请问", "thnn自己", "yfky认真听讲", "klwn中国人民", "qqit多少", "kvjf哪里", "gtut不知道", "iujg没问题", "gmmk一帆风顺"
+  732      };
+  733  
+  734      private WubiDb() { }
+  735  
+  736      /** 由 IME onCreate 调用一次，加载词库（v0.5.5：词库移至 assets，APK 内文本可压缩省体积） */
+  737      public static synchronized void init(Context ctx) {
+  738          if (singleIndex != null) return;
+  739          singleIndex = new HashMap<>();
+  740          phraseIndex = new HashMap<>();
+  741          phraseCodeIndex = new HashMap<>();
+  742          singleCodeIndex = new HashMap<>();
+  743          loadAsset(ctx, "wubi_single.txt", singleIndex);
+  744          loadAsset(ctx, "wubi_phrase.txt", phraseIndex);
+  745          // v0.5.20（用户指令）：联想词表不再加载（联想功能暂时去除，省体积）
+  746          // 词组反向索引（同一词可能多码，保留首条）
+  747          if (phraseIndex != null) {
+  748              for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
+  749                  for (String w : e.getValue()) {
+  750                      if (!phraseCodeIndex.containsKey(w)) phraseCodeIndex.put(w, e.getKey());
+
+第46页
+  751                  }
+  752              }
+  753          }
+  754          // v0.5.4 反馈②：单字反向索引（保留首条）
+  755          // v0.5.23 改造：单字全码索引（4码/最长优先——拼词取前2码与 MRU 编码匹配需全码）
+  756          if (singleIndex != null) {
+  757              for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+  758                  String code = e.getKey();
+  759                  for (String w : e.getValue()) {
+  760                      if (w.length() == 1) {
+  761                          String old = singleCodeIndex.get(w);
+  762                          if (old == null || code.length() >= old.length()) singleCodeIndex.put(w, code);
+  763                      }
+  764                  }
+  765              }
+  766          }
+  767          // v0.5.23 动态拼词：前缀索引 + 全码索引（基础库=全码+简码行）
+  768          if (singleIndex != null && prefixIndex == null) {
+  769              prefixIndex = new HashMap<>();
+  770              fullCodeIndex = new HashMap<>();
+  771              for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+  772                  String code = e.getKey();
+  773                  int clen = code.length();
+  774                  // 前缀桶（1-3码；遍历序=编码序，精确码先入桶自然靠前）
+  775                  for (int p = 1; p <= clen && p <= 3; p++) {
+  776                      String pre = code.substring(0, p);
+  777                      List<String> list = prefixIndex.get(pre);
+  778                      if (list == null) { list = new ArrayList<>(); prefixIndex.put(pre, list); }
+  779                      for (String w : e.getValue()) {
+  780                          if (!list.contains(w)) list.add(w);
+  781                      }
+  782                  }
+  783                  // 全码索引（最长优先）
+  784                  for (String w : e.getValue()) {
+  785                      String old = fullCodeIndex.get(w);
+  786                      if (old == null || clen >= old.length()) fullCodeIndex.put(w, code);
+  787                  }
+  788              }
+  789          }
+  790      }
+  791  
+  792      /** v0.5.13 反馈②：含指定字的积极成语/搭配（联想启发层，读 associate.txt 列表含字匹配） */
+  793      public static List<String> queryIdioms(String ch) {
+  794          List<String> out = new ArrayList<>();
+  795          if (ch == null || ch.isEmpty()) return out;
+  796          List<String> list = phraseIndex == null ? null : phraseIndex.get(ASSOC_KEY);
+  797          if (list != null) {
+  798              for (String w : list) {
+  799                  if (w.indexOf(ch) >= 0 && !w.equals(ch)) out.add(w);
+  800              }
+
+第47页
+  801          }
+  802          return out;
+  803      }
+  804  
+  805      /** v0.5.13：纯文本搭配词表加载（每行一个词组，无编码——进 phraseIndex 特殊键供前缀遍历命中） */
+  806      private static void loadAssetText(Context ctx, String name, Map<String, List<String>> map) {
+  807          try (BufferedReader r = new BufferedReader(
+  808                  new InputStreamReader(ctx.getAssets().open(name), "UTF-8"))) {
+  809              String line;
+  810              List<String> list = new ArrayList<>();
+  811              while ((line = r.readLine()) != null) {
+  812                  line = line.trim();
+  813                  if (!line.isEmpty()) list.add(line);
+  814              }
+  815              if (!list.isEmpty()) map.put("zzzz", list);
+  816          } catch (Exception ignored) { }
+  817      }
+  818  
+  819      private static void loadAsset(Context ctx, String name, Map<String, List<String>> map) {
+  820          try (BufferedReader r = new BufferedReader(
+  821                  new InputStreamReader(ctx.getAssets().open(name), "UTF-8"))) {
+  822              String line;
+  823              while ((line = r.readLine()) != null) {
+  824                  line = line.trim();
+  825                  if (line.isEmpty()) continue;
+  826                  // v0.4.9 紧凑格式：前缀连续 a-y 字母为编码，其余为候选（多候选空格分隔）
+  827                  int i = 0;
+  828                  int len = line.length();
+  829                  while (i < len) {
+  830                      char c = line.charAt(i);
+  831                      if (c >= 'a' && c <= 'y') {
+  832                          i++;
+  833                      } else {
+  834                          break;
+  835                      }
+  836                  }
+  837                  if (i <= 0 || i >= len) continue;
+  838                  String code = line.substring(0, i);
+  839                  String rest = line.substring(i).trim();
+  840                  if (code.length() > 4 || rest.isEmpty()) continue;
+  841                  for (String w : rest.split("\\s+")) {
+  842                      if (w.isEmpty()) continue;
+  843                      List<String> list = map.get(code);
+  844                      if (list == null) {
+  845                          list = new ArrayList<>();
+  846                          map.put(code, list);
+  847                      }
+  848                      list.add(w);
+  849                  }
+  850              }
+
+第48页
+  851          } catch (Exception ignored) { }
+  852      }
+  853  
+  854      private static void ensureIndex() {
+  855          if (singleIndex == null) {
+  856              singleIndex = new HashMap<>();
+  857              phraseIndex = new HashMap<>();
+  858          }
+  859      }
+  860  
+  861      /** 3码预测：预测第 4 码高频词组（扫描 4 码词组前缀） */
+  862      public static List<String> queryPredict(String code3) {
+  863          if (code3 == null || code3.length() != 3) return null;
+  864          ensureIndex();
+  865          List<String> result = new ArrayList<>();
+  866          if (phraseIndex != null) {
+  867              for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
+  868                  String c = e.getKey();
+  869                  if (c.length() == 4 && c.startsWith(code3)) {
+  870                      result.addAll(e.getValue());
+  871                  }
+  872              }
+  873          }
+  874          return result.isEmpty() ? null : result;
+  875      }
+  876  
+  877      /**
+  878       * 字后联想（v0.4.8）：上屏某字后，返回本地词库中含该字的词组（最多 12 条）。
+  879       * 用于「打出任意一个字时，自动显示最近词组 + 带此字的词组」。
+  880       */
+  881      public static List<String> queryByChar(String ch) {
+  882          if (ch == null || ch.length() != 1) return null;
+  883          ensureIndex();
+  884          List<String> result = new ArrayList<>();
+  885          if (phraseIndex != null) {
+  886              for (List<String> list : phraseIndex.values()) {
+  887                  if (list == null) continue;
+  888                  for (String w : list) {
+  889                      if (w.indexOf(ch) >= 0 && !result.contains(w)) {
+  890                          result.add(w);
+  891                          if (result.size() >= 12) return result;
+  892                      }
+  893                  }
+  894              }
+  895          }
+  896          return result.isEmpty() ? null : result;
+  897      }
+  898  
+  899      /**
+  900       * 前缀联想（v0.4.9 连续联想）：上屏"陈胜"后，返回本地词库中以该串开头的词组
+
+第49页
+  901       * （如"陈胜"→"陈胜吴广"），实现历史事件/顺承式联想。
+  902       */
+  903      public static List<String> queryByPrefix(String prefix) {
+  904          if (prefix == null || prefix.isEmpty() || prefix.length() > 4) return null;
+  905          ensureIndex();
+  906          List<String> result = new ArrayList<>();
+  907          if (phraseIndex != null) {
+  908              for (List<String> list : phraseIndex.values()) {
+  909                  if (list == null) continue;
+  910                  for (String w : list) {
+  911                      if (w.startsWith(prefix) && !result.contains(w)) {
+  912                          result.add(w);
+  913                          if (result.size() >= 10) return result;
+  914                      }
+  915                  }
+  916              }
+  917          }
+  918          return result.isEmpty() ? null : result;
+  919      }
+  920  
+  921      /**
+  922       * 候选查询（用户固化的排序规则）：
+  923       *   1码 → 单字；2码 → 单字在前、二字词在后；3码 → 单字；
+  924       *   4码 → 词组优先、单字殿后
+  925       */
+  926      // v0.5.16 反馈③：常用字频序（高频在前；近似《现代汉语常用字表》高频字序，模拟数据，后续用真实语料替换）
+  927      private static final String COMMON_FREQ = "一是人了不在有大中国和为这上他个地年来我会以到时要出的生学说道民家子也成行下们于后就发自之对得主长可过天作分方用多你着部能市等业全里工公经本都而高政法面门动日进区事代那去心小同北定开产前其军还然起种所如现理机体表力好外与文当两实重新三么只山水关明从化平建又制南内西没此将员名手最东头者月间无安看见各城十相但已些正口通想度加第她合院物性战由位常点海意场武使次二向治因立数样身情入原问把路被并利石老教万知级量任江及应省资委务元美特期世湖回系比气汉总展电科金先声提品设或义王社很统处四首共马形己儿司太目基领队直计别女权话少流命至报米给打变果书清活几州华解议更称程今决张导术府才保交放管结师便走达族反再题色五京河接条规式县白它改风光运信受什组听布百济党指论强做取技黄神选记斯真却职号界件花类何眼兵传带空干农边据集联古广完质阳难增历史专官每住商即步认车台林必死游举线言皇土团收考求德叫近备研争非具李众连调感转笑革该持始英克士尔让拉思根格造较际亲单朝红型价校约器字段周亚深候则功属积快图火千准究往极育装许参半令吃观鱼精办像帝八复影告远群包整构料随划算象容示投势热值夫网望源息语股铁断派速怎需片爱律纪支早况病境证编越局推满且列觉服双未居除乐企引标确织初青志率项飞球节察龙响药站施均消客失轻存低甚般击曾防请离落显罗营足素视护副食创余照兴占巴虽洲村费易试星木黑左宝置跟央识维采六底宫房音环案批切斗富乡另倒若按查故突责严桥模仅胜杀围席态破承招杨负层须父供续状域似依银范修找九致密终血旅钱赛独细效玉冲获习医演毛尽脸弹楼艺航陆右协七攻镇检写苏宗章注阿抗弟坐验封紧劳户优财养适陈喜卫排射哥油刻留急降念云微伤例景拿绝阶座刘刚害印亿沙母酒助闻超审待压升送监策略限竟香配藏敌呢差仍兰温园树征善波哪词岛止预怕继皮执味份角草男普答益谁船惊核街夏宣掌田久著画辑奇尼剑吧谈背免孩礼材愿洋春架筑括晚乱乎讲尚良友临激刀夜室既敢邦挥昌板胡欧福港叶简苦担句岁荆贵娘守辖威宜衣帮块堂额错剧充欢够孙班呼阵销坚练脚退读测吴希宁换版异某顾曲楚典朱毒菜判救宋茶洪含顺啊鲜败货矿端兄归冷忙买险康评肉吗厂永哈沉散遗停笔假输牛洞松渐顶训录否述毕督控丰献姑忽爷互亮纳襄登咱钟伯臣雄季脑介鄂召饭暗扩祖齐短烈赶牌恩诉移诗础露届蒙静喝盘卖植授伊湾博痛减穿逐秘庭陵固禁票灵杂姓泽吸侧庆妈遇追甲馆补唐炮沿殿刺怪彩俄旧警索岸轮妇载靠附毫怀软骨探雷旁罪枪牙迎序慢盛雨墙恶谷顿危稳熟概酸操诸绿佛荣针托宽折野付午肯库厚缺罢耳屋嘴末谢巨培页瓦款犯困店智拥雪翻圣戏旗吉婚奖岩疑币圆歌廷健卡烧析讨跑烟误仙疗舞亡闭汽伸脱秋姐繁侵川莫麻秀借寻私岗卷跳丽横驻套兼您君丁束纸夺袁灯坏坦丝径购阴床瞧择墓宪峰遍鲁庙掉丹桃御舰避售怒课播拔奥延虚隐粮络遭摇潜庄混厅婆奴鼓赵访睡震予童徐韦殖抓拜吨扬址洛休纵逃染纷贸透汇灭蛋森仪塔距狐融郡缓聚盖拍迹忠释润粉涓孔岭搜紫虑促抵钢塞寺津液码虎坛珍硬梁奔累役偏迫锛凡损壁哭替税综伦冰盟挂韩竞乌尤弱铺妹秦尊竹珠迅脉泥鬼纯睛刑途隆潮幅杯握谋剂幸奉乘抱朋谓频崇壮骑紝恐享鸡虫绍铜呈泛械摆欲奶敬措爆暴签猛郭嘉障缩亦废搞胞埃曰撤暖寒订俗绩阻盐萨勒忘奏孝贴灰梅触玩默醒胸莲篇柱裁啦淡抢捕闹纺截讯朗誉雅忍梦伙勇峡徒丈尾迷唱泉泰佳残闪伍呀疾署剩贼冠倾豆申贫诺麦泪羊尖辈镜涉贡爹缘摩妻殊贝零映甘骂糖岳饮奋棉雕跃汗冒渡努赞启阁斤裂患伏池鹿洗劲晋倍圈媒箭沟锋胆凭挑抬闯隔弄曹汤苗迁叹唯振储贯彻桌祭符僧衡炸旋喊凤黎郎援肥磁忌赏辽祥董仁辛瑞询敏浪貌毁昨巧腿抽荷陷焦净腹弃乃湘亩滑狗冬宏皆番尸伟桂览恢龄绕趣晶坡魏摸伴墨浓绪舍蓝荡阅井鸿旦惯症鸟窗扎辞聘穷堰宇键荒递恨隶厉杜闲腰袭侍灾涨叔湿寨幕豪郑磨浮薄券赤腐译租氧戴邓煤肠牧孤诏妙旨堡册锅胖柳阔吹丘趋锦颜悬陶拳诚尺晓插蒋艇勤穴摄燕垂罚辆戒稀腾粗袋绘炎氏肩枝狂泊估杭扑臂哲寡偷懂琴悲盾炒稍矛愈籍颁吐呆违亭眉撞贷刊巡屈堆曼饰碎滚悉寄浜迟描污辅魔烦鼻盗餐幼凉仗冈澳驾銆菌肚肃爸仰抚慈扶盆仿炼纲倘碗杰忧惜扫暂祝跨渔宾漫寿猪涌凝邻赴恰劝仇践顷赋悄莱拟贤愤姆乏轰粒逼傅陕昆溶葬燃魂挺腊耐犹辉乳陪颇斜棋殑熊浅沈姊返翼丧拖惨俊驱袖惠涂添牵咸详碰割侯纤柔档糊岂跪拒覆绣吓宿偶揭赖烤卢娃颗邮扇伐循衰弦凯羽枚帅锁疏搭俱帐胶赫鐨埋蒸壳剉彼脏箱浙弯瓜挡拱筹疆肿膜刷杆凶债甜泡玄贾谱夹乾遣薪灌咬尘填廊钻丛狼牢脊熙卒碑漠躲削徽踏贺朵遵狠菲撒扰蛇锡炉纹匹亏鉴慕跌慌穆邀芳爬豫吾奸棒淮捷耕艘齿醉脂兽滴盈卵滋柴溪妃浠碍瓶辩遂怨拨肌俘挖恒励鸣肝腔偿秒拦允塑拆靖耗凌披胁吏纽烂尝垸辟耶艰佩敦疼荐厘匠柏悠壤拾乔轴妖喷掩璃孟轨歇猜晨坊桑堤畅瞎氨辨鞋昏恭畜浩迪雾丢咨擦窝洁飘捉搬奈肤愁砖辣幽嘛赢藕挤舒狮耀诊扣篮尿唤梯勾霍舌侠筋枢屏衙殷栏纠链恋惧笼寸冶弥晃叙吊哩稿娜剥拼欺榜囊汪逆骗堪猎棺胎俩郊掘匆缝乙藻携慧函辱扯嫩癌悟滩祸秉慰驰狱砍糕漏吞纬茅渠催踪叛浑牲杖鞭腺邪欣汝碳彭咐椒绳颈漆遥夷郁斑忆阀卑宴抑逻嫁扭胃仔恼贪兆庸屽僭疯侦鹰驶斩鹤猴蜂瘦赐闷柄椅轿拓扮砂傻粘辐啥鏄伪抛玻昂圳侨吟刃饱吕玛碱冯仓钦哼庞儒叉泄臭艾蓉鼠祯捧舱坝芙瘤勃敲帽吻契舟夸葡剪抖霸艳宸聪仆躺瑶谦炭卧袍猫珊溜漂衔苍坑串浆碧巷咽铸押惩迈锐颤疲滨履盒宅喀饿缠翁幻逢扁旱罕怜姻蓄磷惟槸帕掠稻劫撑姿肾胀慎哨摔谨鹅丑塘肺镑趁蜀兑哦贞禧葛仲惑蔡踢妥筒诞禀朴祀饼萄狭澶杩赔绵诱卜陀呵抹疫辰顽蓬摊倡浦账矩翠煌茂畏劣氛廉鸭瓷戈秩弗悔尉挣拐鼎芦睁脾聊株枯纱幺冻唇茫哀芬轩蛮醇棍晕嫂宙酷郧欠稷鹏孕槽栖吩姚昭罐叠墩盼舆芒酬斥捐斋簡眠脆萧璋皱卿蚀淋卓翰钉棣丫宰阐翅沃挨霖哄爵涔衫逊铭戚旺硕擅嫌赌隋肖饶沪雇罩煎丐掷誓摘竴冤坤屁竭屾宛菱厌矮潭渊俺崖氢棚喇涵裕溃堵媳抄鍙怔蒂肢瑜泌甫檐鏈寂颠撰逝霜羞铅佐帖硫蹈鍦瞬痕爽挽禅娶柯屯韵婴悦肴螺凑兹烛歼毅杉慨钧渗蜜遮窑谐厦柜匈喉愧栽扔苯谊肆霞吵屼笉夕壶赚尹窄弓谭盲勋饲窟俞嗣煮巾裤膨奠瞪珞愚膏喘姜膀蔬糟僚匾妄畴喂沔耻牺旭妨硅崩雌陛卸砸贩竖佸攀晒伞惹裹屠汁擒鳞佣渴浣叩龟雀掀唉泼亥僵屡瞒哊璇厮刮钩桐谅隙丞盯霉侄逸浸爪阙坟咳宠脖彪朕虹衍甸鳍讼虾芝涛巩熔峻怖嘿磕洒掏枣滞鈥舅昔哑焕娱芯衷捞卦旬矣茨蜡喻挪婶琉枕娇豹厨傲腕巢氯燥焚乖嘱禄赠晌鍚琦铃雁姨蹄焰虏鍒粑饥潘兀捏缔歪蕴鸦嘻俯锻骤庵吁剿禽勉膝捣茎晴厢匀灏涯梨蒲驼匪撕嗯樊搏缚垄寓愣斌麋劈旷舵薛沸丸泳绸炬缴寰贱躯褐酶嚷拌颂帜陡鍏募佑皖鎴绑啡仑麓鏉帘镖钠刹妆禾藤弊痴哇凰歧驴铝闸喃滥耍桶酱惶躬熬娥剅啸淘裙骚亨勘窃挫凿塌咖垫芽凸钙框哟翔逮舶锥怡魄灶浴蔽橡懒硝晰盏赦庐谕鄙拂菩栗琳沼圭屿砌倚棵瑰羲酿诈锌杏婉沦卤躁斧淳兔凛哎阮淫剖蕲烹姥咕蚕兜璧搅帆暇趟裸購粹吼哗冀呜瞻搁乞骇炕垮拘岃嵌笛鹃菊淀肪鞍愉犬弧蹲椎阎浏诵烘榴腥裘萝颊蟹灿摧棱琼骄凄怯淑梢丙暮媚钊沫糯驳崔谏炳畔缅襟锤觅鍑拢胪诀奢苹叮榨瀹沾傚渝枉辜髓坠瑟棕萍贿泣嫣峨憾胺甩陂寇烯钓瞅沧坪暑耸垒傍睹垜薯溢鏃谜咋缁嗓贬窜戟葱屑湁胚犁莎囚颖诡腻藩彦勫巍痒蹇芷赣湪沐膊婢粤喧逛贮恍菇諲邢绮厥澄邵耽讽衬恕烫毯仕昼闽拚勿繖桓钾膛歉膳詹坎敛碌狄沽侮垱寝妾嗽埔眷揪牡毙荫涡鍐桩锣釜瀛缮梳揽咀雍铲倦岱厄弘淤尴玲鎵祠恳粥衢戳秃瀑搂迭垃缸郝挠莽瑙瞄粟跋呐歹豚驿圾胳魁诧绒鞑谎尬陌粬讳蝶咒裔凳梭涅杈泻苇焉娟迦巫扒翊敷谣隅撇凹蚁氮苑妓綘潇禹朽寮郢伽粪诛醋栋谴隧簇踩礁庶衮笅堕噪嘲濂鲟彝柬斐沛卞篷祁耿嚼宦溯黔浇敞绞瓣傛窦蕃嶅汰鲍遏魅槐鞘钞徙讶碟琐琢滤嗤鐪蠢锰嵋篘逾弼绅腑瑚稽溉宵祈庇備蒿蛛窍勬玫煞笨鸽泵袱薇捡堝拈驯骡肇砰垣迄斟灼澜漕萼葫鏂梗洼筷僻鳌镶捆昧跺棘曙滄阜豁挟睿矢湛酥眨惕淹岔稼邹逵灞揉俭蛙匣陋盔羌缆聂莉抒痰湴慷後懈芜琛骆扳汛悍呕岀虞瑕酚伺細拽羡鐗鍔蔗滇苔彬拇冥鍗厕絮藉窥羹奕閲铮矶夊晖匕逗傗哺倪怠瞩窖檀蕉缀苕猿浊瞥簿璁缉皋魦楠萌斡焖揖祺鍥烷芋绽侗匙谬睦橙剌撼撮熏碾亢垦逍彰佃邑梓啪诰嗗驹嗡羁敝汞嚣辫蝇汹沅惭蠡墟娴咧漳滔韧孢缕炯涩嵩缎饷唬哉褰鎶濒峭鳙筛殉嶆霎椭啤咯兘婿眯眶鸪珂靡矫鍛诲渤闃钥肘嘶孽杞饵咚敕熷潵桨樱戎榻愕鮠晤蔓啼憋鹧笃侣瓙懿骸摹磋皂嬪欎咏趾吭翘鲤鎯拣骞乍鳄酯栅绰氟渣鸠娌锯邱莹脓闺颐譬钛奎揣溅绢茸蜒笂烁畸姝棠怦晦瘫朔疮蓦靶攒渭铀磅唾茄蕾馨廖荤傣胥兢扛葵丕舜鲨闂乒闄逞诬苟廓镍槛狡牟鸳俏芥浼裴鐢麟稚叭氣鑰悼岄漓楞毗赎倭変玺蝉憎楷柑杠蚊妒馈删孜滃偅拙韬祷熄鸯佹樻虐蒯紊酰佬翌妮蚌沁侈噶剃霳芭烩稠锭娑胧琅坞褂筵轧褶觑酮篆醛洽唧趴绉崛嗭圻扼叨蒜寞毡簧砥撬煨嫉腮慑朦鍘閮嗅鲢聋炖酌冉嗕胤攘牒吱嫔笙蜿裳碘霄鏅瘾捻乓澧吆嶈劾瞰橘澡酋灸竿梍矗耙寥钝蛾姹籗勺庚剁狩隘靴搓篃狸犲讥擂犳豌馒茬伶秭戝鲸苛镁梵傝垛臀颌颅夋徊捎鎬幢弩讧咦嘎鍜涕俸纂呻卯嗜札榆噢锜蔑峙";
+  928  
+  929      /** v0.5.16 反馈③：同码常用字按频序稳定排序（如 dg 研厂三 → 三 在前；不在频序的保持原序靠后） */
+  930      /** v0.5.25 算法①：词得分 = Σ(3500 - 字频排名) —— 全高频字组合（中国人民）得分高、含生僻字组合（咖僻）得分≈0，无需词库即可区分真实词与噪声 */
+  931      private static int wordScore(String w) {
+  932          int total = 0;
+  933          int n = COMMON_FREQ.length();
+  934          for (int i = 0; i < w.length(); i++) {
+  935              int r = COMMON_FREQ.indexOf(w.charAt(i));
+  936              total += (r < 0) ? 0 : (n - r);
+  937          }
+  938          // v0.5.27 反馈①：2 字词加权×2（日常用语以 2 字为主）——"乐意"不再被三字噪声（气水意）挤后；
+  939          //   4 字词×1.5（成语/专名"中国人民"保留优势）；3 字×1
+  940          if (w.length() == 2) total *= 2;
+  941          else if (w.length() == 4) total = total * 3 / 2;
+  942          return total;
+  943      }
+  944  
+  945      /** v0.5.25 算法②：候选组合后按词得分降序重排（保障词置顶后）；2+2 噪声词自动沉底、四字词/成语浮上 */
+  946      private static void reorderByScore(List<String> list, int guaranteed) {
+  947          if (list.size() <= guaranteed + 1) return;
+  948          List<String> head = new ArrayList<>(list.subList(0, guaranteed));
+  949          List<String> tail = new ArrayList<>(list.subList(guaranteed, list.size()));
+  950          tail.sort(new java.util.Comparator<String>() {
+
+第50页
+  951              public int compare(String a, String b) {
+  952                  return wordScore(b) - wordScore(a);
+  953              }
+  954          });
+  955          list.clear();
+  956          list.addAll(head);
+  957          list.addAll(tail);
+  958      }
+  959  
+  960      private static void sortByFreq(List<String> list) {
+  961          for (int i = 1; i < list.size(); i++) {
+  962              String k = list.get(i);
+  963              int j = i - 1;
+  964              int fk = COMMON_FREQ.indexOf(k);
+  965              while (j >= 0 && COMMON_FREQ.indexOf(list.get(j)) > fk) {
+  966                  list.set(j + 1, list.get(j));
+  967                  j--;
+  968              }
+  969              list.set(j + 1, k);
+  970          }
+  971      }
+  972  
+  973      /**
+  974       * v0.5.23 动态拼词（钟总核心思路）：基础库 + 86 规则 → 词组无限
+  975       * 输入 4 码 → 2+2 二字词 / 1+1+2 三字词 / 1+1+1+1 四字词 拆码反查组合
+  976       * 保障词置顶；候选按字频（COMMON_FREQ）稳定排序，最多 15 条
+  977       */
+  978      public static List<String> buildDynamicWords(String code) {
+  979          if (code == null || code.length() != 4) return null;
+  980          ensureIndex();
+  981          List<String> out = new ArrayList<>();
+  982          // 保障词精确置顶（v0.5.25 扩容至 70 个高频词，命中率 85%→95%+ 的基石）
+  983          for (String g : GUARANTEED) {
+  984              // v0.5.26 修复：保障词长度条件 ==6 只匹配 2 字词，3/4 字保障词（没办法/中国人民）全部失效
+  985              //   → 改为 >4（4 码 + 任意长度词），ilif 重新打出"没办法"
+  986              if (g.length() > 4 && g.startsWith(code)) {
+  987                  String w = g.substring(4);
+  988                  if (!out.contains(w)) out.add(w);
+  989              }
+  990          }
+  991          int gCount = out.size();
+  992          // v0.5.24 修复①：拼词桶按字频排序——常用全码字（意/以等）不被同前缀生僻字挤掉（乐意 qiuj / 可以 skny）
+  993          List<String> a2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(0, 2)));
+  994          List<String> b2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(2, 4)));
+  995          if (a2 != null) sortByFreq(a2);
+  996          if (b2 != null) sortByFreq(b2);
+  997          if (a2 != null && b2 != null) {
+  998              int la = Math.min(a2.size(), 6), lb = Math.min(b2.size(), 6);
+  999              for (int i = 0; i < la; i++) {
+ 1000                  for (int j = 0; j < lb; j++) {
+
+第51页
+ 1001                      String w = a2.get(i) + b2.get(j);
+ 1002                      if (!out.contains(w)) out.add(w);
+ 1003                  }
+ 1004              }
+ 1005          }
+ 1006          // 1+1+2 三字词
+ 1007          List<String> c1 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(0, 1)));
+ 1008          List<String> c2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(1, 2)));
+ 1009          List<String> c3 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(2, 4)));
+ 1010          if (c1 != null) sortByFreq(c1);
+ 1011          if (c2 != null) sortByFreq(c2);
+ 1012          if (c3 != null) sortByFreq(c3);
+ 1013          if (c1 != null && c2 != null && c3 != null) {
+ 1014              int l1 = Math.min(c1.size(), 4), l2 = Math.min(c2.size(), 4), l3 = Math.min(c3.size(), 4);
+ 1015              for (int i = 0; i < l1; i++) {
+ 1016                  for (int j = 0; j < l2; j++) {
+ 1017                      for (int k = 0; k < l3; k++) {
+ 1018                          String w = c1.get(i) + c2.get(j) + c3.get(k);
+ 1019                          if (!out.contains(w)) out.add(w);
+ 1020                      }
+ 1021                  }
+ 1022              }
+ 1023          }
+ 1024          // 1+1+1+1 四字词（限流 2×2×2×2=16，排序后截断）
+ 1025          List<String> d1 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(0, 1)));
+ 1026          List<String> d2 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(1, 2)));
+ 1027          List<String> d3 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(2, 3)));
+ 1028          List<String> d4 = prefixIndex == null ? null : new ArrayList<>(prefixIndex.get(code.substring(3, 4)));
+ 1029          if (d1 != null) sortByFreq(d1);
+ 1030          if (d2 != null) sortByFreq(d2);
+ 1031          if (d3 != null) sortByFreq(d3);
+ 1032          if (d4 != null) sortByFreq(d4);
+ 1033          if (d1 != null && d2 != null && d3 != null && d4 != null) {
+ 1034              int l1 = Math.min(d1.size(), 3), l2 = Math.min(d2.size(), 3), l3 = Math.min(d3.size(), 3), l4 = Math.min(d4.size(), 3);
+ 1035              for (int i = 0; i < l1; i++) {
+ 1036                  for (int j = 0; j < l2; j++) {
+ 1037                      for (int k = 0; k < l3; k++) {
+ 1038                          for (int m = 0; m < l4; m++) {
+ 1039                              String w = d1.get(i) + d2.get(j) + d3.get(k) + d4.get(m);
+ 1040                              if (!out.contains(w)) out.add(w);
+ 1041                          }
+ 1042                      }
+ 1043                  }
+ 1044              }
+ 1045          }
+ 1046          // v0.5.25 算法②：词得分重排（保障词置顶后）——真实词（全高频字）浮上、2+2 噪声词（生僻字）沉底
+ 1047          reorderByScore(out, gCount);
+ 1048          if (out.size() > 15) out = new ArrayList<>(out.subList(0, 15));
+ 1049          return out;
+ 1050      }
+
+第52页
+ 1051  
+ 1052      /**
+ 1053       * v0.5.23 动态词组编码（MRU 置顶用）：按 86 规则从单字全码反算词编码
+ 1054       * 2字=前2+前2；3字=1+1+2；4字=1+1+1+1；仅支持 2-4 字
+ 1055       */
+ 1056      public static String dynamicPhraseCode(String word) {
+ 1057          if (word == null) return null;
+ 1058          int n = word.length();
+ 1059          if (n < 2 || n > 4) return null;
+ 1060          ensureIndex();
+ 1061          StringBuilder sb = new StringBuilder();
+ 1062          try {
+ 1063              if (n == 2) {
+ 1064                  for (int i = 0; i < 2; i++) {
+ 1065                      String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(i)));
+ 1066                      if (fc == null) return null;
+ 1067                      sb.append(fc, 0, Math.min(2, fc.length()));
+ 1068                  }
+ 1069              } else if (n == 3) {
+ 1070                  for (int i = 0; i < 2; i++) {
+ 1071                      String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(i)));
+ 1072                      if (fc == null) return null;
+ 1073                      sb.append(fc.charAt(0));
+ 1074                  }
+ 1075                  String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(2)));
+ 1076                  if (fc == null) return null;
+ 1077                  sb.append(fc, 0, Math.min(2, fc.length()));
+ 1078              } else {
+ 1079                  for (int i = 0; i < 4; i++) {
+ 1080                      String fc = fullCodeIndex == null ? null : fullCodeIndex.get(String.valueOf(word.charAt(i)));
+ 1081                      if (fc == null) return null;
+ 1082                      sb.append(fc.charAt(0));
+ 1083                  }
+ 1084              }
+ 1085          } catch (Exception ex) { return null; }
+ 1086          return sb.length() == 4 ? sb.toString() : null;
+ 1087      }
+ 1088  
+ 1089      /** v0.4.8 反馈①②③：查候选（1 码简码单字 / 2 码先单后词 / 3 码单字+预测 / 4 码词组优先） */
+ 1090      public static List<String> query(String code) {
+ 1091          if (code == null || code.isEmpty()) return null;
+ 1092          ensureIndex();
+ 1093          List<String> result = new ArrayList<>();
+ 1094          List<String> singles = singleIndex == null ? null : singleIndex.get(code);
+ 1095          List<String> phr = phraseIndex == null ? null : phraseIndex.get(code);
+ 1096          int len = code.length();
+ 1097          // v0.5.16 反馈③：2/3/4 码单字按常用字频序重排（高频字自动前移，先科学后先进）
+ 1098          // v0.5.45 反馈④：1 码同样重排 + 一级简码强制第一（打 r=的/i=不/w=人，键名字不得压过简码）
+ 1099          if (singles != null && singles.size() > 1) sortByFreq(singles);
+ 1100          if (len == 1) {
+
+第53页
+ 1101              if (singles != null) {
+ 1102                  // 一级简码强制置顶（如 w 行"八/人"→"人"第一）
+ 1103                  String expect = null;
+ 1104                  for (String s1 : SIMPLE1) {
+ 1105                      if (s1.charAt(0) == code.charAt(0)) { expect = s1.substring(1); break; }
+ 1106                  }
+ 1107                  if (expect != null) {
+ 1108                      result.add(expect);
+ 1109                      for (String c : singles) if (!c.equals(expect)) result.add(c);
+ 1110                  } else {
+ 1111                      result.addAll(singles);
+ 1112                  }
+ 1113              }
+ 1114          } else if (len == 2) {
+ 1115              // v0.5.43 反馈②：词组优先（二字词/三字词/四字词/多字词 均先于单字）
+ 1116              if (phr != null) result.addAll(phr);
+ 1117              if (singles != null) result.addAll(singles);
+ 1118          } else if (len == 3) {
+ 1119              if (phr != null) result.addAll(phr);
+ 1120              // v0.5.43 反馈②：3 码前缀匹配 4 码词组（uab→uabn 辛苦了）——词组优先
+ 1121              if (phraseIndex != null) {
+ 1122                  List<String> prePhr = new ArrayList<>();
+ 1123                  for (Map.Entry<String, List<String>> e : phraseIndex.entrySet()) {
+ 1124                      String k = e.getKey();
+ 1125                      if (k.length() > 3 && k.startsWith(code)) {
+ 1126                          for (String w : e.getValue()) {
+ 1127                              if (!prePhr.contains(w)) prePhr.add(w);
+ 1128                          }
+ 1129                      }
+ 1130                  }
+ 1131                  if (!prePhr.isEmpty()) result.addAll(prePhr);
+ 1132              }
+ 1133              if (singles != null) result.addAll(singles);
+ 1134              // v0.5.36 反馈⑥：3 码前缀匹配全码（suf→栏 sufg、udp→送 udpi）——高频单字可直接打出
+ 1135              if (singleIndex != null) {
+ 1136                  for (Map.Entry<String, List<String>> e : singleIndex.entrySet()) {
+ 1137                      String k = e.getKey();
+ 1138                      if (k.length() > 3 && k.startsWith(code)) {
+ 1139                          for (String w : e.getValue()) {
+ 1140                              if (!result.contains(w)) result.add(w);
+ 1141                          }
+ 1142                      }
+ 1143                  }
+ 1144                  if (result.size() > 1) sortByFreq(result);
+ 1145                  if (result.size() > 10) result = new ArrayList<>(result.subList(0, 10));
+ 1146              }
+ 1147          } else if (len == 4) {
+ 1148              if (phr != null) result.addAll(phr);
+ 1149              // v0.5.40 反馈③：4 码单字同样按字频排序（同码多字高频靠前）
+ 1150              if (singles != null) {
+
+第54页
+ 1151                  if (singles.size() > 1) sortByFreq(singles);
+ 1152                  result.addAll(singles);
+ 1153              }
+ 1154          }
+ 1155          return result.isEmpty() ? null : result;
+ 1156      }
+ 1157  
+ 1158      /** v0.5.0 反馈②：取词组的五笔编码（反向索引首条），无则返回 null */
+ 1159      public static String phraseCode(String word) {
+ 1160          if (word == null || word.isEmpty()) return null;
+ 1161          ensureIndex();
+ 1162          if (phraseCodeIndex == null) return null;
+ 1163          return phraseCodeIndex.get(word);
+ 1164      }
+ 1165  
+ 1166      /** v0.5.4 反馈②：取单字的五笔编码（反向索引首条），无则返回 null */
+ 1167      public static String singleCode(String ch) {
+ 1168          if (ch == null || ch.length() != 1) return null;
+ 1169          ensureIndex();
+ 1170          if (singleCodeIndex == null) return null;
+ 1171          return singleCodeIndex.get(ch);
+ 1172      }
+ 1173  }
+ 1174  package com.cloudwubi.ime;
+ 1175  
+ 1176  import android.content.Context;
+ 1177  import android.graphics.Canvas;
+ 1178  import android.graphics.Paint;
+ 1179  import android.graphics.RectF;
+ 1180  import android.inputmethodservice.Keyboard;
+ 1181  import android.inputmethodservice.KeyboardView;
+ 1182  import android.util.AttributeSet;
+ 1183  import android.view.MotionEvent;
+ 1184  
+ 1185  /**
+ 1186   * CloudKeyboardView - 云五笔软键盘视图（v0.4.5 → v0.4.9）
+ 1187   *
+ 1188   * 功能：
+ 1189   *  1. 字母键上滑输入数字/标点（Q→1 … P→0，A→@ … L→!，Z→- … M→;）
+ 1190   *  2. 键帽左上角标注上滑符号（反馈⑦：键盘上能看到上滑可输入的数字/符号）
+ 1191   *  3. 字母大小写显示支持（label 小写 + shiftLabel 大写）
+ 1192   *  4. v0.4.9 反馈③：完全自绘 FLAT 纯色键帽（无渐变/立体），深浅色主题四件套实时切换
+ 1193   *     ——同时规避高版本 Android SDK 移除 KeyboardView.setKeyBackground 等 API 的兼容问题
+ 1194   */
+ 1195  public class CloudKeyboardView extends KeyboardView {
+ 1196  
+ 1197      private static final int SWIPE_THRESHOLD_DP = 18;   // v0.5.29 反馈①：减小阈值，上滑更灵敏
+ 1198      private static final int LONG_PRESS_MS = 600;
+ 1199  
+ 1200      private int downY = 0;
+
+第55页
+ 1201      private boolean swipeTriggered = false;
+ 1202      private Keyboard.Key downKey = null;
+ 1203      private final int thresholdPx;
+ 1204      /** v0.5.4 反馈③：长按支持（回车长按→换行） */
+ 1205      private boolean longPressTriggered = false;
+ 1206      private OnLongPressListener longPressListener;
+ 1207      private final Runnable longPressRunnable = new Runnable() {
+ 1208          @Override
+ 1209          public void run() {
+ 1210              if (downKey != null && longPressListener != null && !swipeTriggered) {
+ 1211                  longPressTriggered = true;
+ 1212                  longPressListener.onLongPress(downKey);
+ 1213              }
+ 1214          }
+ 1215      };
+ 1216  
+ 1217      /** v0.5.4 反馈③：长按回调接口 */
+ 1218      public interface OnLongPressListener {
+ 1219          void onLongPress(Keyboard.Key key);
+ 1220      }
+ 1221  
+ 1222      public void setOnLongPressListener(OnLongPressListener l) {
+ 1223          longPressListener = l;
+ 1224      }
+ 1225  
+ 1226      /** 上滑符号标注画笔 */
+ 1227      private final Paint hintPaint;
+ 1228  
+ 1229      // ===== v0.4.9 FLAT 自绘主题 =====
+ 1230      private int boardBg = 0xFFF3F4F6;       // 键盘底板
+ 1231      private int keyBgNormal = 0xFFFFFFFF;   // 普通键面
+ 1232      private int keyBgFunc = 0xFFE5E7EB;     // 功能键面
+ 1233      private int keyTextColor = 0xFF1F2937;  // 键面文字
+ 1234      private final float cornerPx;           // 键帽圆角
+ 1235      private final float labelSizePx;
+ 1236      private final Paint keyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+ 1237      private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+ 1238  
+ 1239      /** v0.4.9：深浅色主题切换（键帽/底板/文字/上滑标注四件套） */
+ 1240      public void applyTheme(boolean dark) {
+ 1241          if (dark) {
+ 1242              boardBg = 0xFF111827;
+ 1243              keyBgNormal = 0xFF1F2937;
+ 1244              keyBgFunc = 0xFF374151;
+ 1245              keyTextColor = 0xFFF9FAFB;
+ 1246              hintPaint.setColor(0xFF6B7280);
+ 1247          } else {
+ 1248              boardBg = 0xFFF3F4F6;
+ 1249              keyBgNormal = 0xFFFFFFFF;
+ 1250              keyBgFunc = 0xFFE5E7EB;
+
+第56页
+ 1251              keyTextColor = 0xFF1F2937;
+ 1252              hintPaint.setColor(0xFF9CA3AF);
+ 1253          }
+ 1254          invalidate();
+ 1255      }
+ 1256  
+ 1257      /** v0.4.9：上滑符号标注颜色（跟随主题） */
+ 1258      public void setHintColor(int color) {
+ 1259          hintPaint.setColor(color);
+ 1260          invalidate();
+ 1261      }
+ 1262  
+ 1263      public CloudKeyboardView(Context context, AttributeSet attrs) {
+ 1264          super(context, attrs);
+ 1265          thresholdPx = Math.round(SWIPE_THRESHOLD_DP * context.getResources().getDisplayMetrics().density);
+ 1266          hintPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+ 1267          hintPaint.setTextAlign(Paint.Align.CENTER);
+ 1268          hintPaint.setColor(0xFF9CA3AF);
+ 1269          float density = context.getResources().getDisplayMetrics().density;
+ 1270          hintPaint.setTextSize(10 * density);
+ 1271          cornerPx = 6 * density;
+ 1272          labelSizePx = 20 * density;
+ 1273          textPaint.setTextAlign(Paint.Align.CENTER);
+ 1274      }
+ 1275  
+ 1276      /** 上滑符号映射（v0.4.6 严格对齐参考截图）：
+ 1277       *  行1 Q→1…P→0；行2 A→~ S→@ D→# F→$ G→% H→& J→* K→( L→)；
+ 1278       *  行3 Z→' X→/ C→- V→_ B→: N→; M→` */
+ 1279      public static int swipeSymbol(Keyboard.Key key) {
+ 1280          if (key == null || key.codes == null || key.codes.length == 0) return 0;
+ 1281          int code = key.codes[0];
+ 1282          switch (code) {
+ 1283              case 113: return '1';  // Q
+ 1284              case 119: return '2';  // W
+ 1285              case 101: return '3';  // E
+ 1286              case 114: return '4';  // R
+ 1287              case 116: return '5';  // T
+ 1288              case 121: return '6';  // Y
+ 1289              case 117: return '7';  // U
+ 1290              case 105: return '8';  // I
+ 1291              case 111: return '9';  // O
+ 1292              case 112: return '0';  // P
+ 1293              case 97: return '~';   // A
+ 1294              case 115: return '@';  // S
+ 1295              case 100: return '#';  // D
+ 1296              case 102: return '$';  // F
+ 1297              case 103: return '%';  // G
+ 1298              case 104: return '&';  // H
+ 1299              case 106: return '*';  // J
+ 1300              case 107: return '(';  // K
+
+第57页
+ 1301              case 108: return ')';  // L
+ 1302              case 122: return '\''; // Z
+ 1303              case 120: return '/';  // X
+ 1304              case 99: return '-';   // C
+ 1305              case 118: return '_';  // V
+ 1306              case 98: return ':';   // B
+ 1307              case 110: return ';';  // N
+ 1308              case 109: return '`';  // M
+ 1309              case -106: return 0xFF01;  // v0.5.17 修复回归：！，键上滑 → ！（原设计走 IME.swipeUp 但 onTouchEvent 重写后死代码）
+ 1310              case -108: return 0xFF1F;  // v0.5.17 修复回归：？。键上滑 → ？
+ 1311              default: return 0;
+ 1312          }
+ 1313      }
+ 1314  
+ 1315      @Override
+ 1316      public boolean onTouchEvent(MotionEvent ev) {
+ 1317          int x = (int) ev.getX();
+ 1318          int y = (int) ev.getY();
+ 1319          switch (ev.getActionMasked()) {
+ 1320              case MotionEvent.ACTION_DOWN:
+ 1321                  downY = y;
+ 1322                  swipeTriggered = false;
+ 1323                  longPressTriggered = false;
+ 1324                  downKey = findKey(x, y);
+ 1325                  // v0.5.46 反馈②：按下只重绘按下的键区域（局部 invalidate），避免全键盘 70+ 键重绘卡顿
+ 1326                  if (downKey != null) {
+ 1327                      invalidate(downKey.x + getPaddingLeft() - 2, downKey.y + getPaddingTop() - 2,
+ 1328                              downKey.x + getPaddingLeft() + downKey.width + 2,
+ 1329                              downKey.y + getPaddingTop() + downKey.height + 2);
+ 1330                  } else {
+ 1331                      invalidate();
+ 1332                  }
+ 1333                  if (downKey != null) {
+ 1334                      removeCallbacks(longPressRunnable);
+ 1335                      postDelayed(longPressRunnable, LONG_PRESS_MS);
+ 1336                  }
+ 1337                  break;
+ 1338              case MotionEvent.ACTION_MOVE:
+ 1339                  if (!swipeTriggered && downKey != null && (downY - y) > thresholdPx) {
+ 1340                      swipeTriggered = true;
+ 1341                      removeCallbacks(longPressRunnable);
+ 1342                      int sym = swipeSymbol(downKey);
+ 1343                      if (sym != 0) {
+ 1344                          getOnKeyboardActionListener().onKey(sym, new int[]{sym});
+ 1345                          return true;
+ 1346                      }
+ 1347                  }
+ 1348                  break;
+ 1349              case MotionEvent.ACTION_UP:
+ 1350                  removeCallbacks(longPressRunnable);
+
+第58页
+ 1351                  if (longPressTriggered) {
+ 1352                      // v0.5.4 反馈③：长按已处理，吞掉本次点击避免触发普通键
+ 1353                      longPressTriggered = false;
+ 1354                      downKey = null;
+ 1355                      return true;
+ 1356                  }
+ 1357                  // v0.5.28 反馈④：上滑已触发过（符号已上屏）→ 吞掉本次点击，避免字母一并上屏
+ 1358                  if (swipeTriggered) {
+ 1359                      swipeTriggered = false;
+ 1360                      downKey = null;
+ 1361                      return true;
+ 1362                  }
+ 1363                  // v0.5.29 反馈①：UP 兜底——快速上滑（MOVE 未及检测）在抬手时触发上滑符号并吞掉主键
+ 1364                  if (downKey != null && (downY - y) > thresholdPx) {
+ 1365                      int sym = swipeSymbol(downKey);
+ 1366                      if (sym != 0) {
+ 1367                          swipeTriggered = false;
+ 1368                          downKey = null;
+ 1369                          getOnKeyboardActionListener().onKey(sym, new int[]{sym});
+ 1370                          return true;
+ 1371                      }
+ 1372                  }
+ 1373                  downKey = null;
+ 1374                  break;
+ 1375              case MotionEvent.ACTION_CANCEL:
+ 1376                  removeCallbacks(longPressRunnable);
+ 1377                  downKey = null;
+ 1378                  break;
+ 1379          }
+ 1380          return super.onTouchEvent(ev);
+ 1381      }
+ 1382  
+ 1383      /** v0.5.3 反馈⑨：数字/符号面板满宽居中——键盘按当前视图可用宽高等比缩放（幂等：以当前实际边界为基准） */
+ 1384      private void fitKeyboardWidth() {
+ 1385          Keyboard kb = getKeyboard();
+ 1386          int w = getWidth();
+ 1387          int h = getHeight();
+ 1388          if (kb == null || w <= 0 || h <= 0) return;
+ 1389          int availW = w - getPaddingLeft() - getPaddingRight();
+ 1390          int availH = h - getPaddingTop() - getPaddingBottom();
+ 1391          if (availW <= 0 || availH <= 0) return;
+ 1392          try {
+ 1393              int maxX = 0, maxY = 0;
+ 1394              for (Keyboard.Key k : kb.getKeys()) {
+ 1395                  int right = k.x + k.width;
+ 1396                  int bottom = k.y + k.height;
+ 1397                  if (right > maxX) maxX = right;
+ 1398                  if (bottom > maxY) maxY = bottom;
+ 1399              }
+ 1400              if (maxX <= 0 || maxY <= 0) return;
+
+第59页
+ 1401              float sx = availW / (float) maxX;
+ 1402              float sy = availH / (float) maxY;
+ 1403              for (Keyboard.Key k : kb.getKeys()) {
+ 1404                  k.x = Math.round(k.x * sx);
+ 1405                  k.y = Math.round(k.y * sy);
+ 1406                  k.width = Math.round(k.width * sx);
+ 1407                  k.height = Math.round(k.height * sy);
+ 1408              }
+ 1409              invalidateAllKeys();
+ 1410          } catch (Exception ignored) { }
+ 1411      }
+ 1412  
+ 1413      @Override
+ 1414      public void onSizeChanged(int w, int h, int oldw, int oldh) {
+ 1415          super.onSizeChanged(w, h, oldw, oldh);
+ 1416          fitKeyboardWidth();
+ 1417      }
+ 1418  
+ 1419      @Override
+ 1420      public void setKeyboard(Keyboard kb) {
+ 1421          super.setKeyboard(kb);
+ 1422          fitKeyboardWidth();
+ 1423      }
+ 1424  
+ 1425      /** v0.4.9 FLAT 全自绘（键帽圆角纯色 + 文字 + 上滑标注），不依赖父类绘制 API */
+ 1426      @Override
+ 1427      public void onDraw(Canvas canvas) {
+ 1428          Keyboard kb = getKeyboard();
+ 1429          if (kb == null) return;
+ 1430          canvas.drawColor(boardBg);
+ 1431          int padLeft = getPaddingLeft();
+ 1432          int padTop = getPaddingTop();
+ 1433          for (Keyboard.Key key : kb.getKeys()) {
+ 1434              float x = key.x + padLeft;
+ 1435              float y = key.y + padTop;
+ 1436              // 1) 键帽底色（功能键深一档）
+ 1437              boolean pressed = (downKey == key);
+ 1438              boolean func = isFuncKey(key);
+ 1439              keyPaint.setColor(func ? (pressed ? 0xFFD1D5DB : keyBgFunc)
+ 1440                                     : (pressed ? 0xFFE5E7EB : keyBgNormal));
+ 1441              RectF r = new RectF(x + 2, y + 2, x + key.width - 2, y + key.height - 2);
+ 1442              canvas.drawRoundRect(r, cornerPx, cornerPx, keyPaint);
+ 1443              // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护；v0.5.1 支持上下两行；v0.5.4 反馈①：全部水平居中，布局统一）
+ 1444              float cx = x + key.width / 2f;
+ 1445              if (key.label != null && key.label.length() > 0) {
+ 1446                  String lab = key.label.toString();
+ 1447                  int nl = lab.indexOf('\n');
+ 1448                  if (nl >= 0) {
+ 1449                      String up = lab.substring(0, nl);
+ 1450                      String down = lab.substring(nl + 1);
+
+第60页
+ 1451                      if (up.length() > 0) {
+ 1452                          textPaint.setColor(keyTextColor);
+ 1453                          textPaint.setTextSize(labelSizePx * 0.60f);
+ 1454                          canvas.drawText(up, cx, y + key.height * 0.36f, textPaint);
+ 1455                      }
+ 1456                      if (down.length() > 0) {
+ 1457                          textPaint.setColor(keyTextColor);
+ 1458                          textPaint.setTextSize(labelSizePx);
+ 1459                          canvas.drawText(down, cx, y + key.height * 0.72f, textPaint);
+ 1460                      }
+ 1461                  } else {
+ 1462                      textPaint.setColor(keyTextColor);
+ 1463                      textPaint.setTextSize(labelSizePx);
+ 1464                      float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
+ 1465                      canvas.drawText(lab, cx, cy, textPaint);
+ 1466                  }
+ 1467              }
+ 1468              // v0.5.29 反馈①：恢复上滑符号标注（去重版——主文字已含该符号则不重复绘制）
+ 1469              int sym = swipeSymbol(key);
+ 1470              if (sym != 0) {
+ 1471                  String symS = String.valueOf((char) sym);
+ 1472                  String main = (key.label == null ? "" : key.label.toString());
+ 1473                  if (main.indexOf(symS) < 0 && !isFuncKey(key)) {
+ 1474                      canvas.drawText(symS, cx, y + key.height * 0.28f, hintPaint);
+ 1475                  }
+ 1476              }
+ 1477          }
+ 1478      }
+ 1479  
+ 1480      private boolean isFuncKey(Keyboard.Key key) {
+ 1481          if (key == null || key.codes == null || key.codes.length == 0) return true;
+ 1482          int c = key.codes[0];
+ 1483          return c < 0 || c == 32 || c == 46 || c == 44;   // 功能键/空格/句号/逗号
+ 1484      }
+ 1485  
+ 1486      private Keyboard.Key findKey(int x, int y) {
+ 1487          Keyboard kb = getKeyboard();
+ 1488          if (kb == null) return null;
+ 1489          // v0.5.46 反馈①：触摸坐标含 padding，键坐标不含——先减 padding 再命中（修复"打 r 打到 t"键位错）
+ 1490          x -= getPaddingLeft();
+ 1491          y -= getPaddingTop();
+ 1492          for (Keyboard.Key key : kb.getKeys()) {
+ 1493              if (x >= key.x && x <= key.x + key.width
+ 1494                      && y >= key.y && y <= key.y + key.height) {
+ 1495                  return key;
+ 1496              }
+ 1497          }
+ 1498          return null;
+ 1499      }
+ 1500  }
