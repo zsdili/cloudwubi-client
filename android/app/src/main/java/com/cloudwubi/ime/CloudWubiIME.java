@@ -2878,7 +2878,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     body.append('"').append(jsonEscape(list.get(i))).append('"');
                 }
                 body.append("],\"en\":true}");
-                try (OutputStream os = conn.getOutputStream()) os.write(body.toString().getBytes("UTF-8"));
+                try (OutputStream os = conn.getOutputStream()) { os.write(body.toString().getBytes("UTF-8")); }
                 if (conn.getResponseCode() == 200) {
                     try (InputStream is = conn.getInputStream()) {
                         BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
