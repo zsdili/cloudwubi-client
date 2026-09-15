@@ -2624,8 +2624,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private void queryAssociateAsync(final String chain, final String lastChar) {
         final Handler handler = new Handler(Looper.getMainLooper());
         // v0.5.73：整句联想（光标前最后一句）；空则回退 8 字
-        String context = cursorBeforeText();
-        if (context.isEmpty()) context = getContextBefore(8);
+        final String context;
+        String ctx0 = cursorBeforeText();
+        if (ctx0.isEmpty()) ctx0 = getContextBefore(8);
+        context = ctx0;
         Thread t = new Thread(() -> {
             List<String> cloud = new ArrayList<>();
             try {
