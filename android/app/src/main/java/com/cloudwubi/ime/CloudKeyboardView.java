@@ -149,7 +149,14 @@ public class CloudKeyboardView extends KeyboardView {
                 swipeTriggered = false;
                 longPressTriggered = false;
                 downKey = findKey(x, y);
-                invalidate();   // v0.5.41 反馈⑤：按下立即重绘 pressed 高亮（消除"变色慢"卡顿感）
+                // v0.5.46 反馈②：按下只重绘按下的键区域（局部 invalidate），避免全键盘 70+ 键重绘卡顿
+                if (downKey != null) {
+                    invalidate(downKey.x + getPaddingLeft() - 2, downKey.y + getPaddingTop() - 2,
+                            downKey.x + getPaddingLeft() + downKey.width + 2,
+                            downKey.y + getPaddingTop() + downKey.height + 2);
+                } else {
+                    invalidate();
+                }
                 if (downKey != null) {
                     removeCallbacks(longPressRunnable);
                     postDelayed(longPressRunnable, LONG_PRESS_MS);
@@ -306,6 +313,9 @@ public class CloudKeyboardView extends KeyboardView {
     private Keyboard.Key findKey(int x, int y) {
         Keyboard kb = getKeyboard();
         if (kb == null) return null;
+        // v0.5.46 反馈①：触摸坐标含 padding，键坐标不含——先减 padding 再命中（修复"打 r 打到 t"键位错）
+        x -= getPaddingLeft();
+        y -= getPaddingTop();
         for (Keyboard.Key key : kb.getKeys()) {
             if (x >= key.x && x <= key.x + key.width
                     && y >= key.y && y <= key.y + key.height) {

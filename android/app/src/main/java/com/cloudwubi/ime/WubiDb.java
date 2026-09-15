@@ -35,6 +35,12 @@ public final class WubiDb {
     private static Map<String, List<String>> prefixIndex;
     /** v0.5.45 反馈④：86 版 25 键一级简码（Q我 W人 E有 R的 T和 Y主 U产 I不 O为 P这 /
      *  A工 S要 D在 F地 G一 H上 J是 K中 L国 M同 N民 B了 V发 C以 X经）——1 码查询强制置顶 */
+    /** v0.5.46 反馈③：取某键的一级简码字（无则 null） */
+    public static String simple1Char(char key) {
+        for (String s : SIMPLE1) if (s.charAt(0) == key) return s.substring(1);
+        return null;
+    }
+
     private static final String[] SIMPLE1 = {
         "g一","f地","d在","s要","a工","h上","j是","k中","l国","m同",
         "t和","r的","e有","w人","q我","y主","u产","i不","o为","p这",
