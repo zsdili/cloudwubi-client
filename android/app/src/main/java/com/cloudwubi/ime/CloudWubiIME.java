@@ -1549,8 +1549,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         //   用户上屏"前进"后敲 f（方向首码）→ 候选立即置顶"方向"——只敲 1 码就见到衔接词！
         //   原理：五笔编码确定性 + 语义衔接（拼音输入法无法将"正在敲的音节"与衔接词做
         //   确定性映射——这是云五笔独有、三 AI 联想方案均不具备的编码×上下文双锚定）
-        if (!chain.isEmpty() && !code.isEmpty()) {
-            String[] links = ASSOC_LINK.get(chain);
+        String ccaChain = lastCommittedText;
+        if (ccaChain != null && !ccaChain.trim().isEmpty() && !code.isEmpty()) {
+            ccaChain = ccaChain.trim();
+            String[] links = ASSOC_LINK.get(ccaChain);
             if (links != null) {
                 for (String lk : links) {
                     String lc = WubiDb.phraseCode(lk);
@@ -1558,7 +1560,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     if (lc != null && lc.startsWith(code) && !merged.contains(lk)) merged.add(lk);
                 }
             }
-            String anchor1 = chain.substring(chain.length() - 1);
+            String anchor1 = ccaChain.substring(ccaChain.length() - 1);
             String[] links2 = ASSOC_LINK.get(anchor1);
             if (links2 != null) {
                 for (String lk : links2) {
