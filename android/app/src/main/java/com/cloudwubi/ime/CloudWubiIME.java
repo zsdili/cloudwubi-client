@@ -1699,13 +1699,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (candidateView == null) return;
         CharSequence cur = candidateView.getText();
         if (cur != null && t != null && cur.toString().equals(t.toString())) return;
-        safeSetText(t);
+        candidateView.setText(t == null ? "" : t);   // v0.5.64 修复闪退根因：原写 safeSetText(t) 递归自身 → StackOverflow
     }
     private void safeStatusText(CharSequence t) {
         if (statusInfo == null) return;
         CharSequence cur = statusInfo.getText();
         if (cur != null && t != null && cur.toString().equals(t.toString())) return;
-        safeStatusText(t);
+        statusInfo.setText(t == null ? "" : t);   // v0.5.64 修复闪退根因：原写 safeStatusText(t) 递归自身
     }
 
     /** v0.5.62 备选栏状态规范化：每次渲染前强制复位（46dp 固定高/单行/18f 字号/1f 行距）
