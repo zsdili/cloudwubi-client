@@ -284,8 +284,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     try {
                         int off = candidateView.getOffsetForPosition(lastTouchX, lastTouchY);
                         if (candidateView.getText() instanceof android.text.Spanned) {
-                            android.text.ClickableSpan[] cs = ((android.text.Spanned) candidateView.getText())
-                                    .getSpans(off, off, android.text.ClickableSpan.class);
+                            android.text.style.ClickableSpan[] cs = ((android.text.Spanned) candidateView.getText())
+                                    .getSpans(off, off, android.text.style.ClickableSpan.class);
                             onGithub = (cs != null && cs.length > 0);
                         }
                     } catch (Exception ignored) { }
