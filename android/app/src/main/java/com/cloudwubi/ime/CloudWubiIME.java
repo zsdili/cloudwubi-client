@@ -2639,14 +2639,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private String cursorBeforeText() {
         try {
             InputConnection ic = getCurrentInputConnection();
-            // v0.5.75：取消 50 字限制——取光标前 2000 字（整句完整传入云端，云端按整句→词组→字→空降级）
+            // v0.5.78 用户算法：从光标往回，到上一个标点/句号结束的完整语句纳入联想。
+            //   边界=上一个断句标点（。！？，、；：）；结尾标点（。！？…）保留随句传云端（标点参与联想）。
             CharSequence cb = ic == null ? null : ic.getTextBeforeCursor(2000, 0);
             if (cb == null) return "";
             String s = cb.toString().trim();
-            int cut = Math.max(s.lastIndexOf('。'), Math.max(s.lastIndexOf('！'), s.lastIndexOf('？')));
-            if (cut > 0) s = s.substring(cut + 1);
-            while (!s.isEmpty() && "，。！？、；：\"'".indexOf(s.charAt(s.length() - 1)) >= 0)
-                s = s.substring(0, s.length() - 1);
+            // 判断句子结束位置：跳过结尾句号/问号/感叹号（它们属于当前句，保留）
+            int segEnd = s.length();
+            while (segEnd > 0 && "。！？…".indexOf(s.charAt(segEnd - 1)) >= 0) segEnd--;
+            // 从句子内向前找上一个断句标点（。！？，、；：）
+            int cut = -1;
+            for (int i = segEnd - 1; i >= 0; i--) {
+                if ("。！？，、；：".indexOf(s.charAt(i)) >= 0) { cut = i; break; }
+            }
+            if (cut >= 0) s = s.substring(cut + 1);
             return s.trim();
         } catch (Exception e) { return ""; }
     }
