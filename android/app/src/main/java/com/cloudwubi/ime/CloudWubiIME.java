@@ -1174,7 +1174,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 return;
             case KB_ENTER:
             case KeyEvent.KEYCODE_ENTER:
-                commitFirstCandidate();
+                // v0.5.77 反馈：回车 = 换行/搜索（触发宿主动作），不是从备选栏作选择。
+                //   有候选未上屏则先上屏（防丢失），再触发宿主动作（文本框换行、搜索框搜索）。
+                if (composingCode.length() > 0 || !candidates.isEmpty()) {
+                    commitFirstCandidate();
+                }
+                sendDefaultEditorAction(true);
                 return;
             case 44:
                 if (panelMode == 1) { calcBuffer += ","; updateCandidateView(); return; }
@@ -1264,7 +1269,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 handleBackspace();
                 return true;
             case KeyEvent.KEYCODE_ENTER:
-                commitFirstCandidate();
+                // v0.5.77 反馈：回车 = 换行/搜索（触发宿主动作），不是从备选栏作选择
+                if (composingCode.length() > 0 || !candidates.isEmpty()) {
+                    commitFirstCandidate();
+                }
+                sendDefaultEditorAction(true);
                 return true;
             case KeyEvent.KEYCODE_SPACE:
                 commitFirstCandidate();
