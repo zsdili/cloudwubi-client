@@ -106,6 +106,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int THEME_DARK = 1;
     private static final int THEME_LIGHT_KB_BG = 0xFFE8EBEF;   // 键盘底色（浅）
     private static final int THEME_LIGHT_CAND_BG = 0xFFE8EBEF; // 候选条背景（浅）——v0.5.92 与键盘底色统一（原纯白+键盘浅灰=灰白不协调）
+    private static final int THEME_LIGHT_TOOL_BG = 0xFFFCFCFC; // 状态栏背景（浅）——v0.5.95 用户要求 #fcfcfc（原透明露键盘灰 E8EBEF）
+    private static final int THEME_DARK_TOOL_BG = 0xFF23272E; // 状态栏背景（深）
     private static final int THEME_LIGHT_TEXT = 0xFF1F2937;    // 主文字（浅）
     private static final int THEME_LIGHT_HINT = 0xFF9CA3AF;    // 上滑标注/弱文字（浅）
     private static final int THEME_DARK_KB_BG = 0xFF1B1F24;    // 键盘底色（深）
@@ -264,10 +266,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     @Override
     public View onCreateInputView() {
         candidateView = new TextView(this);
-        candidateView.setTextSize(18);   // v0.5.14 反馈⑥：备选词组大字显示（透明背景默认）
-        candidateView.setPadding(24, 12, 24, 12);   // v0.5.93 用户要求：剪贴板左右留白加大（满行显示）
+        candidateView.setTextSize(16);   // v0.5.95 高度固定 25dp 内可完整显示（原 18 在 25dp 高会裁切）
+        candidateView.setPadding(24, 3, 24, 3);   // v0.5.93 用户要求：剪贴板左右留白加大（满行显示）
         // v0.5.14 反馈⑤：固定备选栏高度（单行）→ 不撑大显示范围、无画面抖动
-        candViewH = Math.round(46 * getResources().getDisplayMetrics().density);
+        // v0.5.95 用户要求：备选栏高度固定 25dp（与状态栏统一，避免有字/无字高度差）
+        candViewH = Math.round(25 * getResources().getDisplayMetrics().density);
         candidateView.setMinHeight(candViewH);
         candidateView.setMaxHeight(candViewH);
         candidateView.setMaxLines(1);
@@ -366,6 +369,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow = new LinearLayout(this);
         toolRow.setOrientation(LinearLayout.HORIZONTAL);
         toolRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        // v0.5.95 用户要求：①状态栏背景 #fcfcfc ②工具栏按钮居右——toolRow 必须撑满宽度
+        //   （此前未设 MATCH_PARENT → spacer 权重失效 → 按钮不居右，这是"居右没实现"根因）
+        //   ③状态栏固定高度 25dp（与备选栏统一，防跳动）
+        toolRow.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        toolRow.setMinimumHeight(Math.round(25 * getResources().getDisplayMetrics().density));
         toolRow.setPadding(dp12, dp3, dp12, dp3);   // v0.5.92 左右留边与键盘 12dp 对齐（云五笔≈Q 键左、工具条≈P 键右）
         android.widget.TextView brand = new android.widget.TextView(this);
         brand.setText("云五笔");
@@ -652,6 +661,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // 候选条
         candidateView.setBackgroundColor(dark ? THEME_DARK_CAND_BG : THEME_LIGHT_CAND_BG);
         candidateView.setTextColor(dark ? THEME_DARK_TEXT : THEME_LIGHT_TEXT);
+        // v0.5.95 状态栏背景（#fcfcfc 浅 / 深色配套）
+        if (toolRow != null) toolRow.setBackgroundColor(dark ? THEME_DARK_TOOL_BG : THEME_LIGHT_TOOL_BG);
         // 工具行（v0.5.0 反馈①）
         if (toolRow != null) {
             int tc = dark ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
@@ -2188,7 +2199,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setEllipsize(null);
         // v0.5.9 反馈⑨：适度行距（0,1.3f 非增大 extra）——条目间用浅色相间背景区分（非虚横线、非空行）
         candidateView.setLineSpacing(0f, 1.3f);
-        candidateView.setTextSize(11f);   // v0.5.93 用户要求：剪贴板字号 11（v0.5.90 曾设 9，偏小）
+        candidateView.setTextSize(14f);   // v0.5.95 用户要求：剪贴板字号与"云五笔"一致（14sp）
         candidateView.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);   // v0.5.70：剪贴板列表顶对齐
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         int altBg = dark() ? 0x2AFFFFFF : 0xFFF3F3F3;   // 相间浅色背景（跟随深浅色）
