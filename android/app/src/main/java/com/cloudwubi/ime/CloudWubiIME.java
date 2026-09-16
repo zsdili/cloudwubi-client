@@ -1999,6 +1999,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             candidates.clear();
             cloudHot.clear();
             lastEnHint = "";
+            // v0.5.94 用户反馈：状态栏残留"k"——本防线提前 return 导致 code 空分支的
+            //   safeStatusText("") 未执行；此处一并清状态栏（新会话/退格/上屏后均干净）
+            if (statusInfo != null) safeStatusText("");
             if (candidateView.getText() != null && candidateView.getText().length() > 0) {
                 safeSetText("");
                 return;
