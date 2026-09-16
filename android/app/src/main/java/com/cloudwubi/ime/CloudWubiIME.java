@@ -2130,7 +2130,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 };
                 sb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            appendPager(sb, pages);
         } else {
             sb.append("（暂无联想，继续输入编码）");
         }
@@ -2138,15 +2137,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.39 反馈①③：翻页按钮去掉——纯滑动翻页（左右/上下），指示改为"左右滑动查看"文本 */
-    private void appendPager(SpannableStringBuilder sb, int pages) {
-        if (pages <= 1) return;
-        int pagerColor = dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT;
-        int pStart = sb.length();
-        // v0.5.55 反馈：去掉翻页提示"1/3·左右滑动查看"（翻页功能保留，仅不显示指示文本）
-        // sb.append("  ").append(String.valueOf(candPage + 1)).append("/").append(String.valueOf(pages)).append(" · 左右滑动查看");
-        // sb.setSpan(new ForegroundColorSpan(pagerColor), pStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-    }
-
     private boolean dark() {
         return theme == THEME_DARK;
     }
@@ -2397,8 +2387,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             };
             sb.setSpan(cs, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        // v0.4.9 翻页指示（跟随系统色）
-        appendPager(sb, pages);
+        // v0.5.88：无翻页指示（跟手拖动全量滚动查看）
         safeSetText(sb);
     }
 
