@@ -144,7 +144,7 @@ echo "== 构建完成 =="
 SIZE=$(stat -c %s CloudWubi.apk 2>/dev/null || stat -f %z CloudWubi.apk)
 echo "✅ CloudWubi.apk: $SIZE 字节（$(du -h CloudWubi.apk | cut -f1)）"
 # v0.5.91 用户要求：安装包文件名带版本号便于识别
-VNAME=$(grep -o 'versionName "[^"]*"' app/build.gradle | head -1 | sed 's/versionName "//;s/"//')
+VNAME=$(grep -o 'versionName "[^"]*"' "$PROJ_DIR/app/build.gradle" | head -1 | sed 's/versionName "//;s/"//')
 if [ -n "$VNAME" ]; then
   cp -f CloudWubi.apk "CloudWubi-v$VNAME.apk" 2>/dev/null || true
   echo "✅ 带版本号产物: CloudWubi-v$VNAME.apk"
