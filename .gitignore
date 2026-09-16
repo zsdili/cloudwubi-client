@@ -14,3 +14,4 @@ android/*.zip
 android/r8.jar
 
 android/build-apk/
+*.zip
