@@ -8,8 +8,8 @@ android {
         applicationId "com.cloudwubi.ime"
         minSdk 21
         targetSdk 33
-        versionCode 130
-        versionName "0.5.81"
+        versionCode 131
+        versionName "0.5.82"
     }
     buildTypes {
         release {

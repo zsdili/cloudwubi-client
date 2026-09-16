@@ -1174,8 +1174,15 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 return;
             case KB_ENTER:
             case KeyEvent.KEYCODE_ENTER:
-                // v0.5.77 反馈：回车 = 换行/搜索（触发宿主动作），不是从备选栏作选择。
-                //   有候选未上屏则先上屏（防丢失），再触发宿主动作（文本框换行、搜索框搜索）。
+                // v0.5.82 回车换行根治（用户多次反馈"回车不是换行"）：
+                //   根因=多行框按回车先 commitText("\n") 换行、又执行 sendDefaultEditorAction
+                //   （触发"发送/完成"）→ 双重动作，表现为"不是换行"。
+                //   修复：多行 → 先上屏候选/编码（防丢失），再只换行，不触发宿主动作；
+                //         单行（搜索/地址栏/表单）→ 上屏候选 + 触发宿主动作（搜索/前往/完成）。
+                if (isMultiline()) {
+                    commitFirstAndNewline();
+                    return;
+                }
                 if (composingCode.length() > 0 || !candidates.isEmpty()) {
                     commitFirstCandidate();
                 }
@@ -1269,7 +1276,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 handleBackspace();
                 return true;
             case KeyEvent.KEYCODE_ENTER:
-                // v0.5.77 反馈：回车 = 换行/搜索（触发宿主动作），不是从备选栏作选择
+                // v0.5.82 回车换行根治：多行只换行；单行触发宿主动作（与虚拟键一致）
+                if (isMultiline()) {
+                    commitFirstAndNewline();
+                    return true;
+                }
                 if (composingCode.length() > 0 || !candidates.isEmpty()) {
                     commitFirstCandidate();
                 }
@@ -2346,6 +2357,22 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.4.9 翻页指示（跟随系统色）
         appendPager(sb, pages);
         safeSetText(sb);
+    }
+
+    /** v0.5.82 多行文本框回车：先上屏候选/编码（防丢失），再换行——不再触发宿主动作
+     *  （根治"回车不是换行"：旧逻辑换行后又 sendDefaultEditorAction 触发发送/完成） */
+    private void commitFirstAndNewline() {
+        if (!candidates.isEmpty()) {
+            selectCandidate(0);
+        } else if (composingCode.length() > 0) {
+            String raw = composingCode.toString();
+            composingCode.setLength(0);
+            candidates.clear();
+            candPage = 0;
+            commitText(raw);
+            updateCandidateView();
+        }
+        commitText("\n");
     }
 
     /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
