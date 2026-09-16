@@ -1106,25 +1106,21 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             case KEY_SYM_CN:
                 panelMode = 3;
                 keyboardView.setKeyboard(keyboardSymCn);
-                return;
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
             case KEY_SYM_EN:
                 panelMode = 4;
                 keyboardView.setKeyboard(keyboardSymEn);
-                return;
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
             case KEY_SYM_EMOJI:
                 panelMode = 5;
                 keyboardView.setKeyboard(keyboardSymEmoji);
-                return;
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
             case KEY_SYM_NET:
                 panelMode = 6;
                 keyboardView.setKeyboard(keyboardSymNet);
-                return;
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
             case KEY_SYM_LOCK:   // 🔒 面板锁定（占位：不自动收起）
