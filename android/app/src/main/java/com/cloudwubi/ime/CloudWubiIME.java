@@ -121,8 +121,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private String lastCommittedText = "";   // 最近上屏的连续文本（联想链拼接）
 
     // ===== v0.4.9 候选翻页 =====
-    private static final int CAND_PAGE_SIZE = 5;
     private int candPage = 0;
+    private android.widget.HorizontalScrollView candScroll;   // v0.5.88 备选栏跟手拖动
     private int pinyinInsertPos = 0;   // v0.5.36 反馈⑨：拼音候选插入位置（本地五笔候选之后）
 
     // ===== v0.4.9 取消↺ / 重做↻（编辑快照栈） =====
@@ -137,7 +137,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.34 反馈⑧：剪贴板项标记 span（长按定位删除） */
     private static class ClipTagSpan { int index; ClipTagSpan(int i) { index = i; } }
     private float lastTouchX = 0f, lastTouchY = 0f;   // v0.5.34 长按定位坐标
-    private android.view.GestureDetector candFlingDetector;   // v0.5.35 反馈③：候选左右滑动翻页
     private static final String PREFS_PHRASES = "recent_phrases";  // v0.4.8 MRU 词组
     private static final String PREFS_LAST_SEL = "last_selected";  // v0.5.9 反馈⑧：上次选中字/词持久化（字频调整跨会话生效）
     private static final String PREFS_MRU = "mru_list";   // v0.5.50：同码 MRU 历史（写死规则：之前打过的字/词前置）
@@ -270,24 +269,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         candidateView.setHighlightColor(0x00000000);
         candidateView.setGravity(android.view.Gravity.CENTER_VERTICAL);   // v0.5.70：文本垂直居中——有字/无字视觉高度一致
-        // v0.5.35 反馈③：候选条左右滑动翻页（替代点击翻页）
-        candFlingDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onFling(android.view.MotionEvent e1, android.view.MotionEvent e2, float velocityX, float velocityY) {
-                // v0.5.36 反馈①：所有翻页都用滑动——左右/上下滑动均翻页
-                float vx = Math.abs(velocityX), vy = Math.abs(velocityY);
-                if (Math.max(vx, vy) > 200) {
-                    if (vx > vy) {
-                        if (velocityX < 0) { nextCandidatePage(); return true; }
-                        prevCandidatePage(); return true;
-                    } else {
-                        if (velocityY < 0) { nextCandidatePage(); return true; }
-                        prevCandidatePage(); return true;
-                    }
-                }
-                return false;
-            }
-        });
+
         // v0.5.10 反馈②：点击候选区空白（非条目/非返回）→ 关闭剪贴板回正常输入
         candidateView.setOnClickListener(v -> {
             if (clipMode) {
@@ -347,7 +329,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     }
                 }
             }
-            candFlingDetector.onTouchEvent(ev);
+            // v0.5.88 反馈：拖动跟手——滚动交给 HorizontalScrollView 原生处理（不再 fling 跳页）
             return false;   // 不消费：让 LinkMovementMethod 处理点击/长按
         });
 
@@ -443,7 +425,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(hideBtn);
         // v0.5.8 反馈①：第一行状态栏（云五笔|编码|翻译 | 工具），第二行备选栏，第三行键盘
         root.addView(toolRow);
-        root.addView(candidateView);
+        // v0.5.88 反馈：备选栏翻页有拖动移动效果（HorizontalScrollView 跟手滚动，按住左右移动翻查）
+        candScroll = new android.widget.HorizontalScrollView(this);
+        candScroll.setHorizontalScrollBarEnabled(false);
+        candScroll.setOverScrollMode(android.view.View.OVER_SCROLL_NEVER);
+        candScroll.addView(candidateView);
+        root.addView(candScroll);
         root.addView(keyboardView);
         rootView = root;
         // v0.5.4 反馈③：回车键长按 → 强制换行（单行/多行均生效）
@@ -2120,11 +2107,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(lastCommittedText).append(" ▸ ");
         if (!candidates.isEmpty()) {
+            // v0.5.88 反馈：拖动跟手——全量渲染
             int total = candidates.size();
-            int pages = Math.max(1, (total + CAND_PAGE_SIZE - 1) / CAND_PAGE_SIZE);
-            if (candPage >= pages) candPage = pages - 1;
-            int from = candPage * CAND_PAGE_SIZE;
-            int to = Math.min(total, from + CAND_PAGE_SIZE);
+            int from = 0, to = total;
+            candPage = 0;
             for (int i = from; i < to; i++) {
                 String c = candidates.get(i);
                 int s = sb.length();
@@ -2254,14 +2240,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** 候选列表：v0.5.3 反馈③⑦——纯候选（去杂项）；v0.5.4 反馈④：编码前缀实时显示（含删除时同步）
      *  v0.5.11 反馈②：单行不换行 */
-    /** v0.5.35 反馈③：候选左右滑动翻页 */
-    private void nextCandidatePage() {
-        int pages = Math.max(1, (candidates.size() + CAND_PAGE_SIZE - 1) / CAND_PAGE_SIZE);
-        if (candPage < pages - 1) { candPage++; updateCandidateView(); }
-    }
-    private void prevCandidatePage() {
-        if (candPage > 0) { candPage--; updateCandidateView(); }
-    }
+
 
     /** v0.5.35 反馈①：表达式是否已含运算符（决定数字是否进缓冲） */
     private boolean hasCalcOp(String expr) { return CalcEngine.hasCalcOp(expr); }
@@ -2390,13 +2369,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.80 用户固化：候选排序（最近上屏 > 高频 > 二字 > 三字 > 四字 > 联想句最后）+ 严禁繁体
         reorderCandidates();
         candidateView.setSingleLine(true);
-        candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        // v0.5.88：ScrollView 内全宽滚动查看，不省略截断
         String code = composingCode.toString();
+        // v0.5.88 反馈：拖动跟手——全量渲染（HorizontalScrollView 内滚动翻查，不再 5 条分页跳页）
         int total = candidates.size();
-        int pages = Math.max(1, (total + CAND_PAGE_SIZE - 1) / CAND_PAGE_SIZE);
-        if (candPage >= pages) candPage = pages - 1;
-        int from = candPage * CAND_PAGE_SIZE;
-        int to = Math.min(total, from + CAND_PAGE_SIZE);
+        int from = 0, to = total;
+        candPage = 0;
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
         // v0.5.8 反馈①：编码实时回显已移至状态栏（statusInfo），备选栏仅显示候选
