@@ -105,7 +105,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int THEME_LIGHT = 0;
     private static final int THEME_DARK = 1;
     private static final int THEME_LIGHT_KB_BG = 0xFFE8EBEF;   // 键盘底色（浅）
-    private static final int THEME_LIGHT_CAND_BG = 0xFFFFFFFF; // 候选条背景（浅）
+    private static final int THEME_LIGHT_CAND_BG = 0xFFE8EBEF; // 候选条背景（浅）——v0.5.92 与键盘底色统一（原纯白+键盘浅灰=灰白不协调）
     private static final int THEME_LIGHT_TEXT = 0xFF1F2937;    // 主文字（浅）
     private static final int THEME_LIGHT_HINT = 0xFF9CA3AF;    // 上滑标注/弱文字（浅）
     private static final int THEME_DARK_KB_BG = 0xFF1B1F24;    // 键盘底色（深）
@@ -352,6 +352,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardView.setHapticFeedbackEnabled(false);   // v0.5.8 反馈②：去掉击键感应（震动）
         // 反馈④：键盘左右留边（截图约 4.5% 屏宽）
         int dp12 = Math.round(12 * getResources().getDisplayMetrics().density);
+        int dp3 = Math.round(3 * getResources().getDisplayMetrics().density);
         int dp6 = Math.round(6 * getResources().getDisplayMetrics().density);
         keyboardView.setPadding(dp12, dp6, dp12, dp6);
         // v0.5.44 反馈⑦：固定键盘高度（主键盘 4 行 × 56dp + padding 12dp ≈ 236dp）——切数字/符号面板不跳动
@@ -365,7 +366,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow = new LinearLayout(this);
         toolRow.setOrientation(LinearLayout.HORIZONTAL);
         toolRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        toolRow.setPadding(10, 3, 4, 3);
+        toolRow.setPadding(dp12, dp3, dp12, dp3);   // v0.5.92 左右留边与键盘 12dp 对齐（云五笔≈Q 键左、工具条≈P 键右）
         android.widget.TextView brand = new android.widget.TextView(this);
         brand.setText("云五笔");
         brand.setTextSize(14);   // v0.5.34 反馈④：状态栏字体调大（参考截图）
@@ -1640,15 +1641,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
             }
         }
+        // v0.5.92 用户固化：去掉联想/残留——MRU 与最近上屏词组仅精确匹配置顶（上面 1619-1640 段），
+        //   前缀匹配（打"前"带出"前进"）全部移除：打新字时候选干净，旧上屏内容绝不混入
         // ① MRU：上次选中的字/词（编码前缀匹配，v0.5.44 反馈⑤：1 码只精确匹配——打 r 不提示"白"rrrr）+ 最近上屏词组
-        if (!lastSelected.isEmpty() && code.length() >= 2) {
-            String lc = lastSelected.length() >= 2 ? WubiDb.phraseCode(lastSelected) : WubiDb.singleCode(lastSelected);
-            if (lc != null && lc.startsWith(code) && !lc.equals(code) && !merged.contains(lastSelected)) merged.add(lastSelected);
-        }
-        for (String p : recentPhrases) {
-            String pc = WubiDb.phraseCode(p);
-            if (pc != null && pc.startsWith(code) && !pc.equals(code) && !merged.contains(p)) merged.add(p);
-        }
         // v0.5.23 动态拼词（钟总核心思路）：基础库+86规则 → 4 码词组无限，
         //   保障词置顶 + 2+2/1+1+2/1+1+1+1 动态组合（词组在前、单字殿后）
         // v0.5.44 反馈④：禁用前端动态拼词（"战行/点行"类 2+2 噪声组合）
@@ -1658,27 +1653,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         //   用户上屏"前进"后敲 f（方向首码）→ 候选立即置顶"方向"——只敲 1 码就见到衔接词！
         //   原理：五笔编码确定性 + 语义衔接（拼音输入法无法将"正在敲的音节"与衔接词做
         //   确定性映射——这是云五笔独有、三 AI 联想方案均不具备的编码×上下文双锚定）
-        String ccaChain = lastCommittedText;
-        if (ccaChain != null && !ccaChain.trim().isEmpty() && !code.isEmpty()) {
-            ccaChain = ccaChain.trim();
-            java.util.List<String> links = getLinks(ccaChain);   // v0.6.3：内置+云端双表
-            if (!links.isEmpty()) {
-                for (String lk : links) {
-                    String lc = WubiDb.phraseCode(lk);
-                    if (lc == null) lc = WubiDb.singleCode(lk);   // 单字衔接词（饭/亏/你/了）回退单字码
-                    if (lc != null && lc.startsWith(code) && !merged.contains(lk)) merged.add(lk);
-                }
-            }
-            String anchor1 = ccaChain.substring(ccaChain.length() - 1);
-            java.util.List<String> links2 = getLinks(anchor1);   // v0.6.3：内置+云端双表
-            if (!links2.isEmpty()) {
-                for (String lk : links2) {
-                    String lc = WubiDb.phraseCode(lk);
-                    if (lc == null) lc = WubiDb.singleCode(lk);
-                    if (lc != null && lc.startsWith(code) && !merged.contains(lk)) merged.add(lk);
-                }
-            }
-        }
+        // v0.5.92 用户固化：去掉联想功能——CCA 上下文衔接词（上屏"前进"后打"方"出"方向"）全部禁用
         // ② 第二位：传统五笔（高频字/字根/一至四码简码词组，优先照顾老用户习惯）
         List<String> local = WubiDb.query(code);
         if (local != null) {
@@ -2118,8 +2093,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
         if (code.isEmpty()) {
-            // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏
-            if (statusInfo != null) safeStatusText(lastEnHint.isEmpty() ? "" : lastEnHint);
+            // v0.5.92 用户反馈：提示栏字符删除不掉（"k"残留）——编码清空后状态栏必须全空，
+            //   翻译残留 lastEnHint 一并清（打码过程中翻译仍显示，编码清空即干净）
+            lastEnHint = "";
+            if (statusInfo != null) safeStatusText("");
             // v0.5.55：恢复上下文联想渲染——联想态且有候选时显示"最近上屏 ▸ 联想词"
             if (associateActive && !candidates.isEmpty()) {
                 renderAssociateHint();
