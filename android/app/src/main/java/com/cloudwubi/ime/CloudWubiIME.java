@@ -2420,7 +2420,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.82 多行文本框回车：先上屏候选/编码（防丢失），再换行——不再触发宿主动作
      *  （根治"回车不是换行"：旧逻辑换行后又 sendDefaultEditorAction 触发发送/完成） */
     private void commitFirstAndNewline() {
-        // v0.5.85 固化（用户铁律）：有输入字符（编码）时，按回车只上屏编码字符，点选才上屏备选字
+        // v0.5.86 固化（用户铁律②③）：回车键不上屏中文——
+        //   提示栏有字符（编码）→ 只上屏编码字符；备选栏空 → 换行；任何情况都不选中文候选
         if (composingCode.length() > 0) {
             String raw = composingCode.toString();
             composingCode.setLength(0);
@@ -2428,8 +2429,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             candPage = 0;
             commitText(raw);
             updateCandidateView();
-        } else if (!candidates.isEmpty()) {
-            selectCandidate(0);
         }
         commitText("\n");
     }
@@ -2437,8 +2436,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
      *  v0.5.11 反馈④：按回车 → 上屏当前编码的小写英文（qq → qq），不再误选中文候选（多） */
     private void commitFirstCandidate() {
-        // v0.5.85 固化（用户铁律）：有输入字符（编码）时，按回车只上屏编码字符（小写英文），点选才上屏备选字——
-        //   旧逻辑候选非空一律上候选（打 gisv 回车自动上"不要"），现改为只上 gisv
+        // v0.5.86 固化（用户铁律②③）：回车键不上屏中文——
+        //   提示栏有字符（编码）→ 只上屏编码字符（小写英文）；无编码 → 多行换行 / 单行触发宿主动作（搜索/前往/完成）
         if (composingCode.length() > 0) {
             String raw = composingCode.toString();
             composingCode.setLength(0);
@@ -2448,11 +2447,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
             return;
         }
-        // 无输入编码：候选（如联想/剪贴板）才可被回车选中；单行触发宿主动作（搜索/前往/完成）
-        if (!candidates.isEmpty()) {
-            selectCandidate(0);
-            return;
-        }
+        // 无输入编码：中文候选绝不由回车上屏（点选/空格选择）；备选栏空时回车=换行或触发输入框动作
         if (isMultiline()) {
             commitText("\n");
         } else {
@@ -2482,8 +2477,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
             return;
         }
-        if (composingCode.length() > 0 && !candidates.isEmpty()
-                && !candidates.get(0).equals(composingCode.toString())) {
+        // v0.5.86 固化（用户铁律①）：点空格键 → 无条件选中首个备选词；其他词通过点选上屏
+        if (!candidates.isEmpty()) {
             selectCandidate(0);
         } else {
             commitText(" ");
