@@ -1314,7 +1314,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 sendDefaultEditorAction(true);
                 return true;
             case KeyEvent.KEYCODE_SPACE:
-                commitFirstCandidate();
+                commitSpaceOrFirst();   // v0.5.85：空格=选候选/空格（与虚拟键一致；回车才是"只上编码"）
                 return true;
         }
         return super.onKeyDown(keyCode, event);
@@ -2420,29 +2420,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.5.82 多行文本框回车：先上屏候选/编码（防丢失），再换行——不再触发宿主动作
      *  （根治"回车不是换行"：旧逻辑换行后又 sendDefaultEditorAction 触发发送/完成） */
     private void commitFirstAndNewline() {
-        if (!candidates.isEmpty()) {
-            selectCandidate(0);
-        } else if (composingCode.length() > 0) {
-            String raw = composingCode.toString();
-            composingCode.setLength(0);
-            candidates.clear();
-            candPage = 0;
-            commitText(raw);
-            updateCandidateView();
-        }
-        commitText("\n");
-    }
-
-    /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
-     *  v0.5.11 反馈④：按回车 → 上屏当前编码的小写英文（qq → qq），不再误选中文候选（多） */
-    private void commitFirstCandidate() {
-        // v0.5.76 回车顽疾根治：候选非空一律上屏第一候选（≤4 码同样生效）——
-        //   旧逻辑≤4 码回车上屏"编码本身"（打 lyab 候选"国庆节"按回车却上屏 lyab，
-        //   用户实测"回车没反应/打不出词"）；中文候选上中文、英文候选上英文，符合 v0.5.10 要求
-        if (!candidates.isEmpty()) {
-            selectCandidate(0);
-            return;
-        }
+        // v0.5.85 固化（用户铁律）：有输入字符（编码）时，按回车只上屏编码字符，点选才上屏备选字
         if (composingCode.length() > 0) {
             String raw = composingCode.toString();
             composingCode.setLength(0);
@@ -2450,7 +2428,32 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             candPage = 0;
             commitText(raw);
             updateCandidateView();
-        } else if (isMultiline()) {
+        } else if (!candidates.isEmpty()) {
+            selectCandidate(0);
+        }
+        commitText("\n");
+    }
+
+    /** v0.4.8 反馈④：回车——无候选时上屏换行；v0.5.3 反馈⑥：单行文本框回车无反应（不换行不空格）
+     *  v0.5.11 反馈④：按回车 → 上屏当前编码的小写英文（qq → qq），不再误选中文候选（多） */
+    private void commitFirstCandidate() {
+        // v0.5.85 固化（用户铁律）：有输入字符（编码）时，按回车只上屏编码字符（小写英文），点选才上屏备选字——
+        //   旧逻辑候选非空一律上候选（打 gisv 回车自动上"不要"），现改为只上 gisv
+        if (composingCode.length() > 0) {
+            String raw = composingCode.toString();
+            composingCode.setLength(0);
+            candidates.clear();
+            candPage = 0;
+            commitText(raw);
+            updateCandidateView();
+            return;
+        }
+        // 无输入编码：候选（如联想/剪贴板）才可被回车选中；单行触发宿主动作（搜索/前往/完成）
+        if (!candidates.isEmpty()) {
+            selectCandidate(0);
+            return;
+        }
+        if (isMultiline()) {
             commitText("\n");
         } else {
             // v0.5.76 回车失灵根治：单行文本框（搜索框/浏览器地址栏/表单）回车 → 执行输入框动作
