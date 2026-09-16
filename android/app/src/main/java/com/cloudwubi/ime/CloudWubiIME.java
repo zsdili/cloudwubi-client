@@ -122,6 +122,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     // ===== v0.4.9 候选翻页 =====
     private int candPage = 0;
+    private final java.util.Map<String, java.util.List<String>> cloudCache = new java.util.LinkedHashMap<>();   // v0.5.89 云端词组结果缓存（LRU，提速）
+    // v0.5.89 成对标点自动补全（左符号 → 光标后空时自动补右半边）
+    private static final String PAIR_LEFT = "“（【《『「〔〈｛";
+    private static final String PAIR_RIGHT = "”）》】》』」〕〉｝";
     private android.widget.HorizontalScrollView candScroll;   // v0.5.88 备选栏跟手拖动
     private int pinyinInsertPos = 0;   // v0.5.36 反馈⑨：拼音候选插入位置（本地五笔候选之后）
 
@@ -585,8 +589,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             }
         };
         sb.setSpan(gh, gStart, gEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        // v0.5.59：点击"云五笔"时检测新版本——有新版则提示可点击下载升级（GitHub APK 直链）
-        if (latestVersion != null && compareVersions(latestVersion, currentVersion()) > 0) {
+        // v0.5.89 用户要求：去掉文字提醒——新版本只以"云五笔"右上角红点提示
+        if (false && latestVersion != null && compareVersions(latestVersion, currentVersion()) > 0) {
             int uStart = sb.length();
             sb.append("  ·  发现新版本 v").append(latestVersion).append(" [点击下载升级]");
             int uEnd = sb.length();
@@ -1235,7 +1239,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 //   （91[]/93]/123{/125}/35#/37%/94^/61= 等特殊字符，密码框与常规模式通用）
                 String s = symbolToText(primaryCode);
                 if (s != null) {
-                    commitText(s);
+                    // v0.5.89 功能提升：成对标点自动补全——左符号且光标后无内容 → 上屏"左右对"并把光标移到中间
+                    int pi = PAIR_LEFT.indexOf(s);
+                    if (pi >= 0 && cursorAfterEmpty()) {
+                        commitPairedPunct(s, PAIR_RIGHT.substring(pi, pi + 1));
+                    } else {
+                        commitText(s);
+                    }
                 } else if (primaryCode >= 32 && primaryCode <= 126) {
                     commitText(String.valueOf((char) primaryCode));
                 }
@@ -1774,6 +1784,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.disconnect();
             } catch (Exception ignored) { }
             final List<String> result = cloud;
+            if (!result.isEmpty()) {
+                synchronized (cloudCache) {
+                    cloudCache.put(code, new ArrayList<>(result));
+                    if (cloudCache.size() > 300) { java.util.Iterator<String> it = cloudCache.keySet().iterator(); it.next(); it.remove(); }
+                }
+            }
             handler.post(() -> {
                 // 仅当编码仍一致时回填，避免过期结果覆盖（与 queryGatewayAsync 同约束）
                 if (!code.equals(composingCode.toString())) return;
@@ -1792,6 +1808,18 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         Thread t = new Thread(() -> {
             List<String> cloud = new ArrayList<>();
             String failReason = "";
+            // v0.5.89 提速：结果缓存 LRU——重复输入同码秒回（云端不再每次重查）
+            java.util.Map<String, java.util.List<String>> cache = cloudCache;
+            java.util.List<String> cached = cache.get(code);
+            if (cached != null && !cached.isEmpty()) {
+                final java.util.List<String> hit = cached;
+                handler.post(() -> {
+                    if (!code.equals(composingCode.toString())) return;
+                    for (String s : hit) if (!candidates.contains(s)) candidates.add(s);
+                    updateCandidateView();
+                });
+                return;
+            }
             // v0.5.83 云端失败诊断+重试：静默吞异常导致"词组永远打不出且无任何提示"——
             //   失败时状态栏显示原因（真机 10 秒定位），并自动重试 1 次
             for (int attempt = 0; attempt < 2 && cloud.isEmpty(); attempt++) {
@@ -1803,7 +1831,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     conn.setDoOutput(true);
                     conn.setConnectTimeout(8000);
                     conn.setReadTimeout(8000);
-                    String body = "{\"code\":\"" + code + "\",\"phrase\":true}";
+                    // v0.5.89：携带最近上屏词组（recent）→ 云端命中置顶——打过的字/词实时生成词组累积
+                    StringBuilder rb = new StringBuilder();
+                    int n = 0;
+                    for (String m : mruList) { if (m.length() >= 2 && !rb.toString().contains("\""+m+"\"")) { if (n>0) rb.append(','); rb.append('\"').append(jsonEscape(m)).append('\"'); if (++n >= 20) break; } }
+                    String body = "{\"code\":\"" + code + "\",\"phrase\":true,\"recent\":[" + rb + "]}";
                     try (OutputStream os = conn.getOutputStream()) {
                         os.write(body.getBytes("UTF-8"));
                     }
@@ -2393,6 +2425,29 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.5.82 多行文本框回车：先上屏候选/编码（防丢失），再换行——不再触发宿主动作
      *  （根治"回车不是换行"：旧逻辑换行后又 sendDefaultEditorAction 触发发送/完成） */
+    /** v0.5.89 成对标点：上屏"左+右"并把光标移到中间（光标后无内容时才调用） */
+    private void commitPairedPunct(String left, String right) {
+        try {
+            android.view.inputmethod.InputConnection ic = getCurrentInputConnection();
+            if (ic == null) { commitText(left + right); return; }
+            CharSequence before = ic.getTextBeforeCursor(200, 0);
+            int beforeLen = before == null ? 0 : before.length();
+            pushUndo();
+            commitText(left + right);
+            ic.setSelection(beforeLen + left.length(), beforeLen + left.length());   // 光标移到左符号之后、右符号之前
+        } catch (Exception ignored) { }
+    }
+
+    /** v0.5.89：光标后（after）是否有内容 */
+    private boolean cursorAfterEmpty() {
+        try {
+            android.view.inputmethod.InputConnection ic = getCurrentInputConnection();
+            if (ic == null) return true;
+            CharSequence after = ic.getTextAfterCursor(1, 0);
+            return after == null || after.length() == 0;
+        } catch (Exception e) { return true; }
+    }
+
     private void commitFirstAndNewline() {
         // v0.5.86 固化（用户铁律②③）：回车键不上屏中文——
         //   提示栏有字符（编码）→ 只上屏编码字符；备选栏空 → 换行；任何情况都不选中文候选
@@ -2403,6 +2458,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             candPage = 0;
             commitText(raw);
             updateCandidateView();
+            return;   // v0.5.89 用户更正：提示栏有字符时，上屏，不换行
         }
         commitText("\n");
     }
