@@ -39,8 +39,9 @@
         <Key android:codes="108" android:keyLabel="L&#10;田" />
     </Row>
 
-    <!-- 行3：Z纟 X弓 C又 V女 B子 N已 M山 ⌫（宽） -->
+    <!-- 行3：↑ Z纟 X弓 C又 V女 B子 N已 M山 ⌫（v0.5.104 加回上档键） -->
     <Row android:keyWidth="8.4%p" android:horizontalGap="0.55%p">
+        <Key android:codes="-105" android:keyLabel="↑" android:keyWidth="12%p" />
         <Key android:codes="122" android:keyLabel="Z&#10;纟" />
         <Key android:codes="120" android:keyLabel="X&#10;弓" />
         <Key android:codes="99" android:keyLabel="C&#10;又" />
@@ -48,17 +49,17 @@
         <Key android:codes="98" android:keyLabel="B&#10;子" />
         <Key android:codes="110" android:keyLabel="N&#10;已" />
         <Key android:codes="109" android:keyLabel="M&#10;山" />
-        <Key android:codes="-5" android:keyLabel="⌫" android:keyWidth="14%p" android:isRepeatable="true" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:keyWidth="13%p" android:isRepeatable="true" />
     </Row>
 
-    <!-- 行4：123 | 中/英 | ！， | 空格 | ？。 | 符 | ← -->
-    <Row android:keyWidth="9%p" android:horizontalGap="0.9%p">
+    <!-- 行4：123 | 中/英 | ！， | 空格 | ？。 | 符 | ←（v0.5.104 宽度重排：总和 81%+gap 4.2% 收进屏宽含 padding，← 完整显示） -->
+    <Row android:keyWidth="8.5%p" android:horizontalGap="0.7%p">
         <Key android:codes="-101" android:keyLabel="123" />
         <Key android:codes="-102" android:keyLabel="中/英" />
         <Key android:codes="-106" android:keyLabel="！&#10;，" android:popupCharacters="!" />
-        <Key android:codes="-107" android:keyLabel="空格" android:keyWidth="24%p" />
+        <Key android:codes="-107" android:keyLabel="空格" android:keyWidth="26%p" />
         <Key android:codes="-108" android:keyLabel="？&#10;。" android:popupCharacters="?" />
         <Key android:codes="-104" android:keyLabel="符" />
-        <Key android:codes="-4" android:keyLabel="←" android:keyWidth="13%p" />
+        <Key android:codes="-4" android:keyLabel="←" android:keyWidth="11%p" />
     </Row>
 </Keyboard>

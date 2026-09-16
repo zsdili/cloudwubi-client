@@ -236,6 +236,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private android.widget.TextView clipCount = null;                       // N/300 计数
     private int clipCat1 = -1;                                              // 行1分类：剪贴板0/常用语1/推荐2（-1=未选=显示历史）
     private int clipCat2 = 0;                                               // 行2分类：全部0/最近1/文本2/数字3/链接4
+    private android.widget.TextView btnQuotes = null;                        // v0.5.104 底行"更多语录"（删除后变"取消↺"还原）
     private static final String[] CLIP_PHRASES_COMMON = {"好的", "收到", "谢谢", "辛苦了", "没问题", "马上到", "稍等一下", "不客气", "加油", "周末愉快"};
     private static final String[] CLIP_PHRASES_REC = {"降维打击", "东方神秘大国", "青山绿水", "共同富裕", "好好学习", "天天向上"};
     // v0.5.36 反馈④：剪贴板长按删除 → 点"取消↺"恢复还原（防误操作）
@@ -2054,18 +2055,36 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         row2.addView(makeClipCat("数字", 3, 1));
         row2.addView(makeClipCat("链接", 4, 1));
         clipPanel.addView(row2);
-        // 行3：卡片列表（flex 2.2）
+        // 行3：卡片列表（v0.5.104 ScrollView 包裹——上下滑动翻查，不压缩）
+        android.widget.ScrollView clipSc = new android.widget.ScrollView(this);
+        clipSc.setVerticalScrollBarEnabled(false);
+        clipSc.setOverScrollMode(android.view.View.OVER_SCROLL_NEVER);
+        clipSc.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 2.2f));
         clipList = new LinearLayout(this);
         clipList.setOrientation(LinearLayout.VERTICAL);
-        clipList.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 2.2f));
-        clipPanel.addView(clipList);
+        clipList.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        clipSc.addView(clipList);
+        clipPanel.addView(clipSc);
         // 行4：更多语录|手动|设置|空格|回车
         LinearLayout row4 = new LinearLayout(this);
         row4.setOrientation(LinearLayout.HORIZONTAL);
         row4.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
-        row4.addView(makeBottomBtn("更多语录", 1.4f, false, false));
-        row4.addView(makeBottomBtn("手动", 1f, false, false));
-        row4.addView(makeBottomBtn("设置", 1f, false, false));
+        // v0.5.104 功能键落实：更多语录→全部常用语；手动→弹窗录入；设置→系统输入法设置
+        btnQuotes = makeBottomBtn("更多语录", 1.4f, false, false);
+        btnQuotes.setOnClickListener(v -> { clipCat1 = 1; clipCat2 = 0; renderClipPanel(); });
+        row4.addView(btnQuotes);
+        android.widget.TextView btnManual = makeBottomBtn("手动", 1f, false, false);
+        btnManual.setOnClickListener(v -> showManualClipDialog());
+        row4.addView(btnManual);
+        android.widget.TextView btnSet = makeBottomBtn("设置", 1f, false, false);
+        btnSet.setOnClickListener(v -> {
+            try {
+                android.content.Intent in = new android.content.Intent(android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS);
+                in.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(in);
+            } catch (Exception ignored) { }
+        });
+        row4.addView(btnSet);
         row4.addView(makeBottomBtn("空格", 2.6f, true, false));
         row4.addView(makeBottomBtn("回车", 1.4f, false, true));
         clipPanel.addView(row4);
@@ -2176,7 +2195,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 pool.add(it);
             }
         }
-        int shown = Math.min(5, pool.size());
+        int shown = Math.min(8, pool.size());   // v0.5.104 显示 8 条 + 上下滑动翻查
         for (int i = 0; i < shown; i++) {
             final String item = pool.get(i);
             final int srcIdx = (c1 == 0) ? clipHistory.indexOf(item) : -1;
@@ -2219,7 +2238,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
         card.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.round(40 * den));
         lp.setMargins(0, Math.round(2 * den), 0, Math.round(2 * den));
         card.setLayoutParams(lp);
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
@@ -2267,7 +2286,46 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             clipMode = false;
             updateCandidateView();
         });
+        if (index >= 0) {   // v0.5.104 长按卡片→删除，底行"更多语录"变"取消↺"可还原
+            card.setOnLongClickListener(v -> {
+                removeClipItem(index);
+                if (btnQuotes != null) {
+                    btnQuotes.setText("取消↺");
+                    btnQuotes.setOnClickListener(v2 -> {
+                        doUndo();
+                        btnQuotes.setText("更多语录");
+                        renderClipPanel();
+                    });
+                }
+                renderClipPanel();
+                return true;
+            });
+        }
         return card;
+    }
+
+    /** v0.5.104 手动添加剪贴板（IME 内弹窗录入，写入历史并刷新面板） */
+    private void showManualClipDialog() {
+        try {
+            final android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+            b.setTitle("手动添加剪贴板");
+            final android.widget.EditText et = new android.widget.EditText(this);
+            et.setHint("输入内容…");
+            et.setSingleLine(false);
+            b.setView(et);
+            b.setPositiveButton("确定", (d, w) -> {
+                String t = et.getText().toString().trim();
+                if (!t.isEmpty()) {
+                    addClipHistory(t);
+                    if (btnQuotes != null && !"取消↺".equals(btnQuotes.getText().toString())) {
+                        btnQuotes.setText("更多语录");
+                    }
+                    renderClipPanel();
+                }
+            });
+            b.setNegativeButton("取消", null);
+            b.show();
+        } catch (Exception ignored) { }
     }
 
     private void hideClipPanel() {

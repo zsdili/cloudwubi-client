@@ -6,9 +6,9 @@
      行4: 返回 | 0 | 符号 | 回车(深蓝白字)
      键面三色：白#FFF / 功能灰#E8EAED / 选中蓝#DCE1E7(回车) -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
-    android:keyWidth="19.2%p"
+    android:keyWidth="17.6%p"
     android:keyHeight="57.5dp"
-    android:horizontalGap="1%p"
+    android:horizontalGap="0.8%p"
     android:verticalGap="3dp"
     android:keyBackground="@drawable/key_bg">
 
@@ -37,6 +37,6 @@
         <Key android:codes="-103" android:keyLabel="返回" android:keyHeight="46dp" />
         <Key android:codes="48" android:keyLabel="0" android:keyHeight="46dp" />
         <Key android:codes="-104" android:keyLabel="符号" android:keyHeight="46dp" />
-        <Key android:codes="-4" android:keyLabel="回车" android:keyWidth="38%p" android:keyHeight="46dp" />
+        <Key android:codes="-4" android:keyLabel="回车" android:keyWidth="35%p" android:keyHeight="46dp" />
     </Row>
 </Keyboard>
