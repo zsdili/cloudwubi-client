@@ -2271,7 +2271,48 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         updateCandidateView();
     }
 
+    /** v0.5.80 用户固化：严禁繁体——渲染前过滤含繁体字形的候选（简繁同形不算） */
+    private static final String TRAD_CHARS = "國萬鍾龍鳳雲東車門關開說誰們華會來還進過時後學問題體氣機電風視話書報紙錢銀號碼數間愛親邊這樣點頭張長陽陰聲見讀寫語言漢簡繁臺灣港澳廣兩點個動幹麼裡來殺鬥買賣飛鳥魚馬車聽聞練習題機會";
+    private boolean hasTrad(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (TRAD_CHARS.indexOf(s.charAt(i)) >= 0) return true;
+        }
+        return false;
+    }
+
+    /** v0.5.80 用户固化排序规则：最近上屏 > 高频字 > 二字词 > 三字词 > 四字词 > 其他联想词/句(最后)
+     *  严禁将联想的句子放最前面，只限补全时可供选择；严禁繁体。 */
+    private void reorderCandidates() {
+        if (!chineseMode || candidates.size() <= 1) return;
+        // ① 严禁繁体：先过滤
+        candidates.removeIf(this::hasTrad);
+        if (candidates.size() <= 1) return;
+        // ② 分层：最近上屏(含 MRU 历史) > 高频单字 > 二字 > 三字 > 四字 > 联想句(>4字)
+        List<String> mru = new ArrayList<>(), high = new ArrayList<>(),
+                     d2 = new ArrayList<>(), d3 = new ArrayList<>(),
+                     d4 = new ArrayList<>(), other = new ArrayList<>();
+        for (String s : candidates) {
+            if (s.equals(lastSelected) || mruList.contains(s)) mru.add(s);
+            else if (s.length() == 1) high.add(s);
+            else if (s.length() == 2) d2.add(s);
+            else if (s.length() == 3) d3.add(s);
+            else if (s.length() == 4) d4.add(s);
+            else other.add(s);   // >4 字：联想词/句子，只限补全时选择，排在最后
+        }
+        // 高频单字按词频降序（freqMap 端侧累计）
+        high.sort((a, b) -> Integer.compare(freqOf(b), freqOf(a)));
+        candidates.clear();
+        candidates.addAll(mru);
+        candidates.addAll(high);
+        candidates.addAll(d2);
+        candidates.addAll(d3);
+        candidates.addAll(d4);
+        candidates.addAll(other);
+    }
+
     private void renderCandidates() {
+        // v0.5.80 用户固化：候选排序（最近上屏 > 高频 > 二字 > 三字 > 四字 > 联想句最后）+ 严禁繁体
+        reorderCandidates();
         candidateView.setSingleLine(true);
         candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         String code = composingCode.toString();
