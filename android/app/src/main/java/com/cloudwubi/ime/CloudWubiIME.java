@@ -821,30 +821,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         } catch (Exception e) { return false; }
     }
 
-    /** v0.5.5 反馈⑦：进入输入状态/光标前字联想（本地 MRU + 含字词组 + 云端前缀） */
-    private void showAssociateForChar(String ch) {
-        candidates.clear();
-        List<String> merged = new ArrayList<>();
-        int mruCount = 0;   // v0.5.67：云端语义衔接候选插到 MRU 段后（修"了解"置顶——语义衔接>字词搭配）
-        for (String p : recentPhrases) {
-            if (p.startsWith(ch) && !merged.contains(p)) { merged.add(p); mruCount++; }
-        }
-        List<String> byChar = WubiDb.queryByChar(ch);
-        if (byChar != null) {
-            for (String p : byChar) {
-                if (!merged.contains(p)) merged.add(p);
-                if (merged.size() >= 12) break;
-            }
-        }
-        pinyinInsertPos = merged.size();   // v0.5.36 反馈⑨：拼音候选插到本地五笔候选之后
-        candidates.addAll(merged);
-        candPage = 0;
-        updateCandidateView();
-        cloudAssocInsert = mruCount;       // v0.5.67：云端回填插 MRU 后（了解类字词搭配被挤后）
-        // v0.5.91 用户固化：去掉联想功能——上屏字后的云端联想一并禁用（图：整洁后 1.我 2.こ 骚扰）
-        // if (GATEWAY_READY && !merged.isEmpty()) queryAssociateAsync(ch, ch);
-    }
-
     private void resetComposing() {
         composingCode.setLength(0);
         candidates.clear();
