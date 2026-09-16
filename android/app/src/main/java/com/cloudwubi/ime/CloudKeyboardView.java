@@ -60,6 +60,7 @@ public class CloudKeyboardView extends KeyboardView {
     private int keyTextColor = 0xFF1F2937;  // 键面文字
     private final float cornerPx;           // 键帽圆角
     private final float labelSizePx;
+    private boolean symbolLabel = false;   // v0.5.98 符号界面字号 14f（主键盘 20dp × 0.7）
     private final Paint keyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -98,6 +99,13 @@ public class CloudKeyboardView extends KeyboardView {
         cornerPx = 6 * density;
         labelSizePx = 20 * density;
         textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+    /** v0.5.98 符号界面切换：true=键面字号 14dp（用户要求 14f） */
+    public void setSymbolLabel(boolean on) {
+        symbolLabel = on;
+    }
+    public boolean isSymbolLabel() {
+        return symbolLabel;
     }
 
     /** 上滑符号映射（v0.4.6 严格对齐参考截图）：
@@ -277,17 +285,17 @@ public class CloudKeyboardView extends KeyboardView {
                     String down = lab.substring(nl + 1);
                     if (up.length() > 0) {
                         textPaint.setColor(keyTextColor);
-                        textPaint.setTextSize(labelSizePx * 0.60f);
+                        textPaint.setTextSize((symbolLabel ? labelSizePx * 0.7f : labelSizePx) * 0.60f);
                         canvas.drawText(up, cx, y + key.height * 0.36f, textPaint);
                     }
                     if (down.length() > 0) {
                         textPaint.setColor(keyTextColor);
-                        textPaint.setTextSize(labelSizePx);
+                        textPaint.setTextSize(symbolLabel ? labelSizePx * 0.7f : labelSizePx);
                         canvas.drawText(down, cx, y + key.height * 0.72f, textPaint);
                     }
                 } else {
                     textPaint.setColor(keyTextColor);
-                    textPaint.setTextSize(labelSizePx);
+                    textPaint.setTextSize(symbolLabel ? labelSizePx * 0.7f : labelSizePx);
                     float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
                     canvas.drawText(lab, cx, cy, textPaint);
                 }

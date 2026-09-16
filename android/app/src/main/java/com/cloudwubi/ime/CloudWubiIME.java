@@ -105,8 +105,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int THEME_LIGHT = 0;
     private static final int THEME_DARK = 1;
     private static final int THEME_LIGHT_KB_BG = 0xFFE8EBEF;   // 键盘底色（浅）
-    private static final int THEME_LIGHT_CAND_BG = 0xFFFCFCFC; // 候选条背景（浅）——v0.5.96 用户要求：与工具栏互换（原 E8EBEF）
-    private static final int THEME_LIGHT_TOOL_BG = 0xFFE8EBEF; // 状态栏背景（浅）——v0.5.96 用户要求：与备选栏互换（原 #fcfcfc）
+    private static final int THEME_LIGHT_CAND_BG = 0xFFEFEFEF; // 候选条背景（浅）——v0.5.98 用户要求 #efefef
+    private static final int THEME_LIGHT_TOOL_BG = 0xFFCFCFCF; // 状态栏背景（浅）——v0.5.98 用户要求 #cfcfcf
     private static final int THEME_DARK_TOOL_BG = 0xFF23272E; // 状态栏背景（深）
     private static final int THEME_DARK_CAND_BG2 = 0xFF1B1F24; // 候选条背景（深）——与深色键盘同色
     private static final int THEME_LIGHT_TEXT = 0xFF1F2937;    // 主文字（浅）
@@ -427,15 +427,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(makeToolButton("←", v -> doUndo()));   // v0.5.74 反馈②：取消改向左箭头
         toolRow.addView(makeToolButton("→", v -> doRedo()));   // v0.5.74 反馈②：重做改向右箭头
         // v0.5.97 用户要求：表情单独放工具栏（重做与剪贴板之间）→ 点击直开表情键盘
-        toolRow.addView(makeToolButton("☺", v -> {
-            clipMode = false;
-            infoPanelMode = false;
-            keyboardView.setKeyboard(keyboardSymEmoji);
-            panelMode = KEY_SYM_EMOJI;
-            prevPanel = 0;
-            applyLetterCase();
-            resetIdleTimers();
-        }));
+        // v0.5.98 用户要求：表情按钮改 😀 且颜色灰色（与其他工具按钮区分）
+        {
+            android.widget.TextView emojiBtn = makeToolButton("😀", v -> {
+                clipMode = false;
+                infoPanelMode = false;
+                keyboardView.setKeyboard(keyboardSymEmoji);
+                panelMode = KEY_SYM_EMOJI;
+                prevPanel = 0;
+                applyLetterCase();
+                resetIdleTimers();
+            });
+            emojiBtn.setTextColor(0xFF9CA3AF);   // 灰色
+            toolRow.addView(emojiBtn);
+        }
         toolRow.addView(makeToolButton("亖", v -> {
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
@@ -1092,6 +1097,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymRecent);
+                keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
             case KEY_SYM_RECENT:   // v0.5.34 分类切换（左栏）
                 panelMode = 2;
@@ -1101,17 +1107,25 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 panelMode = 3;
                 keyboardView.setKeyboard(keyboardSymCn);
                 return;
+                keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
+                return;
             case KEY_SYM_EN:
                 panelMode = 4;
                 keyboardView.setKeyboard(keyboardSymEn);
+                return;
+                keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
             case KEY_SYM_EMOJI:
                 panelMode = 5;
                 keyboardView.setKeyboard(keyboardSymEmoji);
                 return;
+                keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
+                return;
             case KEY_SYM_NET:
                 panelMode = 6;
                 keyboardView.setKeyboard(keyboardSymNet);
+                return;
+                keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
             case KEY_SYM_LOCK:   // 🔒 面板锁定（占位：不自动收起）
                 return;
@@ -1142,6 +1156,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 panelMode = 0;
                 calcBuffer = "";
                 keyboardView.setKeyboard(keyboardMain);
+                keyboardView.setSymbolLabel(false);   // v0.5.98 主键盘恢复 20dp
                 applyLetterCase();
                 updateCandidateView();
                 return;
@@ -2210,7 +2225,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setSingleLine(false);
         candidateView.setEllipsize(null);
         // v0.5.9 反馈⑨：适度行距（0,1.3f 非增大 extra）——条目间用浅色相间背景区分（非虚横线、非空行）
-        candidateView.setLineSpacing(0f, 1.3f);
+        candidateView.setLineSpacing(0f, 2.0f);   // v0.5.98 用户要求：剪贴板行距加大（原 1.3 太密）
         candidateView.setTextSize(14f);   // v0.5.95 用户要求：剪贴板字号与"云五笔"一致（14sp）
         candidateView.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);   // v0.5.70：剪贴板列表顶对齐
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
