@@ -280,45 +280,57 @@ public class CloudKeyboardView extends KeyboardView {
             // 1) 键帽底色（功能键深一档）
             boolean pressed = (downKey == key);
             boolean func = isFuncKey(key);
-            keyPaint.setColor(func ? (pressed ? DesignTokens.KEY_SELECT : keyBgFunc)
-                                   : (pressed ? DesignTokens.KEY_SELECT : keyBgNormal));
+            // v0.5.103 v12：回车/返回键=选中蓝#DCE1E7 白字（数字面板回车、符号面板返回）
+            boolean enterLike = (key.codes != null && key.codes.length > 0 && (key.codes[0] == -4 || key.codes[0] == -103));
+            keyPaint.setColor(enterLike ? DesignTokens.KEY_SELECT
+                                        : (func ? (pressed ? DesignTokens.KEY_SELECT : keyBgFunc)
+                                                : (pressed ? DesignTokens.KEY_SELECT : keyBgNormal)));
             RectF r = new RectF(x + 2, y + 2, x + key.width - 2, y + key.height - 2);
             canvas.drawRoundRect(r, cornerPx, cornerPx, keyPaint);
             // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护；v0.5.1 支持上下两行；v0.5.4 反馈①：全部水平居中，布局统一）
             float cx = x + key.width / 2f;
+            int textColor = enterLike ? 0xFFFFFFFF : keyTextColor;   // v0.5.103 深蓝键白字
             if (key.label != null && key.label.length() > 0) {
                 String lab = key.label.toString();
                 int nl = lab.indexOf('\n');
                 if (nl >= 0) {
                     String up = lab.substring(0, nl);
                     String down = lab.substring(nl + 1);
+                    // v0.5.103 v12：字母键两行=字母(16dp主文字)+字根(8dp次文字)；标点键两行=同色14dp
+                    int c0 = (key.codes != null && key.codes.length > 0) ? key.codes[0] : 0;
+                    boolean radicalKey = (c0 >= 'a' && c0 <= 'z');
                     if (up.length() > 0) {
-                        textPaint.setColor(keyTextColor);
-                        textPaint.setTextSize((symbolLabel ? labelSizePx * 0.7f : labelSizePx) * 0.60f);
-                        canvas.drawText(up, cx, y + key.height * 0.36f, textPaint);
+                        textPaint.setColor(textColor);
+                        textPaint.setTextSize(symbolLabel ? labelSizePx * 0.7f : labelSizePx);
+                        canvas.drawText(up, cx, y + key.height * 0.38f, textPaint);
                     }
                     if (down.length() > 0) {
-                        textPaint.setColor(keyTextColor);
-                        textPaint.setTextSize(symbolLabel ? labelSizePx * 0.7f : labelSizePx);
-                        canvas.drawText(down, cx, y + key.height * 0.72f, textPaint);
+                        if (radicalKey) {
+                            // 字根：8dp 次文字色（hintPaint 已按 FONT_RADICAL_DP 配置）
+                            canvas.drawText(down, cx, y + key.height * 0.70f, hintPaint);
+                        } else {
+                            textPaint.setColor(textColor);
+                            textPaint.setTextSize(symbolLabel ? labelSizePx * 0.7f : labelSizePx);
+                            canvas.drawText(down, cx, y + key.height * 0.72f, textPaint);
+                        }
                     }
                 } else {
-                    textPaint.setColor(keyTextColor);
+                    textPaint.setColor(textColor);
                     textPaint.setTextSize(symbolLabel ? labelSizePx * 0.7f : labelSizePx);
                     float cy = y + key.height / 2f - (textPaint.ascent() + textPaint.descent()) / 2f;
                     canvas.drawText(lab, cx, cy, textPaint);
                 }
             }
-            // v0.5.29 反馈①：恢复上滑符号标注（去重版——主文字已含该符号则不重复绘制）
-            int sym = swipeSymbol(key);
-            if (sym != 0) {
-                String symS = String.valueOf((char) sym);
-                String main = (key.label == null ? "" : key.label.toString());
-                if (main.indexOf(symS) < 0 && !isFuncKey(key)) {
-                    canvas.drawText(symS, cx, y + key.height * 0.28f, hintPaint);
-                }
-            }
+            // v0.5.103 v12：键面无数字/符号子标签（主键盘=字母+字根两行，完全按设计稿）
         }
+    }
+
+    /** v0.5.103 v12：键盘区高度恒 239dp（onMeasure 强制，忽略 XML 累加舍入误差——五面板切换零跳动） */
+    @Override
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int w = MeasureSpec.getSize(widthMeasureSpec);
+        int h = Math.round(DesignTokens.KEYBOARD_AREA_DP * getResources().getDisplayMetrics().density);
+        setMeasuredDimension(w, h);
     }
 
     private boolean isFuncKey(Keyboard.Key key) {

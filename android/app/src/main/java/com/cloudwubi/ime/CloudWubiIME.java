@@ -230,6 +230,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private ClipboardManager clipManager;
     private SharedPreferences prefs;
     private List<String> clipHistory = new ArrayList<>();
+    private List<Long> clipTimes = new ArrayList<>();                       // v0.5.103 剪贴板时间戳
+    private LinearLayout clipPanel = null;                                  // v0.5.103 v12 剪贴板面板（239dp 整块）
+    private LinearLayout clipList = null;                                   // 卡片列表容器
+    private android.widget.TextView clipCount = null;                       // N/300 计数
+    private int clipCat1 = -1;                                              // 行1分类：剪贴板0/常用语1/推荐2（-1=未选=显示历史）
+    private int clipCat2 = 0;                                               // 行2分类：全部0/最近1/文本2/数字3/链接4
+    private static final String[] CLIP_PHRASES_COMMON = {"好的", "收到", "谢谢", "辛苦了", "没问题", "马上到", "稍等一下", "不客气", "加油", "周末愉快"};
+    private static final String[] CLIP_PHRASES_REC = {"降维打击", "东方神秘大国", "青山绿水", "共同富裕", "好好学习", "天天向上"};
     // v0.5.36 反馈④：剪贴板长按删除 → 点"取消↺"恢复还原（防误操作）
     private String clipUndoItem = null;
     private int clipUndoIndex = -1;
@@ -380,10 +388,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.95 用户要求：①状态栏背景 #fcfcfc ②工具栏按钮居右——toolRow 必须撑满宽度
         //   （此前未设 MATCH_PARENT → spacer 权重失效 → 按钮不居右，这是"居右没实现"根因）
         //   ③状态栏固定高度 25dp（与备选栏统一，防跳动）
+        int toolH = Math.round(DesignTokens.TOOLBAR_HEIGHT_DP * getResources().getDisplayMetrics().density);
         toolRow.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        toolRow.setMinimumHeight(Math.round(DesignTokens.TOOLBAR_HEIGHT_DP * getResources().getDisplayMetrics().density));   // v0.5.101 工具栏统一 32dp
-        toolRow.setPadding(dp12, dp3, dp12, dp3);   // v0.5.92 左右留边与键盘 12dp 对齐（云五笔≈Q 键左、工具条≈P 键右）
+                LinearLayout.LayoutParams.MATCH_PARENT, toolH));   // v0.5.103 固定高 32dp（min=max 双锁，防内容撑高闪动）
+        toolRow.setMinimumHeight(toolH);
+        toolRow.setPadding(dp12, dp3, dp12, dp3);
         android.widget.TextView brand = new android.widget.TextView(this);
         brand.setText("云五笔");
         brand.setTextSize(14);   // v0.5.34 反馈④：状态栏字体调大（参考截图）
@@ -459,6 +468,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candScroll.addView(candidateView);
         root.addView(candScroll);
         root.addView(keyboardView);
+        buildClipPanel(root);   // v0.5.103 v12：剪贴板面板整块（239dp，替代键盘区显示）
         rootView = root;
         // v0.5.4 反馈③：回车键长按 → 强制换行（单行/多行均生效）
         keyboardView.setOnLongPressListener(key -> {
@@ -854,30 +864,46 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         clipUndoItem = clipHistory.get(index);   // v0.5.36 反馈④：记录待撤销项
         clipUndoIndex = index;
         clipHistory.remove(index);
+        if (index < clipTimes.size()) clipTimes.remove(index);
         saveClipHistory();
     }
 
     private void addClipHistory(String text) {
         if (text == null || text.trim().isEmpty()) return;
         String norm = text.replace('\u0001', ' ');
+        int dupIdx = clipHistory.indexOf(norm);
+        if (dupIdx >= 0) clipTimes.remove(dupIdx);
         clipHistory.remove(norm);
         clipHistory.add(0, norm);
-        while (clipHistory.size() > CLIP_MAX) clipHistory.remove(clipHistory.size() - 1);
+        clipTimes.add(0, System.currentTimeMillis());
+        while (clipHistory.size() > CLIP_MAX) {
+            clipHistory.remove(clipHistory.size() - 1);
+            clipTimes.remove(clipTimes.size() - 1);
+        }
         saveClipHistory();
     }
 
     private void saveClipHistory() {
         StringBuilder sb = new StringBuilder();
-        for (String s : clipHistory) sb.append(s).append('\u0001');
+        for (int i = 0; i < clipHistory.size(); i++) {
+            long ts = (i < clipTimes.size()) ? clipTimes.get(i) : System.currentTimeMillis();
+            sb.append(clipHistory.get(i)).append('\u0002').append(ts).append('\u0001');
+        }
         prefs.edit().putString(PREFS_CLIP, sb.toString()).apply();
     }
 
     private void loadClipHistory() {
         clipHistory.clear();
+        clipTimes.clear();
         String raw = prefs.getString(PREFS_CLIP, "");
         if (!raw.isEmpty()) {
             String[] arr = raw.split("\u0001", -1);
-            for (String s : arr) if (!s.isEmpty()) clipHistory.add(s);
+            for (String seg : arr) {
+                if (seg.isEmpty()) continue;
+                String[] kv = seg.split("\u0002", -1);
+                clipHistory.add(kv[0]);
+                clipTimes.add(kv.length > 1 ? Long.parseLong(kv[1]) : System.currentTimeMillis());
+            }
         }
     }
 
@@ -935,8 +961,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         for (Keyboard.Key k : keyboardMain.getKeys()) {
             int c = k.codes[0];
             if (c >= 'a' && c <= 'z') {
-                k.label = upper ? String.valueOf(Character.toUpperCase((char) c))
-                                : String.valueOf((char) c);
+                // v0.5.103 v12：label 为 "Q\n金" 两行（字母+字根）——只替换字母行，保留字根行
+                String lab = k.label == null ? "" : k.label.toString();
+                String[] parts = lab.split("\n", 2);
+                String letter = upper ? String.valueOf(Character.toUpperCase((char) c))
+                                      : String.valueOf((char) c);
+                k.label = parts.length > 1 ? letter + "\n" + parts[1] : letter;
             } else if (c == KEY_SHIFT) {
                 // v0.5.41 反馈③：shift 激活视觉——大写模式显示实心 ⇧（明确"已切换"），否则 ↑
                 k.label = shiftState > 0 ? "⇧" : "↑";
@@ -1508,6 +1538,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.36 反馈④：剪贴板长按删除 → 点取消↺恢复还原
         if (clipUndoItem != null) {
             clipHistory.add(Math.min(clipUndoIndex, clipHistory.size()), clipUndoItem);
+            clipTimes.add(Math.min(clipUndoIndex, clipTimes.size()), System.currentTimeMillis());
             saveClipHistory();
             clipUndoItem = null;
             clipUndoIndex = -1;
@@ -1982,6 +2013,252 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         return list;
     }
 
+    // ===== v0.5.103 v12 剪贴板面板（分类行+卡片列表+底行，239dp 整块替代键盘） =====
+    private void buildClipPanel(LinearLayout root) {
+        final float den = getResources().getDisplayMetrics().density;
+        int dp2 = Math.round(2 * den), dp4 = Math.round(4 * den), dp6 = Math.round(6 * den);
+        int dp8 = Math.round(8 * den), dp12 = Math.round(12 * den);
+        int area = Math.round(DesignTokens.KEYBOARD_AREA_DP * den);
+        clipPanel = new LinearLayout(this);
+        clipPanel.setOrientation(LinearLayout.VERTICAL);
+        clipPanel.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, area));
+        clipPanel.setPadding(dp12, dp4, dp12, dp4);
+        // 行1：剪贴板|常用语|推荐 + N/300
+        LinearLayout row1 = new LinearLayout(this);
+        row1.setOrientation(LinearLayout.HORIZONTAL);
+        row1.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row1.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        row1.addView(makeClipCat("剪贴板", 0, 0));
+        row1.addView(makeClipCat("常用语", 1, 0));
+        row1.addView(makeClipCat("推荐", 2, 0));
+        android.widget.Space sp1 = new android.widget.Space(this);
+        row1.addView(sp1, new LinearLayout.LayoutParams(0, 1, 1f));
+        clipCount = new android.widget.TextView(this);
+        clipCount.setTextSize(10);
+        clipCount.setTextColor(DesignTokens.TEXT_SUB);
+        clipCount.setPadding(dp6, 0, 0, 0);
+        row1.addView(clipCount);
+        clipPanel.addView(row1);
+        // 行2：全部|最近|文本|数字|链接
+        LinearLayout row2 = new LinearLayout(this);
+        row2.setOrientation(LinearLayout.HORIZONTAL);
+        row2.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        row2.addView(makeClipCat("全部", 0, 1));
+        row2.addView(makeClipCat("最近", 1, 1));
+        row2.addView(makeClipCat("文本", 2, 1));
+        row2.addView(makeClipCat("数字", 3, 1));
+        row2.addView(makeClipCat("链接", 4, 1));
+        clipPanel.addView(row2);
+        // 行3：卡片列表（flex 2.2）
+        clipList = new LinearLayout(this);
+        clipList.setOrientation(LinearLayout.VERTICAL);
+        clipList.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 2.2f));
+        clipPanel.addView(clipList);
+        // 行4：更多语录|手动|设置|空格|回车
+        LinearLayout row4 = new LinearLayout(this);
+        row4.setOrientation(LinearLayout.HORIZONTAL);
+        row4.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        row4.addView(makeBottomBtn("更多语录", 1.4f, false, false));
+        row4.addView(makeBottomBtn("手动", 1f, false, false));
+        row4.addView(makeBottomBtn("设置", 1f, false, false));
+        row4.addView(makeBottomBtn("空格", 2.6f, true, false));
+        row4.addView(makeBottomBtn("回车", 1.4f, false, true));
+        clipPanel.addView(row4);
+        root.addView(clipPanel);
+        clipPanel.setVisibility(android.view.View.GONE);
+    }
+
+    private android.widget.TextView makeClipCat(String label, final int cat, final int level) {
+        final float den = getResources().getDisplayMetrics().density;
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(label);
+        tv.setTextSize(level == 0 ? 12 : 11);
+        tv.setGravity(android.view.Gravity.CENTER);
+        tv.setSingleLine(true);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        lp.setMargins(0, Math.round(2 * den), Math.round(3 * den), Math.round(2 * den));
+        tv.setLayoutParams(lp);
+        tv.setPadding(Math.round(6 * den), 0, Math.round(6 * den), 0);
+        tv.setOnClickListener(v -> {
+            if (level == 0) {
+                if (cat == 0 && clipCat1 == 0) {   // 再点"剪贴板"=关闭面板
+                    clipMode = false;
+                    updateCandidateView();
+                    return;
+                }
+                clipCat1 = cat;
+            } else {
+                clipCat2 = cat;
+            }
+            renderClipPanel();
+        });
+        return tv;
+    }
+
+    private android.widget.TextView makeBottomBtn(String label, float weight, boolean spaceLike, boolean enterLike) {
+        final float den = getResources().getDisplayMetrics().density;
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(label);
+        tv.setTextSize(11);
+        tv.setGravity(android.view.Gravity.CENTER);
+        tv.setSingleLine(true);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, weight);
+        lp.setMargins(0, Math.round(2 * den), Math.round(3 * den), 0);
+        tv.setLayoutParams(lp);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setCornerRadius(Math.round(DesignTokens.KEY_RADIUS_DP * den));
+        if (enterLike) {
+            bg.setColor(DesignTokens.KEY_SELECT);
+            tv.setTextColor(0xFFFFFFFF);
+        } else if (spaceLike) {
+            bg.setColor(DesignTokens.KEY_NORMAL);
+            tv.setTextColor(DesignTokens.TEXT_SUB);
+        } else {
+            bg.setColor(DesignTokens.KEY_FUNC);
+            tv.setTextColor(DesignTokens.TEXT_MAIN);
+        }
+        tv.setBackground(bg);
+        tv.setOnClickListener(v -> {
+            if (enterLike) { commitText("\n"); }
+            else if (spaceLike) { commitText(" "); }
+            else { android.widget.Toast.makeText(this, "敬请期待", android.widget.Toast.LENGTH_SHORT).show(); }
+        });
+        return tv;
+    }
+
+    private String fmtTime(long ts) {
+        long diff = System.currentTimeMillis() - ts;
+        if (diff < 60 * 1000L) return "刚刚";
+        if (diff < 60 * 60 * 1000L) return (diff / 60000L) + " 分钟前";
+        if (diff < 24 * 60 * 60 * 1000L) return (diff / 3600000L) + " 小时前";
+        return (diff / (24 * 3600000L)) + " 天前";
+    }
+
+    private void renderClipPanel() {
+        if (clipPanel == null) return;
+        clipPanel.setVisibility(android.view.View.VISIBLE);
+        if (keyboardView != null) keyboardView.setVisibility(android.view.View.GONE);
+        if (candidateView != null) safeSetText("");
+        if (statusInfo != null) safeStatusText("");
+        if (clipCount != null) clipCount.setText(clipHistory.size() + "/300");
+        // 行1/行2 选中态刷新
+        refreshClipCats();
+        clipList.removeAllViews();
+        final int c1 = clipCat1 < 0 ? 0 : clipCat1;
+        java.util.List<String> pool = new java.util.ArrayList<>();
+        if (c1 == 1) {
+            for (String p : CLIP_PHRASES_COMMON) pool.add(p);
+        } else if (c1 == 2) {
+            for (String p : CLIP_PHRASES_REC) pool.add(p);
+        } else {
+            for (int i = 0; i < clipHistory.size(); i++) {
+                if (clipCat2 == 1 && i >= 5) break;                 // 最近：前5
+                String it = clipHistory.get(i);
+                if (clipCat2 == 2 && (it.matches("[\\-+]?\\d+(\\.\\d+)?" ) || it.contains("http"))) continue;  // 文本
+                if (clipCat2 == 3 && !it.matches("[\\-+]?\\d+(\\.\\d+)?")) continue;                          // 数字
+                if (clipCat2 == 4 && !(it.contains("http") || it.contains("www."))) continue;                        // 链接
+                pool.add(it);
+            }
+        }
+        int shown = Math.min(5, pool.size());
+        for (int i = 0; i < shown; i++) {
+            final String item = pool.get(i);
+            final int srcIdx = (c1 == 0) ? clipHistory.indexOf(item) : -1;
+            clipList.addView(makeClipCard(item, srcIdx));
+        }
+    }
+
+    private void refreshClipCats() {
+        if (clipPanel == null) return;
+        final float den = getResources().getDisplayMetrics().density;
+        for (int child = 0; child < clipPanel.getChildCount(); child++) {
+            android.view.View row = clipPanel.getChildAt(child);
+            if (!(row instanceof LinearLayout)) continue;
+            LinearLayout rl = (LinearLayout) row;
+            for (int i = 0; i < rl.getChildCount(); i++) {
+                android.view.View v = rl.getChildAt(i);
+                if (!(v instanceof android.widget.TextView)) continue;
+                android.widget.TextView tv = (android.widget.TextView) v;
+                String lab = tv.getText().toString();
+                int c1 = clipCat1 < 0 ? 0 : clipCat1;
+                boolean sel;
+                if (lab.equals("剪贴板") || lab.equals("常用语") || lab.equals("推荐")) {
+                    sel = (lab.equals("剪贴板") && c1 == 0) || (lab.equals("常用语") && c1 == 1) || (lab.equals("推荐") && c1 == 2);
+                } else if (lab.equals("全部") || lab.equals("最近") || lab.equals("文本") || lab.equals("数字") || lab.equals("链接")) {
+                    sel = (lab.equals("全部") && clipCat2 == 0) || (lab.equals("最近") && clipCat2 == 1) || (lab.equals("文本") && clipCat2 == 2) || (lab.equals("数字") && clipCat2 == 3) || (lab.equals("链接") && clipCat2 == 4);
+                } else {
+                    continue;
+                }
+                android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+                bg.setCornerRadius(Math.round(DesignTokens.KEY_RADIUS_DP * den));
+                bg.setColor(sel ? DesignTokens.KEY_SELECT : DesignTokens.KEY_FUNC);
+                tv.setBackground(bg);
+                tv.setTextColor(sel ? 0xFFFFFFFF : DesignTokens.TEXT_MAIN);
+            }
+        }
+    }
+
+    private android.view.View makeClipCard(String text, final int index) {
+        final float den = getResources().getDisplayMetrics().density;
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
+        lp.setMargins(0, Math.round(2 * den), 0, Math.round(2 * den));
+        card.setLayoutParams(lp);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setCornerRadius(Math.round(DesignTokens.KEY_RADIUS_DP * den));
+        bg.setColor(0xFFFFFFFF);
+        card.setBackground(bg);
+        card.setPadding(Math.round(10 * den), 0, Math.round(8 * den), 0);
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(text.replace('\n', ' '));
+        tv.setTextSize(13);
+        tv.setSingleLine(true);
+        tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        tv.setTextColor(DesignTokens.TEXT_MAIN);
+        card.addView(tv, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        if (index >= 0 && index < clipTimes.size()) {
+            android.widget.TextView time = new android.widget.TextView(this);
+            time.setText(fmtTime(clipTimes.get(index)));
+            time.setTextSize(9);
+            time.setTextColor(DesignTokens.TEXT_SUB);
+            time.setPadding(Math.round(6 * den), 0, Math.round(6 * den), 0);
+            card.addView(time);
+        }
+        android.widget.TextView del = new android.widget.TextView(this);
+        del.setText("✕");
+        del.setTextSize(10);
+        del.setTextColor(DesignTokens.TEXT_MAIN);
+        del.setGravity(android.view.Gravity.CENTER);
+        del.setPadding(Math.round(8 * den), 0, Math.round(8 * den), 0);
+        android.graphics.drawable.GradientDrawable dbg = new android.graphics.drawable.GradientDrawable();
+        dbg.setCornerRadius(Math.round(4 * den));
+        dbg.setColor(DesignTokens.KEY_FUNC);
+        del.setBackground(dbg);
+        if (index >= 0) {
+            del.setOnClickListener(v -> {
+                removeClipItem(index);
+                renderClipPanel();
+            });
+        } else {
+            del.setVisibility(android.view.View.GONE);
+        }
+        card.addView(del);
+        final String t = text;
+        card.setOnClickListener(v -> {
+            commitText(t);
+            clipMode = false;
+            updateCandidateView();
+        });
+        return card;
+    }
+
+    private void hideClipPanel() {
+        if (clipPanel != null) clipPanel.setVisibility(android.view.View.GONE);
+        if (keyboardView != null) keyboardView.setVisibility(android.view.View.VISIBLE);
+    }
+
     /** 候选条渲染：空闲态（云五笔 ▾ 剪贴板）/ 剪贴板历史 / 数字计算 / 候选列表 */
     /** v0.5.60：内容相同不重绘（消除联想上屏等场景屏幕闪动——setText 全量替换触发重绘闪烁） */
     private void safeSetText(CharSequence t) {
@@ -2014,6 +2291,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     private void updateCandidateView() {
         if (candidateView == null) return;
+        if (!clipMode) hideClipPanel();   // v0.5.103 v12：非剪贴板态隐藏面板、恢复键盘
         // v0.5.90 用户固化：提示栏为空时备选必须清空（不残留任何候选/联想）
         if (composingCode.length() == 0 && !clipMode && !infoPanelMode && !(panelMode == 1)) {
             candidates.clear();
@@ -2038,7 +2316,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.5.11 反馈⑥：剪贴板态优先渲染（英文输入态也可用剪贴板，原英文分支提前 return 导致不可用）
         if (clipMode) {
-            renderClipboardList();
+            renderClipPanel();   // v0.5.103 v12 剪贴板面板（分类+卡片列表+底行）
             return;
         }
         // v0.5.34 反馈①：数字面板实时计算——候选条显示"带式"和"仅结果"两个候选，点选上屏
@@ -2114,7 +2392,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             return;
         }
         if (clipMode) {
-            renderClipboardList();
+            renderClipPanel();   // v0.5.103 v12 剪贴板面板（分类+卡片列表+底行）
             return;
         }
         // v0.5.11 反馈②：候选/联想单行显示（不换行），英文翻译只显示在第一行状态栏

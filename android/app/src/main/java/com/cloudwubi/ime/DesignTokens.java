@@ -55,6 +55,8 @@ public final class DesignTokens {
     public static final int CAND_BAR_HEIGHT_DP = 28;
     /** 工具栏与备选栏之间分隔线 1dp */
     public static final int DIVIDER_DP = 1;
+    /** 键盘区高度（300-32-28-1=239，恒等） */
+    public static final int KEYBOARD_AREA_DP = PANEL_HEIGHT_DP - TOOLBAR_HEIGHT_DP - CAND_BAR_HEIGHT_DP - DIVIDER_DP;
     /** 主键盘键高 */
     public static final int KEY_HEIGHT_DP = 40;
     /** 键间隙 */

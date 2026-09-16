@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔符号面板 v0.5.98：8 列正方键（宽=高 45dp），返回与锁定互换位置，符号字号 14 -->
+<!-- 云五笔符号面板 v0.5.103：完全按 UI v12 设计稿（分类行+4行符号+底行）
+     行1: 最近 | ▸中文 | 英文 | 网络 | ，| 。| ？| ！
+     行2: ：| 、| @| …
+     行3: “| ”| ；| ~
+     行4: .| -| （| ）
+     行5: 《| 》| ÷| ×
+     行6: 🔒| ∧| ∨| ⌫| 返回(深蓝白字) -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="12.2%p"
     android:keyHeight="37.3dp"
@@ -8,58 +14,43 @@
     android:keyBackground="@drawable/key_bg">
     <Row>
         <Key android:codes="-311" android:keyLabel="最近" />
-        <Key android:codes="-312" android:keyLabel="中文" />
+        <Key android:codes="-312" android:keyLabel="▸中文" />
         <Key android:codes="-313" android:keyLabel="英文" />
         <Key android:codes="-315" android:keyLabel="网络" />
         <Key android:codes="65292" android:keyLabel="，" />
         <Key android:codes="12290" android:keyLabel="。" />
         <Key android:codes="65311" android:keyLabel="？" />
-    </Row>
-    <Row>
         <Key android:codes="65281" android:keyLabel="！" />
+    </Row>
+    <Row android:keyWidth="24.4%p" android:horizontalGap="0.4%p">
         <Key android:codes="65306" android:keyLabel="：" />
         <Key android:codes="12289" android:keyLabel="、" />
-        <Key android:codes="61" android:keyLabel="=" />
+        <Key android:codes="64" android:keyLabel="@" />
         <Key android:codes="8230" android:keyLabel="…" />
+    </Row>
+    <Row android:keyWidth="24.4%p" android:horizontalGap="0.4%p">
         <Key android:codes="8220" android:keyLabel="“" />
         <Key android:codes="8221" android:keyLabel="”" />
         <Key android:codes="65307" android:keyLabel="；" />
+        <Key android:codes="126" android:keyLabel="~" />
     </Row>
-    <Row>
-        <Key android:codes="8216" android:keyLabel="‘" />
-        <Key android:codes="8217" android:keyLabel="’" />
+    <Row android:keyWidth="24.4%p" android:horizontalGap="0.4%p">
+        <Key android:codes="46" android:keyLabel="." />
+        <Key android:codes="45" android:keyLabel="-" />
         <Key android:codes="65288" android:keyLabel="（" />
         <Key android:codes="65289" android:keyLabel="）" />
-        <Key android:codes="12304" android:keyLabel="【" />
-        <Key android:codes="12305" android:keyLabel="】" />
+    </Row>
+    <Row android:keyWidth="24.4%p" android:horizontalGap="0.4%p">
         <Key android:codes="12298" android:keyLabel="《" />
         <Key android:codes="12299" android:keyLabel="》" />
-    </Row>
-    <Row>
-        <Key android:codes="8800" android:keyLabel="≠" />
-        <Key android:codes="8776" android:keyLabel="≈" />
-        <Key android:codes="8804" android:keyLabel="≤" />
-        <Key android:codes="8805" android:keyLabel="≥" />
-        <Key android:codes="215" android:keyLabel="×" />
         <Key android:codes="247" android:keyLabel="÷" />
-        <Key android:codes="177" android:keyLabel="±" />
-        <Key android:codes="8451" android:keyLabel="℃" />
+        <Key android:codes="215" android:keyLabel="×" />
     </Row>
     <Row>
-        <Key android:codes="45" android:keyLabel="-" />
-        <Key android:codes="95" android:keyLabel="_" />
-        <Key android:codes="126" android:keyLabel="~" />
-        <Key android:codes="183" android:keyLabel="·" />
-        <Key android:codes="64" android:keyLabel="@" />
-        <Key android:codes="35" android:keyLabel="#" />
-        <Key android:codes="37" android:keyLabel="%" />
-        <Key android:codes="38" android:keyLabel="&amp;" />
-    </Row>
-    <Row>
-        <Key android:codes="-103" android:keyLabel="返回" />
-        <Key android:codes="-322" android:keyLabel="⌃" />
-        <Key android:codes="-323" android:keyLabel="⌄" />
-        <Key android:codes="-5" android:keyLabel="←" android:isRepeatable="true" />
         <Key android:codes="-321" android:keyLabel="🔒" />
+        <Key android:codes="-322" android:keyLabel="∧" />
+        <Key android:codes="-323" android:keyLabel="∨" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:isRepeatable="true" />
+        <Key android:codes="-103" android:keyLabel="返回" />
     </Row>
 </Keyboard>

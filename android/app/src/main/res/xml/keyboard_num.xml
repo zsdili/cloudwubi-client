@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 云五笔数字面板 v0.5.34：严格按用户参考截图
-     行1: + | 1 | 2 | 3 | ←(退格)
-     行2: - | 4 | 5 | 6 | @
-     行3: * | 7 | 8 | 9 | .
-     行4: 返回 | / | 0 | 符号 | ↵(回车)
-     说明：实时计算结果在候选条点选上屏（带式/仅结果），回车执行输入框动作 -->
+<!-- 云五笔数字面板 v0.5.103：完全按 UI v12 设计稿
+     行1: + | 1 | 2 | 3 | ⌫
+     行2: − | 4 | 5 | 6 | @
+     行3: × | 7 | 8 | 9 | .
+     行4: 返回 | 0 | 符号 | 回车(深蓝白字)
+     键面三色：白#FFF / 功能灰#E8EAED / 选中蓝#DCE1E7(回车) -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="19.2%p"
     android:keyHeight="57.5dp"
@@ -17,17 +17,17 @@
         <Key android:codes="49" android:keyLabel="1" />
         <Key android:codes="50" android:keyLabel="2" />
         <Key android:codes="51" android:keyLabel="3" />
-        <Key android:codes="-5" android:keyLabel="←" android:isRepeatable="true" />
+        <Key android:codes="-5" android:keyLabel="⌫" android:isRepeatable="true" />
     </Row>
     <Row>
-        <Key android:codes="45" android:keyLabel="-" />
+        <Key android:codes="45" android:keyLabel="−" />
         <Key android:codes="52" android:keyLabel="4" />
         <Key android:codes="53" android:keyLabel="5" />
         <Key android:codes="54" android:keyLabel="6" />
-        <Key android:codes="61" android:keyLabel="=" />   <!-- v0.5.96 用户：等号常用，数字面板直取（原@移符号页） -->
+        <Key android:codes="64" android:keyLabel="@" />
     </Row>
     <Row>
-        <Key android:codes="42" android:keyLabel="*" />
+        <Key android:codes="42" android:keyLabel="×" />
         <Key android:codes="55" android:keyLabel="7" />
         <Key android:codes="56" android:keyLabel="8" />
         <Key android:codes="57" android:keyLabel="9" />
@@ -35,9 +35,8 @@
     </Row>
     <Row>
         <Key android:codes="-103" android:keyLabel="返回" android:keyHeight="46dp" />
-        <Key android:codes="47" android:keyLabel="/" android:keyHeight="46dp" />
         <Key android:codes="48" android:keyLabel="0" android:keyHeight="46dp" />
         <Key android:codes="-104" android:keyLabel="符号" android:keyHeight="46dp" />
-        <Key android:codes="-4" android:keyLabel="↵" android:keyHeight="46dp" />
+        <Key android:codes="-4" android:keyLabel="回车" android:keyWidth="38%p" android:keyHeight="46dp" />
     </Row>
 </Keyboard>
