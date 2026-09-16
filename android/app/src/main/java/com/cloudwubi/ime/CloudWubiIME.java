@@ -2013,6 +2013,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     private void updateCandidateView() {
         if (candidateView == null) return;
+        // v0.5.90 用户固化：提示栏为空时备选必须清空（不残留任何候选/联想）
+        if (composingCode.length() == 0 && !clipMode && !infoPanelMode && !(panelMode == 1)) {
+            candidates.clear();
+            cloudHot.clear();
+            lastEnHint = "";
+            if (candidateView.getText() != null && candidateView.getText().length() > 0) {
+                safeSetText("");
+                return;
+            }
+        }
         resetCandidateStyle();   // v0.5.62：状态规范化——所有分支渲染前统一复位
         // v0.5.13 反馈①：app 信息面板优先渲染
         if (infoPanelMode) {
@@ -2192,6 +2202,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setEllipsize(null);
         // v0.5.9 反馈⑨：适度行距（0,1.3f 非增大 extra）——条目间用浅色相间背景区分（非虚横线、非空行）
         candidateView.setLineSpacing(0f, 1.3f);
+        candidateView.setTextSize(9f);   // v0.5.90 用户要求：剪贴板文字字号缩小为一半（正常态 18 → 剪贴板 9）
         candidateView.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);   // v0.5.70：剪贴板列表顶对齐
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         int altBg = dark() ? 0x2AFFFFFF : 0xFFF3F3F3;   // 相间浅色背景（跟随深浅色）
@@ -2717,9 +2728,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // v0.5.73：翻译基于光标（整词→末字→空不译，与打不打字无关）
         refreshTranslation();
+        // v0.5.90 用户固化：去掉联想功能——上屏后不触发任何联想（v0.5.87 起禁打字路径，本处收尾）
         // v0.5.55：恢复上下文联想（用户强化要求：光标前字/整词上下文联想——MRU置顶+整词前缀+锚字+成语+云端顺承）
-        associateActive = true;
-        triggerAssociate();
+        // associateActive = true;
+        // triggerAssociate();
     }
 
     /** v0.4.9 反馈① + v0.5.1 反馈⑤：联想基准=整个上屏词组（如"前进"→"前进浪潮/前进号角"），
@@ -2835,7 +2847,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                         lastEnHint = "";
                     }
                 }
-                triggerAssociate();   // v0.5.74：基于光标整词重新联想（外部变化也触发）
+                // v0.5.90 用户固化：去掉联想功能——不再触发任何联想（v0.5.87 起禁打字路径，本处收尾）
+                // triggerAssociate();
             }
             refreshTranslation();   // v0.5.73：光标移动 → 同步刷新翻译（整词→字→空不译）
         }
