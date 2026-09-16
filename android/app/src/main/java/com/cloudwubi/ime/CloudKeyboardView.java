@@ -61,11 +61,13 @@ public class CloudKeyboardView extends KeyboardView {
     private final float cornerPx;           // 键帽圆角
     private final float labelSizePx;
     private boolean symbolLabel = false;   // v0.5.98 符号界面字号 14f（主键盘 20dp × 0.7）
+    private boolean darkTheme = false;     // v0.5.99 记录当前主题（透明键面恢复用）
     private final Paint keyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     /** v0.4.9：深浅色主题切换（键帽/底板/文字/上滑标注四件套） */
     public void applyTheme(boolean dark) {
+        darkTheme = dark;   // v0.5.99
         if (dark) {
             boardBg = 0xFF111827;
             keyBgNormal = 0xFF1F2937;
@@ -100,9 +102,16 @@ public class CloudKeyboardView extends KeyboardView {
         labelSizePx = 20 * density;
         textPaint.setTextAlign(Paint.Align.CENTER);
     }
-    /** v0.5.98 符号界面切换：true=键面字号 14dp（用户要求 14f） */
+    /** v0.5.98 符号界面切换：true=键面字号 14dp（用户要求 14f）
+     *  v0.5.99 用户要求：符号键盘去掉键面背景（透明，看不到键的样子） */
     public void setSymbolLabel(boolean on) {
         symbolLabel = on;
+        if (on) {
+            keyBgNormal = 0x00000000;   // 透明键面
+            keyBgFunc = 0x00000000;
+        } else {
+            applyTheme(darkTheme);   // 恢复主题色
+        }
     }
     public boolean isSymbolLabel() {
         return symbolLabel;

@@ -105,8 +105,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int THEME_LIGHT = 0;
     private static final int THEME_DARK = 1;
     private static final int THEME_LIGHT_KB_BG = 0xFFE8EBEF;   // 键盘底色（浅）
-    private static final int THEME_LIGHT_CAND_BG = 0xFFEFEFEF; // 候选条背景（浅）——v0.5.98 用户要求 #efefef
-    private static final int THEME_LIGHT_TOOL_BG = 0xFFCFCFCF; // 状态栏背景（浅）——v0.5.98 用户要求 #cfcfcf
+    private static final int THEME_LIGHT_CAND_BG = 0x00000000; // 候选条背景（浅）——v0.5.99 用户要求透明
+    private static final int THEME_LIGHT_TOOL_BG = 0xFFEFEFEF; // 状态栏背景（浅）——v0.5.99 用户要求 #efefef
     private static final int THEME_DARK_TOOL_BG = 0xFF23272E; // 状态栏背景（深）
     private static final int THEME_DARK_CAND_BG2 = 0xFF1B1F24; // 候选条背景（深）——与深色键盘同色
     private static final int THEME_LIGHT_TEXT = 0xFF1F2937;    // 主文字（浅）
@@ -406,7 +406,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         statusInfo.setPadding(8, 0, 0, 0);
         statusInfo.setSingleLine(true);
         statusInfo.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        statusInfo.setMaxWidth(Math.round(140 * getResources().getDisplayMetrics().density));   // v0.5.40 反馈⑤：限定显示宽度
+        statusInfo.setMaxWidth(Math.round(70 * getResources().getDisplayMetrics().density));   // v0.5.99 7 个工具按钮后宽度不足溢出——限 70dp
         statusInfo.setTextColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
         // v0.5.9 反馈⑦：点击状态栏英文翻译 → 上屏翻译内容
         statusInfo.setOnClickListener(v -> {
@@ -460,6 +460,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candScroll = new android.widget.HorizontalScrollView(this);
         candScroll.setHorizontalScrollBarEnabled(false);
         candScroll.setOverScrollMode(android.view.View.OVER_SCROLL_NEVER);
+        // v0.5.99 用户要求：备选栏左右不超过 Q/P 键（键盘 padding 12dp 对齐）
+        candScroll.setPadding(dp12, 0, dp12, 0);
         candScroll.addView(candidateView);
         root.addView(candScroll);
         root.addView(keyboardView);
@@ -501,7 +503,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.40 反馈④：固定宽度放置工具栏按钮，避免文字宽度差异导致位移晃动
         // v0.5.60 反馈③：宽度 44dp→34dp（5 按钮间隔缩小一半）；↺↻ 再下移 3 像素视觉对齐
         tv.setLayoutParams(new LinearLayout.LayoutParams(
-                Math.round(34 * getResources().getDisplayMetrics().density),
+                Math.round(26 * getResources().getDisplayMetrics().density),   // v0.5.99 7 按钮 26dp×7=182 防溢出（原 34 超屏宽挤掉按钮）
                 LinearLayout.LayoutParams.MATCH_PARENT));
         if (isRound) tv.setTranslationY(-6f);   // v0.5.70 反馈：↺↻ 仍下掉 → 上移 6 像素（22sp 大字符基线偏下）
         return tv;
@@ -2036,6 +2038,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             // v0.5.94 用户反馈：状态栏残留"k"——本防线提前 return 导致 code 空分支的
             //   safeStatusText("") 未执行；此处一并清状态栏（新会话/退格/上屏后均干净）
             if (statusInfo != null) safeStatusText("");
+            // v0.5.99 用户反馈（>10次）：有输入/没输入时备选栏高度不一样——根因：本防线提前
+            //   return 前未复位候选栏样式——剪贴板态(80dp多行)残留→无输入时 80dp、有输入时 28dp
+            resetCandidateStyle();
             if (candidateView.getText() != null && candidateView.getText().length() > 0) {
                 safeSetText("");
                 return;
