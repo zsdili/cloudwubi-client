@@ -122,6 +122,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     // ===== v0.4.9 候选翻页 =====
     private int candPage = 0;
+    private boolean suppressHintAfterCommit = false;   // v0.5.91 上屏后抑制翻译刷新（上屏即清空状态栏）
     private final java.util.Map<String, java.util.List<String>> cloudCache = new java.util.LinkedHashMap<>();   // v0.5.89 云端词组结果缓存（LRU，提速）
     // v0.5.89 成对标点自动补全（左符号 → 光标后空时自动补右半边）
     private static final String PAIR_LEFT = "“（【《『「〔〈｛";
@@ -378,7 +379,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(brandWrap);
         brandWrap.addView(brand);
         android.view.View dot = new android.view.View(this);
-        int dotSize = Math.round(10 * getResources().getDisplayMetrics().density);
+        int dotSize = 2;   // v0.5.91 用户要求：红点 2px 大小即可（原 10dp 太大）
         android.widget.FrameLayout.LayoutParams dotLp = new android.widget.FrameLayout.LayoutParams(
                 dotSize, dotSize, android.view.Gravity.TOP | android.view.Gravity.END);
         dot.setLayoutParams(dotLp);
@@ -806,7 +807,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candPage = 0;
         updateCandidateView();
         cloudAssocInsert = mruCount;       // v0.5.67：云端回填插 MRU 后（了解类字词搭配被挤后）
-        if (GATEWAY_READY && !merged.isEmpty()) queryAssociateAsync(ch, ch);
+        // v0.5.91 用户固化：去掉联想功能——上屏字后的云端联想一并禁用（图：整洁后 1.我 2.こ 骚扰）
+        // if (GATEWAY_READY && !merged.isEmpty()) queryAssociateAsync(ch, ch);
     }
 
     private void resetComposing() {
@@ -1416,6 +1418,10 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         associateActive = false;
         lastCommittedChar = "";
         lastCommittedText = "";
+        // v0.5.91 用户要求：上屏即清空状态栏（含翻译残留 clean）——保持干净整洁
+        lastEnHint = "";
+        suppressHintAfterCommit = true;
+        safeStatusText("");
         updateCandidateView();
     }
 
@@ -3183,6 +3189,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.5.73：光标移动/上屏后刷新翻译（整词→字→空不译）；密码框不译 */
     private void refreshTranslation() {
+        // v0.5.91 上屏后的第一次光标刷新跳过翻译（状态栏保持干净）；之后外部移动光标正常翻译
+        if (suppressHintAfterCommit) {
+            suppressHintAfterCommit = false;
+            lastEnHint = "";
+            if (statusInfo != null) statusInfo.setText("");
+            return;
+        }
         String ctx = isPassword ? "" : cursorBeforeText();
         if (ctx.isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
         queryTranslationByCursor(ctx);
