@@ -2272,7 +2272,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.80 用户固化：严禁繁体——渲染前过滤含繁体字形的候选（简繁同形不算） */
-    private static final String TRAD_CHARS = "國萬鍾龍鳳雲東車門關開說誰們華會來還進過時後學問題體氣機電風視話書報紙錢銀號碼數間愛親邊這樣點頭張長陽陰聲見讀寫語言漢簡繁臺灣港澳廣兩點個動幹麼裡來殺鬥買賣飛鳥魚馬車聽聞練習題機會";
+    private static final String TRAD_CHARS = "國萬鍾龍鳳雲東車門關開說誰們華會來還進過時後學問題體氣機電風視話書報紙錢銀號碼數間愛親邊這樣點頭張長陽陰聲見讀寫語漢簡臺灣廣兩點個動幹麼裡殺鬥買賣飛鳥魚馬車聽聞練習題機會";
     private boolean hasTrad(String s) {
         for (int i = 0; i < s.length(); i++) {
             if (TRAD_CHARS.indexOf(s.charAt(i)) >= 0) return true;
