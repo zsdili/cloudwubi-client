@@ -1412,7 +1412,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             try { ic.finishComposingText(); } catch (Exception ignored) { }
             ic.commitText(s, 1);
         }
-        maybeTriggerComma(s);   // v0.6.6 上屏含中文逗号 → 联想下半句/下半段
+        maybeTriggerComma(s);   // v0.6.6 上屏含中文逗号 → 联想下半句/下半段（v0.7.16 已禁用）
+        // v0.7.16 固化（用户：暂时去掉联想功能，每次上屏完提示栏和备选栏清空，去除干扰）：
+        composingCode.setLength(0);
+        candidates.clear();
+        associateActive = false;
+        lastCommittedChar = "";
+        lastCommittedText = "";
+        updateCandidateView();
     }
 
     // ===== v0.5.14 反馈②：端侧词频缓存（最近 3 个月输入记录，联想排序权重） =====
@@ -2771,7 +2778,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         updateCandidateView();
         // ③ 云端热点：上下文通道（整句上文→语境连续联想）+ 锚字前缀兜底
         cloudAssocInsert = -1;   // v0.5.67：打字路径云端回填走原逻辑（末尾）
-        if (GATEWAY_READY) queryAssociateAsync(chain, anchor);
+        // v0.7.16 固化：暂时去掉联想功能——打字路径云端联想禁用（候选只含词库词组，去干扰）
+        // if (GATEWAY_READY) queryAssociateAsync(chain, anchor);
     }
 
     /** v0.5.0 反馈③：读取光标前一个字（联想锚字来源） */
@@ -2946,6 +2954,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     /** v0.6.6 逗号补全联想：上屏中文逗号 → 光标前末句 → 云端查下半句 → 候选置顶
      *  数据源为公共知识（诗词/俗语/名言），非个人语料 */
     private void maybeTriggerComma(String s) {
+        // v0.7.16 固化：暂时去掉联想功能——逗号下半句联想禁用（保留函数壳，调用点保留便于恢复）
+        return;
+    }
+    private void _maybeTriggerCommaOld(String s) {
+        /* v0.6.6 原逻辑（已禁用，保留存档）
         if (s == null || !s.contains("，")) return;
         new Thread(() -> {
             try {
@@ -2973,6 +2986,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 });
             } catch (Exception ignored) { }
         }).start();
+        */
     }
 
     /** 云端 POST 请求（返回 phrases 数组，失败返回 null） */
