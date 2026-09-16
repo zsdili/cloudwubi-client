@@ -51,9 +51,14 @@ public class CalcEngine {
                 || expr.indexOf('/') >= 0 || expr.indexOf('×') >= 0 || expr.indexOf('÷') >= 0;
     }
 
-    /** 四则表达式求值（乘除优先，加减左结合；非法/除零返回 NaN） */
+    /** 四则表达式求值（乘除优先，加减左结合；非法/除零返回 NaN）
+     *  v0.5.76 顽疾根治：负数开头表达式（"-2+5"）此前解析到开头"-"时 cur 为空 → NaN →
+     *  连续计算拼接（4-6=-2 再+5）永远失败——用户反馈 6 次的计算 bug 的代码级根因 */
     public static double calcEval(String expr) {
         expr = expr.replace('×', '*').replace('÷', '/');
+        // 一元负号兜底：仅处理开头"-"（-2+5 → 0-2+5，用户"4-6=-2 再+5"核心场景）；
+        //   运算符后负号（4*-2）维持原 NaN 语义（不输出错值，避免"4*-2→-2"式错误结果）
+        if (expr.startsWith("-")) expr = "0" + expr;
         List<Double> nums = new ArrayList<Double>();
         List<Character> ops = new ArrayList<Character>();
         StringBuilder cur = new StringBuilder();

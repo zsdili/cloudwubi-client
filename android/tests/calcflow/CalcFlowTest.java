@@ -31,8 +31,8 @@ public class CalcFlowTest {
         check("1b 首次 4-6=-2 带式", "4-6=-2".equals(b1.commit));
         e2.onOp("+");
         e2.onDigit('5');
-        CalcEngine.Action b2 = e2.onEq(true);    // 拼接
-        check("1b 连续 4-6=-2+5=3", "4-6=-2+5=3".equals(b2.commit));
+        CalcEngine.Action b2 = e2.onEq(true);    // 增量上屏：文本"4-6=-2"已在屏 → 只补"+5=3"
+        check("1b 连续 增量+5=3（拼成4-6=-2+5=3）", "+5=3".equals(b2.commit));
         // 场景2：2*3=6 → *4 → 6*4=24（带式）
         CalcEngine e3 = newEngine(true);
         e3.onDigit('2'); e3.onOp("*"); e3.onDigit('3');
@@ -41,7 +41,7 @@ public class CalcFlowTest {
         e3.onOp("*");
         e3.onDigit('4');
         CalcEngine.Action c2 = e3.onEq(true);
-        check("2 连续 2*3=6*4=24", "2*3=6*4=24".equals(c2.commit));
+        check("2 连续 增量*4=24（拼成2*3=6*4=24）", "*4=24".equals(c2.commit));
         // 场景3：上屏结果后按运算符进计算（lastCalcInput 续算，不丢表达式）
         CalcEngine e4 = newEngine(false);
         e4.onDigit('8'); e4.onOp("*"); e4.onDigit('4');
