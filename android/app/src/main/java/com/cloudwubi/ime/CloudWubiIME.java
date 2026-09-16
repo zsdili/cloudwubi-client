@@ -426,6 +426,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(makeToolButton("✕", v -> handleBackspace()));
         toolRow.addView(makeToolButton("←", v -> doUndo()));   // v0.5.74 反馈②：取消改向左箭头
         toolRow.addView(makeToolButton("→", v -> doRedo()));   // v0.5.74 反馈②：重做改向右箭头
+        // v0.5.97 用户要求：表情单独放工具栏（重做与剪贴板之间）→ 点击直开表情键盘
+        toolRow.addView(makeToolButton("☺", v -> {
+            clipMode = false;
+            infoPanelMode = false;
+            keyboardView.setKeyboard(keyboardSymEmoji);
+            panelMode = KEY_SYM_EMOJI;
+            prevPanel = 0;
+            applyLetterCase();
+            resetIdleTimers();
+        }));
         toolRow.addView(makeToolButton("亖", v -> {
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
@@ -625,7 +635,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             };
             sb.setSpan(dl, uStart, uEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else if (updateChecked) {
-            sb.append(latestVersion == null ? "  ·  检查更新失败（网络）" : "  ·  已是最新版本");
+            // v0.5.97 用户要求：app 信息里去掉"最新版本"提示（有新版只在云五笔右上角 2px 红点提醒）
         }
         sb.setSpan(new ForegroundColorSpan(c), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // v0.5.65 反馈①：app 信息仅限一行（不换行、超宽省略），保证不撑大显示范围
