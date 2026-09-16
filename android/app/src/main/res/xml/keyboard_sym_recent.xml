@@ -2,7 +2,7 @@
 <!-- 云五笔符号面板 v0.5.98：8 列正方键（宽=高 45dp），返回与锁定互换位置 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="12.2%p"
-    android:keyHeight="45dp"
+    android:keyHeight="45.4dp"
     android:horizontalGap="0.2%p"
     android:verticalGap="3dp"
     android:keyBackground="@drawable/key_bg">
@@ -10,7 +10,6 @@
         <Key android:codes="-311" android:keyLabel="▸最近" />
         <Key android:codes="-312" android:keyLabel="中文" />
         <Key android:codes="-313" android:keyLabel="英文" />
-        <Key android:codes="-314" android:keyLabel="表情" />
         <Key android:codes="-315" android:keyLabel="网络" />
         <Key android:codes="65292" android:keyLabel="，" />
         <Key android:codes="12290" android:keyLabel="。" />

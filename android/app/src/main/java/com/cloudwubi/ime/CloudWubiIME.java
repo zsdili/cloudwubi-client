@@ -155,6 +155,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private LinearLayout rootView;
     private LinearLayout toolRow;   // v0.5.0 反馈①：工具行（全选/取消↺/重做↻）
     private android.widget.ImageView hideBtn;   // v0.5.4 反馈⑨：闲置 2 秒后出现的收起键盘按钮（v0.5.101 图标化）
+    /** v0.5.101 面板切换：清空编码/候选/状态栏（v12 规范——切面板候选必须干净，不残留干扰） */
+    private void clearComposingOnPanelSwitch() {
+        composingCode.setLength(0);
+        candidates.clear();
+        cloudHot.clear();
+        lastEnHint = "";
+        if (statusInfo != null) safeStatusText("");
+        updateCandidateView();
+    }
+
     /** v0.5.5：闲置定时器——2 秒出现收起按钮（反馈④，INVISIBLE 占位不跳动）
      *  v0.5.8 反馈⑤：取消状态栏/备选栏自动清空（原 1 秒清空候选已移除，候选保留待用户操作） */
     private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
@@ -1085,7 +1095,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 calcBuffer = "";
                 keyboardView.setKeyboard(keyboardNum);
                 keyboardView.setSymbolLabel(false);   // v0.5.99-fix 数字面板恢复主键盘字号 20dp
-                updateCandidateView();
+                clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_IN:   // v0.5.34 符号面板分类式：进入"最近"分类（参考用户截图）
                 if (panelMode < 2 || panelMode > 6) {
@@ -1094,26 +1104,31 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymRecent);
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
+                clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_RECENT:   // v0.5.34 分类切换（左栏）
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymRecent);
                 keyboardView.setSymbolLabel(true);   // v0.5.99-fix 符号分类一致 14dp
+                clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_CN:
                 panelMode = 3;
                 keyboardView.setKeyboard(keyboardSymCn);
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
+                clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_EN:
                 panelMode = 4;
                 keyboardView.setKeyboard(keyboardSymEn);
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
+                clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_NET:
                 panelMode = 6;
                 keyboardView.setKeyboard(keyboardSymNet);
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
+                clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_LOCK:   // 🔒 面板锁定（占位：不自动收起）
                 return;

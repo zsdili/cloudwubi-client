@@ -7,9 +7,9 @@
      功能键浅紫底 #C8C8D8，普通键白底，键盘底 #E8EBEF -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="8.3%p"
-    android:keyHeight="50dp"
+    android:keyHeight="57.5dp"
     android:horizontalGap="0.55%p"
-    android:verticalGap="6dp"
+    android:verticalGap="3dp"
     android:keyBackground="@drawable/key_bg">
 
     <!-- 行1：Q W E R T Y U I O P（上滑数字 1 2 3 4 5 6 7 8 9 0） -->
@@ -53,7 +53,7 @@
     </Row>
 
     <!-- 行4：123 | 中/英 | !, | 空格(原🎤，v0.4.8反馈⑤) | ?。 | 符 | ←(回车宽) -->
-    <Row android:keyWidth="9%p" android:horizontalGap="0.9%p" android:keyHeight="46dp">
+    <Row android:keyWidth="9%p" android:horizontalGap="0.9%p">
         <Key android:codes="-101" android:keyLabel="123" />
         <Key android:codes="-102" android:keyLabel="中" />
         <Key android:codes="-106" android:keyLabel="！&#10;，" android:popupCharacters="!" />

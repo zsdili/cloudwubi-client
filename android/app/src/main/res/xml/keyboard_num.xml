@@ -7,9 +7,9 @@
      说明：实时计算结果在候选条点选上屏（带式/仅结果），回车执行输入框动作 -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="19.2%p"
-    android:keyHeight="50dp"
+    android:keyHeight="57.5dp"
     android:horizontalGap="1%p"
-    android:verticalGap="6dp"
+    android:verticalGap="3dp"
     android:keyBackground="@drawable/key_bg">
 
     <Row>
