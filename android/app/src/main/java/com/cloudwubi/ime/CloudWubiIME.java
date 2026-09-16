@@ -66,7 +66,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int KEY_SYM_RECENT = -311;
     private static final int KEY_SYM_CN = -312;
     private static final int KEY_SYM_EN = -313;
-    private static final int KEY_SYM_EMOJI = -314;
     private static final int KEY_SYM_NET = -315;
     private static final int KEY_SYM_LOCK = -321;
     private static final int KEY_SYM_UP = -322;
@@ -178,7 +177,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private Keyboard keyboardSymRecent;   // v0.5.34 符号面板分类：最近
     private Keyboard keyboardSymCn;       // 中文
     private Keyboard keyboardSymEn;       // 英文
-    private Keyboard keyboardSymEmoji;    // 表情
     private Keyboard keyboardSymNet;      // 网络
     private boolean chineseMode = true;
     private boolean fromChineseShift = false;   // v0.5.10 反馈①：记录 shift 是否从中文切入英文大写
@@ -347,7 +345,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         keyboardSymRecent = new Keyboard(this, R.xml.keyboard_sym_recent);
         keyboardSymCn = new Keyboard(this, R.xml.keyboard_sym_cn);
         keyboardSymEn = new Keyboard(this, R.xml.keyboard_sym_en);
-        keyboardSymEmoji = new Keyboard(this, R.xml.keyboard_sym_emoji);
         keyboardSymNet = new Keyboard(this, R.xml.keyboard_sym_net);
         keyboardView = new CloudKeyboardView(this, null);
         keyboardView.setKeyboard(keyboardMain);
@@ -409,13 +406,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         statusInfo.setMaxWidth(Math.round(70 * getResources().getDisplayMetrics().density));   // v0.5.99 7 个工具按钮后宽度不足溢出——限 70dp
         statusInfo.setTextColor(dark() ? THEME_DARK_HINT : THEME_LIGHT_HINT);
         // v0.5.9 反馈⑦：点击状态栏英文翻译 → 上屏翻译内容
-        statusInfo.setOnClickListener(v -> {
-            if (!lastEnHint.isEmpty()) {
-                commitText(lastEnHint);
-                lastEnHint = "";
-                updateCandidateView();
-            }
-        });
+        statusInfo.setOnClickListener(null);   // v0.5.101 翻译去掉：点击状态栏不再上屏
         toolRow.addView(statusInfo);
         android.widget.Space spacer = new android.widget.Space(this);
         toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
@@ -427,19 +418,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         toolRow.addView(makeToolButton(R.drawable.ic_tool_undo, v -> doUndo()));   // v0.5.101 取消=圆圈左弧箭头
         toolRow.addView(makeToolButton(R.drawable.ic_tool_redo, v -> doRedo()));   // v0.5.101 重做=圆圈右弧箭头
         // v0.5.97 用户要求：表情单独放工具栏（重做与剪贴板之间）→ 点击直开表情键盘
-        // v0.5.98 用户要求：表情按钮改 😀 且颜色灰色（与其他工具按钮区分）
-        {
-            android.widget.ImageView emojiBtn = makeToolButton(R.drawable.ic_tool_emoji, v -> {
-                clipMode = false;
-                infoPanelMode = false;
-                keyboardView.setKeyboard(keyboardSymEmoji);
-                panelMode = KEY_SYM_EMOJI;
-                prevPanel = 0;
-                applyLetterCase();
-                resetIdleTimers();
-            });
-            toolRow.addView(emojiBtn);   // v0.5.101 表情=圆圈笑脸细线
-        }
         toolRow.addView(makeToolButton(R.drawable.ic_tool_clip, v -> {   // v0.5.101 剪贴板=圆圈剪贴板细线
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
@@ -1132,11 +1110,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 keyboardView.setKeyboard(keyboardSymEn);
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 return;
-            case KEY_SYM_EMOJI:
-                panelMode = 5;
-                keyboardView.setKeyboard(keyboardSymEmoji);
-                keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
-                return;
             case KEY_SYM_NET:
                 panelMode = 6;
                 keyboardView.setKeyboard(keyboardSymNet);
@@ -1469,7 +1442,6 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             try { ic.finishComposingText(); } catch (Exception ignored) { }
             ic.commitText(s, 1);
         }
-        maybeTriggerComma(s);   // v0.6.6 上屏含中文逗号 → 联想下半句/下半段（v0.7.16 已禁用）
         // v0.7.16 固化（用户：暂时去掉联想功能，每次上屏完提示栏和备选栏清空，去除干扰）：
         composingCode.setLength(0);
         candidates.clear();
@@ -3229,16 +3201,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** v0.5.73：光标移动/上屏后刷新翻译（整词→字→空不译）；密码框不译 */
     private void refreshTranslation() {
-        // v0.5.91 上屏后的第一次光标刷新跳过翻译（状态栏保持干净）；之后外部移动光标正常翻译
-        if (suppressHintAfterCommit) {
-            suppressHintAfterCommit = false;
-            lastEnHint = "";
-            if (statusInfo != null) statusInfo.setText("");
-            return;
-        }
-        String ctx = isPassword ? "" : cursorBeforeText();
-        if (ctx.isEmpty()) { lastEnHint = ""; updateCandidateView(); return; }
-        queryTranslationByCursor(ctx);
+        // v0.5.101 用户固化：翻译功能去掉——不再查询/显示英文翻译（保留清空，防残留干扰）
+        if (suppressHintAfterCommit) suppressHintAfterCommit = false;
+        lastEnHint = "";
+        if (statusInfo != null) statusInfo.setText("");
+        updateCandidateView();
     }
 
     /** 上报选词（云端 MRU 学习，尽力而为） */
