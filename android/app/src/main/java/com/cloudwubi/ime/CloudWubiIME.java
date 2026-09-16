@@ -1109,30 +1109,35 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymRecent);
+                patchSymLabels();   // v0.5.103 🔒 emoji 编译丢——代码补 label
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_RECENT:   // v0.5.34 分类切换（左栏）
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymRecent);
+                patchSymLabels();   // v0.5.103 🔒 emoji 编译丢——代码补 label
                 keyboardView.setSymbolLabel(true);   // v0.5.99-fix 符号分类一致 14dp
                 clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_CN:
                 panelMode = 3;
                 keyboardView.setKeyboard(keyboardSymCn);
+                patchSymLabels();   // v0.5.103 🔒 emoji 编译丢——代码补 label
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_EN:
                 panelMode = 4;
                 keyboardView.setKeyboard(keyboardSymEn);
+                patchSymLabels();   // v0.5.103 🔒 emoji 编译丢——代码补 label
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 clearComposingOnPanelSwitch();
                 return;
             case KEY_SYM_NET:
                 panelMode = 6;
                 keyboardView.setKeyboard(keyboardSymNet);
+                patchSymLabels();   // v0.5.103 🔒 emoji 编译丢——代码补 label
                 keyboardView.setSymbolLabel(true);   // v0.5.98 符号界面字号 14
                 clearComposingOnPanelSwitch();
                 return;
@@ -2132,6 +2137,17 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (diff < 60 * 60 * 1000L) return (diff / 60000L) + " 分钟前";
         if (diff < 24 * 60 * 60 * 1000L) return (diff / 3600000L) + " 小时前";
         return (diff / (24 * 3600000L)) + " 天前";
+    }
+
+    /** v0.5.103：🔒 emoji 被 AAPT2 编译丢弃 → 切符号面板后代码补 label（避免锁定键空白） */
+    private void patchSymLabels() {
+        if (keyboardView == null || keyboardView.getKeyboard() == null) return;
+        for (Keyboard.Key k : keyboardView.getKeyboard().getKeys()) {
+            if (k.codes != null && k.codes.length > 0 && k.codes[0] == KEY_SYM_LOCK) {
+                k.label = "🔒";
+            }
+        }
+        keyboardView.invalidateAllKeys();
     }
 
     private void renderClipPanel() {
