@@ -104,20 +104,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     // ===== v0.4.9 FLAT 主题（跟随系统浅色/深色） =====
     private static final int THEME_LIGHT = 0;
     private static final int THEME_DARK = 1;
-    private static final int THEME_LIGHT_KB_BG = 0xFFE8EBEF;   // 键盘底色（浅）
+    private static final int THEME_LIGHT_KB_BG = DesignTokens.BG;   // 键盘底色（浅，统一 token）
     private static final int THEME_LIGHT_CAND_BG = 0x00000000; // 候选条背景（浅）——v0.5.99 用户要求透明
-    private static final int THEME_LIGHT_TOOL_BG = 0xFFEFEFEF; // 状态栏背景（浅）——v0.5.99 用户要求 #efefef
-    private static final int THEME_DARK_TOOL_BG = 0xFF23272E; // 状态栏背景（深）
-    private static final int THEME_DARK_CAND_BG2 = 0xFF1B1F24; // 候选条背景（深）——与深色键盘同色
-    private static final int THEME_LIGHT_TEXT = 0xFF1F2937;    // 主文字（浅）
-    private static final int THEME_LIGHT_HINT = 0xFF9CA3AF;    // 上滑标注/弱文字（浅）
-    private static final int THEME_DARK_KB_BG = 0xFF1B1F24;    // 键盘底色（深）
-    private static final int THEME_DARK_CAND_BG = 0xFF1B1F24;  // 候选条背景（深）——与键盘底色一致（v0.5.96）
-    private static final int THEME_DARK_TEXT = 0xFFF3F4F6;     // 主文字（深）
-    private static final int THEME_DARK_HINT = 0xFF6B7280;     // 弱文字（深）
-    private static final int THEME_ACCENT = 0xFF3B82F6;        // 主题蓝
-    private static final int THEME_FIRST = 0xFFF59E0B;         // 首选橙色
-    private static final int THEME_ERROR = 0xFFDC2626;         // 计算错误红
+    private static final int THEME_LIGHT_TOOL_BG = DesignTokens.BG; // 状态栏背景（浅，统一 token，与键盘同底色）
+    private static final int THEME_DARK_TOOL_BG = DesignTokens.DARK_BG; // 状态栏背景（深，统一 token）
+    private static final int THEME_DARK_CAND_BG2 = DesignTokens.DARK_BG; // 候选条背景（深，统一 token）
+    private static final int THEME_LIGHT_TEXT = DesignTokens.TEXT_MAIN; // 主文字（浅，统一 token）
+    private static final int THEME_LIGHT_HINT = DesignTokens.TEXT_SUB; // 弱文字（浅，统一 token）
+    private static final int THEME_DARK_KB_BG = DesignTokens.DARK_BG; // 键盘底色（深，统一 token）
+    private static final int THEME_DARK_CAND_BG = DesignTokens.DARK_BG; // 候选条背景（深，统一 token）
+    private static final int THEME_DARK_TEXT = DesignTokens.DARK_TEXT; // 主文字（深，统一 token）
+    private static final int THEME_DARK_HINT = DesignTokens.DARK_TEXT_SUB; // 弱文字（深，统一 token）
+    private static final int THEME_ACCENT = DesignTokens.ACCENT; // 主题蓝（统一 token）
+    private static final int THEME_FIRST = DesignTokens.FIRST; // 首选候选橙（统一 token）
+    private static final int THEME_ERROR = DesignTokens.ERROR; // 错误红（统一 token）
     private int theme = THEME_LIGHT;
 
     // ===== v0.4.9 连续联想（陈→胜→吴广） =====
@@ -155,7 +155,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private CloudKeyboardView keyboardView;
     private LinearLayout rootView;
     private LinearLayout toolRow;   // v0.5.0 反馈①：工具行（全选/取消↺/重做↻）
-    private android.widget.TextView hideBtn;   // v0.5.4 反馈⑨：闲置 2 秒后出现的收起键盘按钮
+    private android.widget.ImageView hideBtn;   // v0.5.4 反馈⑨：闲置 2 秒后出现的收起键盘按钮（v0.5.101 图标化）
     /** v0.5.5：闲置定时器——2 秒出现收起按钮（反馈④，INVISIBLE 占位不跳动）
      *  v0.5.8 反馈⑤：取消状态栏/备选栏自动清空（原 1 秒清空候选已移除，候选保留待用户操作） */
     private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
@@ -271,7 +271,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setPadding(24, 3, 24, 3);   // v0.5.93 用户要求：剪贴板左右留白加大（满行显示）
         // v0.5.14 反馈⑤：固定备选栏高度（单行）→ 不撑大显示范围、无画面抖动
         // v0.5.96 用户要求：备选栏高度固定 28dp（与状态栏统一，避免有字/无字高度差）
-        candViewH = Math.round(28 * getResources().getDisplayMetrics().density);
+        candViewH = Math.round(DesignTokens.CAND_BAR_HEIGHT_DP * getResources().getDisplayMetrics().density);   // v0.5.101 备选栏统一 28dp
         candidateView.setMinHeight(candViewH);
         candidateView.setMaxHeight(candViewH);
         candidateView.setMaxLines(1);
@@ -360,7 +360,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         int dp6 = Math.round(6 * getResources().getDisplayMetrics().density);
         keyboardView.setPadding(dp12, dp6, dp12, dp6);
         // v0.5.44 反馈⑦：固定键盘高度（主键盘 4 行 × 56dp + padding 12dp ≈ 236dp）——切数字/符号面板不跳动
-        keyboardView.setMinimumHeight(Math.round(236 * getResources().getDisplayMetrics().density));
+        keyboardView.setMinimumHeight(Math.round((DesignTokens.PANEL_HEIGHT_DP - DesignTokens.TOOLBAR_HEIGHT_DP - DesignTokens.CAND_BAR_HEIGHT_DP - DesignTokens.DIVIDER_DP) * getResources().getDisplayMetrics().density));   // v0.5.101 总高恒 300：239 键盘区
         keyboardView.setMinimumWidth(Math.round(340 * getResources().getDisplayMetrics().density));
 
         LinearLayout root = new LinearLayout(this);
@@ -375,7 +375,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         //   ③状态栏固定高度 25dp（与备选栏统一，防跳动）
         toolRow.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        toolRow.setMinimumHeight(Math.round(28 * getResources().getDisplayMetrics().density));   // v0.5.96 用户要求 28
+        toolRow.setMinimumHeight(Math.round(DesignTokens.TOOLBAR_HEIGHT_DP * getResources().getDisplayMetrics().density));   // v0.5.101 工具栏统一 32dp
         toolRow.setPadding(dp12, dp3, dp12, dp3);   // v0.5.92 左右留边与键盘 12dp 对齐（云五笔≈Q 键左、工具条≈P 键右）
         android.widget.TextView brand = new android.widget.TextView(this);
         brand.setText("云五笔");
@@ -396,7 +396,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         dot.setLayoutParams(dotLp);
         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
         gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-        gd.setColor(0xFFE53935);   // 红色红点
+        gd.setColor(DesignTokens.ERROR);   // 红点（统一 token）
         dot.setBackground(gd);
         dot.setVisibility(android.view.View.GONE);
         brandWrap.addView(dot);
@@ -420,16 +420,16 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         android.widget.Space spacer = new android.widget.Space(this);
         toolRow.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
         // v0.5.55 反馈：全选图标⭕️→〇（⭕️为红色字符，与取消/删除等工具栏图标颜色不统一；〇为普通字符跟随主题色）
-        toolRow.addView(makeToolButton("〇", v -> selectAll()));
+        toolRow.addView(makeToolButton(R.drawable.ic_tool_select, v -> selectAll()));   // v0.5.101 细线圆圈图标
         // v0.5.14 反馈③：工具栏加"删除"（删光标前字符/选区，与退格同功能）
         // v0.5.36 反馈③：取消/删除只用图标节省空间（✕=删除、↺=取消、↻=重做）
-        toolRow.addView(makeToolButton("✕", v -> handleBackspace()));
-        toolRow.addView(makeToolButton("←", v -> doUndo()));   // v0.5.74 反馈②：取消改向左箭头
-        toolRow.addView(makeToolButton("→", v -> doRedo()));   // v0.5.74 反馈②：重做改向右箭头
+        toolRow.addView(makeToolButton(R.drawable.ic_tool_delete, v -> handleBackspace()));
+        toolRow.addView(makeToolButton(R.drawable.ic_tool_undo, v -> doUndo()));   // v0.5.101 取消=圆圈左弧箭头
+        toolRow.addView(makeToolButton(R.drawable.ic_tool_redo, v -> doRedo()));   // v0.5.101 重做=圆圈右弧箭头
         // v0.5.97 用户要求：表情单独放工具栏（重做与剪贴板之间）→ 点击直开表情键盘
         // v0.5.98 用户要求：表情按钮改 😀 且颜色灰色（与其他工具按钮区分）
         {
-            android.widget.TextView emojiBtn = makeToolButton("😀", v -> {
+            android.widget.ImageView emojiBtn = makeToolButton(R.drawable.ic_tool_emoji, v -> {
                 clipMode = false;
                 infoPanelMode = false;
                 keyboardView.setKeyboard(keyboardSymEmoji);
@@ -438,10 +438,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 applyLetterCase();
                 resetIdleTimers();
             });
-            emojiBtn.setTextColor(0xFF9CA3AF);   // 灰色
-            toolRow.addView(emojiBtn);
+            toolRow.addView(emojiBtn);   // v0.5.101 表情=圆圈笑脸细线
         }
-        toolRow.addView(makeToolButton("亖", v -> {
+        toolRow.addView(makeToolButton(R.drawable.ic_tool_clip, v -> {   // v0.5.101 剪贴板=圆圈剪贴板细线
             // v0.5.5 反馈①：密码框禁用剪贴板（隐私）
             if (isPassword) return;
             infoPanelMode = false;   // v0.5.13：切剪贴板时关闭信息面板
@@ -449,13 +448,20 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             updateCandidateView();
         }));
         // v0.5.10 反馈③：下隐功能键常显（取消闲置计时），图标 🔽
-        hideBtn = makeToolButton("🔽", v -> {
+        hideBtn = makeToolButton(R.drawable.ic_tool_hide, v -> {   // v0.5.101 收起=圆圈下箭头
             try { requestHideSelf(0); } catch (Exception ignored) { }
         });
         hideBtn.setVisibility(android.view.View.VISIBLE);
         toolRow.addView(hideBtn);
         // v0.5.8 反馈①：第一行状态栏（云五笔|编码|翻译 | 工具），第二行备选栏，第三行键盘
         root.addView(toolRow);
+        // v0.5.101 UI 统一规范：工具栏与备选栏之间 1dp 分隔线（总高 300 = 32+1+28+239 恒固定）
+        android.view.View divider = new android.view.View(this);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                Math.round(DesignTokens.DIVIDER_DP * getResources().getDisplayMetrics().density)));
+        divider.setBackgroundColor(0x0F000000);
+        root.addView(divider);
         // v0.5.88 反馈：备选栏翻页有拖动移动效果（HorizontalScrollView 跟手滚动，按住左右移动翻查）
         candScroll = new android.widget.HorizontalScrollView(this);
         candScroll.setHorizontalScrollBarEnabled(false);
@@ -489,24 +495,33 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.0 反馈①：工具行按钮（全选/取消↺/重做↻） */
-    private TextView makeToolButton(String text, View.OnClickListener listener) {
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        // v0.5.54 反馈：取消↺/重做↻ 仍偏小 → 放大至 22；其余统一 15——工具栏图标视觉统一
-        boolean isRound = text.equals("↺") || text.equals("↻");
-        float ts = isRound ? 22f : 15f;
-        tv.setTextSize(ts);
-        // v0.5.72 反馈：重塑图标字符位置——全部按钮去字体内边距 + 行居中（上下/左右均居中）
-        tv.setIncludeFontPadding(false);
-        tv.setGravity(android.view.Gravity.CENTER);
-        tv.setOnClickListener(listener);
-        // v0.5.40 反馈④：固定宽度放置工具栏按钮，避免文字宽度差异导致位移晃动
-        // v0.5.60 反馈③：宽度 44dp→34dp（5 按钮间隔缩小一半）；↺↻ 再下移 3 像素视觉对齐
-        tv.setLayoutParams(new LinearLayout.LayoutParams(
-                Math.round(26 * getResources().getDisplayMetrics().density),   // v0.5.99 7 按钮 26dp×7=182 防溢出（原 34 超屏宽挤掉按钮）
-                LinearLayout.LayoutParams.MATCH_PARENT));
-        if (isRound) tv.setTranslationY(-6f);   // v0.5.70 反馈：↺↻ 仍下掉 → 上移 6 像素（22sp 大字符基线偏下）
-        return tv;
+    /** v0.5.101 工具栏图标按钮：细线圆圈 VectorDrawable（统一 26dp、圆角 6、按压浅灰底）。
+     *  颜色/尺寸/圆角唯一来源 DesignTokens——禁止组件另配。 */
+    private android.widget.ImageView makeToolButton(int iconRes, View.OnClickListener listener) {
+        android.widget.ImageView iv = new android.widget.ImageView(this);
+        iv.setImageResource(iconRes);
+        float d = getResources().getDisplayMetrics().density;
+        iv.setPadding(Math.round(4 * d), Math.round(4 * d), Math.round(4 * d), Math.round(4 * d));
+        iv.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        iv.setLayoutParams(new LinearLayout.LayoutParams(
+                Math.round(DesignTokens.TOOL_ICON_DP * d), LinearLayout.LayoutParams.MATCH_PARENT));
+        iv.setOnClickListener(listener);
+        // 按压反馈：浅灰底（唯一 token）
+        final android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(DesignTokens.KEY_RADIUS_DP * d);
+        bg.setColor(0);
+        iv.setBackground(bg);
+        iv.setOnTouchListener((v, ev) -> {
+            if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                bg.setColor(DesignTokens.KEY_SELECT);
+            } else if (ev.getAction() == android.view.MotionEvent.ACTION_UP
+                    || ev.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
+                bg.setColor(0);
+            }
+            return false;
+        });
+        return iv;
     }
 
     /** v0.5.13 反馈①：app 信息面板（IME 内嵌，候选条区域渲染，点任意键关闭）
@@ -636,7 +651,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 }
                 @Override
                 public void updateDrawState(android.text.TextPaint ds) {
-                    ds.setColor(dark() ? 0xFF4FC3F7 : 0xFF1565C0);
+                    ds.setColor(DesignTokens.ACCENT);   // 强调蓝（统一 token）
                     ds.setUnderlineText(true);
                 }
             };
@@ -2236,7 +2251,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setTextSize(14f);   // v0.5.95 用户要求：剪贴板字号与"云五笔"一致（14sp）
         candidateView.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);   // v0.5.70：剪贴板列表顶对齐
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
-        int altBg = dark() ? 0x2AFFFFFF : 0xFFF3F3F3;   // 相间浅色背景（跟随深浅色）
+        int altBg = dark() ? 0x2AFFFFFF : DesignTokens.LIST_ALT;   // 相间浅色背景（统一 token）
         StringBuilder sb = new StringBuilder();
         sb.append("◀ 返回  （长按可删除）   ");   // v0.5.93 用户要求：剪贴板加长按删除提示
         if (clipHistory.isEmpty()) {

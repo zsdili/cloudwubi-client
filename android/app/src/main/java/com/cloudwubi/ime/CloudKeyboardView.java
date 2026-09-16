@@ -54,10 +54,10 @@ public class CloudKeyboardView extends KeyboardView {
     private final Paint hintPaint;
 
     // ===== v0.4.9 FLAT 自绘主题 =====
-    private int boardBg = 0xFFF3F4F6;       // 键盘底板
-    private int keyBgNormal = 0xFFFFFFFF;   // 普通键面
-    private int keyBgFunc = 0xFFE5E7EB;     // 功能键面
-    private int keyTextColor = 0xFF1F2937;  // 键面文字
+    private int boardBg = DesignTokens.BG;          // 键盘底板（统一 token）
+    private int keyBgNormal = DesignTokens.KEY_NORMAL; // 普通键面（统一 token）
+    private int keyBgFunc = DesignTokens.KEY_FUNC;  // 功能键面（统一 token）
+    private int keyTextColor = DesignTokens.TEXT_MAIN; // 键面文字（统一 token）
     private final float cornerPx;           // 键帽圆角
     private final float labelSizePx;
     private boolean symbolLabel = false;   // v0.5.98 符号界面字号 14f（主键盘 20dp × 0.7）
@@ -69,17 +69,17 @@ public class CloudKeyboardView extends KeyboardView {
     public void applyTheme(boolean dark) {
         darkTheme = dark;   // v0.5.99
         if (dark) {
-            boardBg = 0xFF111827;
-            keyBgNormal = 0xFF1F2937;
-            keyBgFunc = 0xFF374151;
-            keyTextColor = 0xFFF9FAFB;
-            hintPaint.setColor(0xFF6B7280);
+            boardBg = DesignTokens.DARK_BG;
+            keyBgNormal = DesignTokens.DARK_KEY_NORMAL;
+            keyBgFunc = DesignTokens.DARK_KEY_FUNC;
+            keyTextColor = DesignTokens.DARK_TEXT;
+            hintPaint.setColor(DesignTokens.DARK_TEXT_SUB);
         } else {
-            boardBg = 0xFFF3F4F6;
-            keyBgNormal = 0xFFFFFFFF;
-            keyBgFunc = 0xFFE5E7EB;
-            keyTextColor = 0xFF1F2937;
-            hintPaint.setColor(0xFF9CA3AF);
+            boardBg = DesignTokens.BG;
+            keyBgNormal = DesignTokens.KEY_NORMAL;
+            keyBgFunc = DesignTokens.KEY_FUNC;
+            keyTextColor = DesignTokens.TEXT_MAIN;
+            hintPaint.setColor(DesignTokens.TEXT_SUB);
         }
         invalidate();
     }
@@ -95,11 +95,11 @@ public class CloudKeyboardView extends KeyboardView {
         thresholdPx = Math.round(SWIPE_THRESHOLD_DP * context.getResources().getDisplayMetrics().density);
         hintPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         hintPaint.setTextAlign(Paint.Align.CENTER);
-        hintPaint.setColor(0xFF9CA3AF);
+        hintPaint.setColor(DesignTokens.TEXT_SUB);
         float density = context.getResources().getDisplayMetrics().density;
-        hintPaint.setTextSize(10 * density);
-        cornerPx = 6 * density;
-        labelSizePx = 20 * density;
+        hintPaint.setTextSize(DesignTokens.FONT_RADICAL_DP * density);
+        cornerPx = DesignTokens.KEY_RADIUS_DP * density;
+        labelSizePx = DesignTokens.FONT_KEY_DP * density;
         textPaint.setTextAlign(Paint.Align.CENTER);
     }
     /** v0.5.98 符号界面切换：true=键面字号 14dp（用户要求 14f）
@@ -280,8 +280,8 @@ public class CloudKeyboardView extends KeyboardView {
             // 1) 键帽底色（功能键深一档）
             boolean pressed = (downKey == key);
             boolean func = isFuncKey(key);
-            keyPaint.setColor(func ? (pressed ? 0xFFD1D5DB : keyBgFunc)
-                                   : (pressed ? 0xFFE5E7EB : keyBgNormal));
+            keyPaint.setColor(func ? (pressed ? DesignTokens.KEY_SELECT : keyBgFunc)
+                                   : (pressed ? DesignTokens.KEY_SELECT : keyBgNormal));
             RectF r = new RectF(x + 2, y + 2, x + key.width - 2, y + key.height - 2);
             canvas.drawRoundRect(r, cornerPx, cornerPx, keyPaint);
             // 2) 键面文字（label 大小写由 IME updateKeyLabels 直接维护；v0.5.1 支持上下两行；v0.5.4 反馈①：全部水平居中，布局统一）
