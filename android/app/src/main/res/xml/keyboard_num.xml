@@ -24,7 +24,7 @@
         <Key android:codes="52" android:keyLabel="4" />
         <Key android:codes="53" android:keyLabel="5" />
         <Key android:codes="54" android:keyLabel="6" />
-        <Key android:codes="64" android:keyLabel="@" />
+        <Key android:codes="61" android:keyLabel="=" />   <!-- v0.5.96 用户：等号常用，数字面板直取（原@移符号页） -->
     </Row>
     <Row>
         <Key android:codes="42" android:keyLabel="*" />

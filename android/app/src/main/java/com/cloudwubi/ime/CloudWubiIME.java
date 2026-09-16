@@ -105,13 +105,14 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private static final int THEME_LIGHT = 0;
     private static final int THEME_DARK = 1;
     private static final int THEME_LIGHT_KB_BG = 0xFFE8EBEF;   // 键盘底色（浅）
-    private static final int THEME_LIGHT_CAND_BG = 0xFFE8EBEF; // 候选条背景（浅）——v0.5.92 与键盘底色统一（原纯白+键盘浅灰=灰白不协调）
-    private static final int THEME_LIGHT_TOOL_BG = 0xFFFCFCFC; // 状态栏背景（浅）——v0.5.95 用户要求 #fcfcfc（原透明露键盘灰 E8EBEF）
+    private static final int THEME_LIGHT_CAND_BG = 0xFFFCFCFC; // 候选条背景（浅）——v0.5.96 用户要求：与工具栏互换（原 E8EBEF）
+    private static final int THEME_LIGHT_TOOL_BG = 0xFFE8EBEF; // 状态栏背景（浅）——v0.5.96 用户要求：与备选栏互换（原 #fcfcfc）
     private static final int THEME_DARK_TOOL_BG = 0xFF23272E; // 状态栏背景（深）
+    private static final int THEME_DARK_CAND_BG2 = 0xFF1B1F24; // 候选条背景（深）——与深色键盘同色
     private static final int THEME_LIGHT_TEXT = 0xFF1F2937;    // 主文字（浅）
     private static final int THEME_LIGHT_HINT = 0xFF9CA3AF;    // 上滑标注/弱文字（浅）
     private static final int THEME_DARK_KB_BG = 0xFF1B1F24;    // 键盘底色（深）
-    private static final int THEME_DARK_CAND_BG = 0xFF23272E;  // 候选条背景（深）
+    private static final int THEME_DARK_CAND_BG = 0xFF1B1F24;  // 候选条背景（深）——与键盘底色一致（v0.5.96）
     private static final int THEME_DARK_TEXT = 0xFFF3F4F6;     // 主文字（深）
     private static final int THEME_DARK_HINT = 0xFF6B7280;     // 弱文字（深）
     private static final int THEME_ACCENT = 0xFF3B82F6;        // 主题蓝
@@ -266,11 +267,11 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     @Override
     public View onCreateInputView() {
         candidateView = new TextView(this);
-        candidateView.setTextSize(16);   // v0.5.95 高度固定 25dp 内可完整显示（原 18 在 25dp 高会裁切）
+        candidateView.setTextSize(16);   // v0.5.95/96 固定高度内完整显示（原 18 会裁切）
         candidateView.setPadding(24, 3, 24, 3);   // v0.5.93 用户要求：剪贴板左右留白加大（满行显示）
         // v0.5.14 反馈⑤：固定备选栏高度（单行）→ 不撑大显示范围、无画面抖动
-        // v0.5.95 用户要求：备选栏高度固定 25dp（与状态栏统一，避免有字/无字高度差）
-        candViewH = Math.round(25 * getResources().getDisplayMetrics().density);
+        // v0.5.96 用户要求：备选栏高度固定 28dp（与状态栏统一，避免有字/无字高度差）
+        candViewH = Math.round(28 * getResources().getDisplayMetrics().density);
         candidateView.setMinHeight(candViewH);
         candidateView.setMaxHeight(candViewH);
         candidateView.setMaxLines(1);
@@ -374,7 +375,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         //   ③状态栏固定高度 25dp（与备选栏统一，防跳动）
         toolRow.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        toolRow.setMinimumHeight(Math.round(25 * getResources().getDisplayMetrics().density));
+        toolRow.setMinimumHeight(Math.round(28 * getResources().getDisplayMetrics().density));   // v0.5.96 用户要求 28
         toolRow.setPadding(dp12, dp3, dp12, dp3);   // v0.5.92 左右留边与键盘 12dp 对齐（云五笔≈Q 键左、工具条≈P 键右）
         android.widget.TextView brand = new android.widget.TextView(this);
         brand.setText("云五笔");
@@ -575,6 +576,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     private void renderInfoPanel() {
+        candidateView.setTextSize(14f);   // v0.5.96 用户要求：非输入界面字号 14
         int c = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         SpannableStringBuilder sb = new SpannableStringBuilder();
         // v0.5.40 反馈①：app 信息只显示 版本号 + github(可点击跳转) + 微信，不得显示其他内容
@@ -1997,7 +1999,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setMaxHeight(candViewH);
         candidateView.setMaxLines(1);
         candidateView.setSingleLine(true);
-        candidateView.setTextSize(18);
+        candidateView.setTextSize(16);   // v0.5.96 统一 16（配合 28dp 高度）
         candidateView.setLineSpacing(0f, 1f);
         candidateView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         candidateView.setGravity(android.view.Gravity.CENTER_VERTICAL);   // v0.5.70：正常态文本垂直居中
@@ -2212,8 +2214,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             int shown = Math.min(8, clipHistory.size());
             for (int i = 0; i < shown; i++) {
                 String item = clipHistory.get(i);
+                // v0.5.96 用户要求：剪贴板文字占满屏宽、不省略（原截断 18 字加…）
                 String line = item.replace('\n', ' ');
-                if (line.length() > 18) line = line.substring(0, 18) + "…";
                 sb.append("  ").append(i + 1).append("·").append(line).append("\n");
             }
         }

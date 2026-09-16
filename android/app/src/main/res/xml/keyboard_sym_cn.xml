@@ -16,7 +16,7 @@
         <Key android:codes="-312" android:keyLabel="▸中文" android:keyWidth="12%p" />
         <Key android:codes="65306" android:keyLabel="：" android:keyWidth="21.5%p" />
         <Key android:codes="12289" android:keyLabel="、" android:keyWidth="21.5%p" />
-        <Key android:codes="64" android:keyLabel="@" android:keyWidth="21.5%p" />
+        <Key android:codes="64" android:keyLabel="=" android:keyWidth="21.5%p" />
         <Key android:codes="8230" android:keyLabel="…" android:keyWidth="21.5%p" />
     </Row>
     <Row>
@@ -29,9 +29,9 @@
     <Row>
         <Key android:codes="-314" android:keyLabel="表情" android:keyWidth="12%p" />
         <Key android:codes="8217" android:keyLabel="’" android:keyWidth="21.5%p" />
-        <Key android:codes="126" android:keyLabel="~" android:keyWidth="21.5%p" />
-        <Key android:codes="183" android:keyLabel="·" android:keyWidth="21.5%p" />
-        <Key android:codes="45" android:keyLabel="-" android:keyWidth="21.5%p" />
+        <Key android:codes="126" android:keyLabel="≠" android:keyWidth="21.5%p" />
+        <Key android:codes="183" android:keyLabel="≈" android:keyWidth="21.5%p" />
+        <Key android:codes="45" android:keyLabel="×" android:keyWidth="21.5%p" />
     </Row>
     <Row>
         <Key android:codes="-315" android:keyLabel="网络" android:keyWidth="12%p" />
