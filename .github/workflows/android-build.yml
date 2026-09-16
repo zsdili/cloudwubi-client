@@ -58,13 +58,13 @@ jobs:
           echo "── 连续计算流程测试（4-6=-2→+5=3 / 2*3=6→*4=24）──"
           java -cp /tmp/javatests com.cloudwubi.ime.CalcFlowTest
           echo "── CalcEngine 引擎测试 ──"
-          java -cp /tmp/javatests com.cloudwubi.ime.CalcEngineTest
+          java -cp /tmp/javatests CalcEngineTest
           echo "── MRU 引擎测试 ──"
-          java -cp /tmp/javatests com.cloudwubi.ime.MruEngineTest
+          java -cp /tmp/javatests MruEngineTest
           echo "── 联想引擎测试 ──"
-          java -cp /tmp/javatests com.cloudwubi.ime.AssociateEngineTest
+          java -cp /tmp/javatests AssociateEngineTest
           echo "── 版本工具测试 ──"
-          java -cp /tmp/javatests com.cloudwubi.ime.VersionUtilTest
+          java -cp /tmp/javatests VersionUtilTest
 
       - name: 上传 APK 工件
         uses: actions/upload-artifact@v4
