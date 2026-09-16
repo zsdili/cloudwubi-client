@@ -265,7 +265,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     public View onCreateInputView() {
         candidateView = new TextView(this);
         candidateView.setTextSize(18);   // v0.5.14 反馈⑥：备选词组大字显示（透明背景默认）
-        candidateView.setPadding(14, 12, 14, 12);
+        candidateView.setPadding(24, 12, 24, 12);   // v0.5.93 用户要求：剪贴板左右留白加大（满行显示）
         // v0.5.14 反馈⑤：固定备选栏高度（单行）→ 不撑大显示范围、无画面抖动
         candViewH = Math.round(46 * getResources().getDisplayMetrics().density);
         candidateView.setMinHeight(candViewH);
@@ -2185,12 +2185,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         candidateView.setEllipsize(null);
         // v0.5.9 反馈⑨：适度行距（0,1.3f 非增大 extra）——条目间用浅色相间背景区分（非虚横线、非空行）
         candidateView.setLineSpacing(0f, 1.3f);
-        candidateView.setTextSize(9f);   // v0.5.90 用户要求：剪贴板文字字号缩小为一半（正常态 18 → 剪贴板 9）
+        candidateView.setTextSize(11f);   // v0.5.93 用户要求：剪贴板字号 11（v0.5.90 曾设 9，偏小）
         candidateView.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);   // v0.5.70：剪贴板列表顶对齐
         int textColor = dark() ? THEME_DARK_TEXT : THEME_LIGHT_TEXT;
         int altBg = dark() ? 0x2AFFFFFF : 0xFFF3F3F3;   // 相间浅色背景（跟随深浅色）
         StringBuilder sb = new StringBuilder();
-        sb.append("◀ 返回   ");
+        sb.append("◀ 返回  （长按可删除）   ");   // v0.5.93 用户要求：剪贴板加长按删除提示
         if (clipHistory.isEmpty()) {
             sb.append("（剪贴板暂无历史，复制的文本将自动记录）");
         } else {
