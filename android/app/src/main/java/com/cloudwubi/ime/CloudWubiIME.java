@@ -1020,7 +1020,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         if (primaryCode >= '0' && primaryCode <= '9') {
             // v0.5.41 反馈⑤：数字键即时触感（消除"粘粘"卡顿感——按键即有反馈）
             keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
-            // v0.5.58：统一走真实计算引擎（CalcEngine，JVM 单元测试直接测线上逻辑）
+            // v0.5.76 上滑数字失效根治：主键盘/英文态数字（含字母键上滑的 1-0）直接上屏——
+            //   旧逻辑一律走 calc 引擎，calcBuffer 残留（如 4-6 计算后未清）时 onDigit 只进缓冲不 commit → "上滑不出数字"
+            if (panelMode != 1) {
+                commitText(String.valueOf((char) primaryCode));
+                return;
+            }
+            // v0.5.58：数字面板统一走真实计算引擎（CalcEngine，JVM 单元测试直接测线上逻辑）
             CalcEngine.Action ca = calcEngine.onDigit((char) primaryCode);
             syncCalcState();
             if (ca.commit != null) commitText(ca.commit);
@@ -1119,25 +1125,29 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 commitSpaceOrFirst();
                 return;
             case KEY_CALC_EQ:      // = 计算上屏（旧面板键，保留兼容）
-                commitCalc(true);
+                // v0.5.76 符号输出：非计算态按 = 输出"="（用户：加减乘除等于都能输出对应符号）
+                if (panelMode == 1 && !calcBuffer.isEmpty()) commitCalc(true);
+                else commitText("=");
                 return;
             case KEY_CALC_DIV:     // ÷
-                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("÷"); } else commitText("÷");
+                if (panelMode == 1 && (prevCharIsDigit() || !calcEngine.lastCalcInput.isEmpty())) { calcAppendOp("÷"); } else commitText("÷");
                 return;
             case KEY_CALC_MUL:     // ×
-                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("×"); } else commitText("×");
+                if (panelMode == 1 && (prevCharIsDigit() || !calcEngine.lastCalcInput.isEmpty())) { calcAppendOp("×"); } else commitText("×");
                 return;
             case 43:               // +
-                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("+"); } else commitText("+");
+                // v0.5.76 连续计算根治：计算后（lastCalcInput=结果）再按运算符必须进计算——
+                //   旧条件只看光标前数字，真机上屏"4-6=-2"后光标前字符偶发非数字 → "+"无反应
+                if (panelMode == 1 && (prevCharIsDigit() || !calcEngine.lastCalcInput.isEmpty())) { calcAppendOp("+"); } else commitText("+");
                 return;
             case 45:               // -
-                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("-"); } else commitText("-");
+                if (panelMode == 1 && (prevCharIsDigit() || !calcEngine.lastCalcInput.isEmpty())) { calcAppendOp("-"); } else commitText("-");
                 return;
             case 42:               // *（数字面板计算）
-                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("*"); } else commitText("*");
+                if (panelMode == 1 && (prevCharIsDigit() || !calcEngine.lastCalcInput.isEmpty())) { calcAppendOp("*"); } else commitText("*");
                 return;
             case 47:               // /（数字面板计算）
-                if (panelMode == 1 && prevCharIsDigit()) { calcAppendOp("/"); } else commitText("/");
+                if (panelMode == 1 && (prevCharIsDigit() || !calcEngine.lastCalcInput.isEmpty())) { calcAppendOp("/"); } else commitText("/");
                 return;
             case 64:               // @（数字面板邮箱直上屏）
                 commitText("@");
