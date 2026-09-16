@@ -41,6 +41,30 @@ jobs:
         run: |
           bash scripts/regression_check.sh android/build-apk/CloudWubi.apk
 
+      - name: JVM 引擎回归测试（真实代码，非模拟器：Calc/联想/MRU/词库）
+        run: |
+          mkdir -p /tmp/javatests
+          javac -encoding UTF-8 -d /tmp/javatests \
+            android/app/src/main/java/com/cloudwubi/ime/CalcEngine.java \
+            android/app/src/main/java/com/cloudwubi/ime/MruEngine.java \
+            android/app/src/main/java/com/cloudwubi/ime/AssociateEngine.java \
+            android/app/src/main/java/com/cloudwubi/ime/VersionUtil.java \
+            android/tests/CalcEngineTest.java \
+            android/tests/calcflow/CalcFlowTest.java \
+            android/tests/MruEngineTest.java \
+            android/tests/AssociateEngineTest.java \
+            android/tests/VersionUtilTest.java 2>&1 | tail -8
+          echo "── 连续计算流程测试（4-6=-2→+5=3 / 2*3=6→*4=24）──"
+          java -cp /tmp/javatests com.cloudwubi.ime.CalcFlowTest
+          echo "── CalcEngine 引擎测试 ──"
+          java -cp /tmp/javatests com.cloudwubi.ime.CalcEngineTest
+          echo "── MRU 引擎测试 ──"
+          java -cp /tmp/javatests com.cloudwubi.ime.MruEngineTest
+          echo "── 联想引擎测试 ──"
+          java -cp /tmp/javatests com.cloudwubi.ime.AssociateEngineTest
+          echo "── 版本工具测试 ──"
+          java -cp /tmp/javatests com.cloudwubi.ime.VersionUtilTest
+
       - name: 上传 APK 工件
         uses: actions/upload-artifact@v4
         with:
