@@ -1714,8 +1714,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(6000);
-                conn.setReadTimeout(6000);
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
                 String body = "{\"code\":\"" + code + "\",\"phrase\":true}";
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(body.getBytes("UTF-8"));
@@ -2728,8 +2728,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(6000);
-                conn.setReadTimeout(6000);
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(body.getBytes("UTF-8"));
                 }
@@ -2803,8 +2803,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(6000);
-            conn.setReadTimeout(6000);
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(body.getBytes("UTF-8"));
             }
@@ -2892,7 +2892,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             try {
                 HttpURLConnection c = (HttpURLConnection) new URL(GATEWAY_URL).openConnection();
                 c.setRequestMethod("POST"); c.setRequestProperty("Content-Type", "application/json");
-                c.setDoOutput(true); c.setConnectTimeout(6000); c.setReadTimeout(6000);
+                c.setDoOutput(true); c.setConnectTimeout(8000); c.setReadTimeout(8000);
                 // v0.5.74：候选=整句 + 光标前中文整词（母亲节2026→母亲节）+ 末字（去重）
                 java.util.List<String> cs = new java.util.ArrayList<>();
                 cs.add(ctx);
