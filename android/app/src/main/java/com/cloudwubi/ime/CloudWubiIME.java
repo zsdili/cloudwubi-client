@@ -206,6 +206,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     private boolean updateChecked = false;
     private long lastUpdateCheck = 0L;
     private volatile boolean checkingUpdate = false;
+    private android.view.View versionBadge = null;   // v0.5.84 反馈③："云五笔"右上角新版本红点
 
     // Shift / Caps（反馈③）
     private int shiftState = 0;             // 0=小写 1=单次大写 2=锁定大写
@@ -385,7 +386,23 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         // v0.5.13 反馈①：去掉 ⓘ 按钮（AlertDialog 在 IME 服务 Context 无法显示）→ 点"云五笔"文字打开 app 信息面板
         brand.setPadding(6, 6, 6, 6);
         brand.setOnClickListener(v -> showInfoPanel());
-        toolRow.addView(brand);
+        // v0.5.84 反馈③：有新版本时"云五笔"右上角红点提示（替代文字提醒）——
+        //   brand 外包 FrameLayout，右上角叠 10dp 红点，检测到新版才显示
+        android.widget.FrameLayout brandWrap = new android.widget.FrameLayout(this);
+        toolRow.addView(brandWrap);
+        brandWrap.addView(brand);
+        android.view.View dot = new android.view.View(this);
+        int dotSize = Math.round(10 * getResources().getDisplayMetrics().density);
+        android.widget.FrameLayout.LayoutParams dotLp = new android.widget.FrameLayout.LayoutParams(
+                dotSize, dotSize, android.view.Gravity.TOP | android.view.Gravity.END);
+        dot.setLayoutParams(dotLp);
+        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+        gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        gd.setColor(0xFFE53935);   // 红色红点
+        dot.setBackground(gd);
+        dot.setVisibility(android.view.View.GONE);
+        brandWrap.addView(dot);
+        versionBadge = dot;
         statusInfo = new android.widget.TextView(this);
         statusInfo.setTextSize(14);   // v0.5.34 反馈④
         statusInfo.setPadding(8, 0, 0, 0);
@@ -440,6 +457,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         applyLangLabels();
         applyLetterCase();   // 中文模式默认大写显示
         updateCandidateView();
+        // v0.5.84 反馈③：启动即检测新版本（红点常驻提示——用户要求"有新版本红点提示"，不等点击）
+        checkUpdateAsync();
         return root;
     }
 
@@ -529,6 +548,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 updateChecked = true;
                 lastUpdateCheck = System.currentTimeMillis();
                 checkingUpdate = false;
+                updateVersionBadge();   // v0.5.84 反馈③：检测到新版 → "云五笔"右上角红点
                 if (infoPanelMode) updateCandidateView();   // 面板仍打开才刷新（否则下次打开再显示）
             });
         }).start();
@@ -536,6 +556,13 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
 
     /** 版本号比较（v0.5.60：逻辑提取到 VersionUtil——纯 Java 可测） */
     private static int compareVersions(String a, String b) { return VersionUtil.compare(a, b); }
+
+    /** v0.5.84 反馈③：有新版本 → "云五笔"右上角红点亮起；无/最新 → 熄灭 */
+    private void updateVersionBadge() {
+        if (versionBadge == null) return;
+        boolean hasNew = latestVersion != null && compareVersions(latestVersion, currentVersion()) > 0;
+        versionBadge.setVisibility(hasNew ? android.view.View.VISIBLE : android.view.View.GONE);
+    }
 
     private String currentVersion() {
         try {
