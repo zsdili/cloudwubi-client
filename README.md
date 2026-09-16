@@ -123,3 +123,19 @@ MIT License · 贡献规范见 [CONTRIBUTING.md](CONTRIBUTING.md)
 - [cloudwubi-gateway](https://github.com/zsdili/cloudwubi-gateway) - 云端网关（腾讯云 SCF）
 - [cloudwubi-rules](https://github.com/zsdili/cloudwubi-rules) - 五笔规则库（去中心化共建）
 - [cloudwubi-ai](https://github.com/zsdili/cloudwubi-ai) - AI 引擎（规划中）
+
+---
+
+## 📦 最新版本：v0.5.76（2026-09-16）
+
+**下载**：GitHub [v0.5.76](https://github.com/zsdili/cloudwubi-client/releases/tag/v0.5.76) ｜ Gitee [CloudWubi.apk](https://gitee.com/zsdili/cloudwubi-client/releases/download/v0.5.76/CloudWubi.apk)（直接覆盖安装，体积 99,865B < 100KB 门禁）
+
+**本轮根治（CI 门禁抓出）**：计算负数根因（-2+5 失败→修复）+ 连续计算增量上屏 + 版本号同步 0.5.76/125
+
+**防复发四门禁（强制执行）**：
+1. `docs/VERIFICATION-MATRIX.md` — 真机 50 场景回归矩阵（发布强制门禁，任一项❌禁发）
+2. `docs/BUG-LEDGER.md` — 顽疾台账（先验收上轮再开发）
+3. CI JVM 引擎回归测试 — 计算/联想/MRU/版本真实代码测试（CalcFlow PASS 8/8）
+4. 网关部署即验证 — `gateway-repo/deploy_scf.py` 部署后自动 curl 3 接口
+
+**问题反馈**：GitHub Issues ｜ Gitee Issues（附复现步骤 + 截图 + 期望结果）
