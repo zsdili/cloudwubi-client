@@ -1091,6 +1091,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                 panelMode = 1;
                 calcBuffer = "";
                 keyboardView.setKeyboard(keyboardNum);
+                keyboardView.setSymbolLabel(false);   // v0.5.99-fix 数字面板恢复主键盘字号 20dp
                 updateCandidateView();
                 return;
             case KEY_SYM_IN:   // v0.5.34 符号面板分类式：进入"最近"分类（参考用户截图）
@@ -1104,6 +1105,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             case KEY_SYM_RECENT:   // v0.5.34 分类切换（左栏）
                 panelMode = 2;
                 keyboardView.setKeyboard(keyboardSymRecent);
+                keyboardView.setSymbolLabel(true);   // v0.5.99-fix 符号分类一致 14dp
                 return;
             case KEY_SYM_CN:
                 panelMode = 3;
@@ -1143,9 +1145,12 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     if (prevPanel == 1) {
                         panelMode = 1;
                         keyboardView.setKeyboard(keyboardNum);
+                        keyboardView.setSymbolLabel(false);   // v0.5.99-fix 数字面板恢复 20dp
                     } else {
                         panelMode = 0;
                         keyboardView.setKeyboard(keyboardMain);
+                        keyboardView.setSymbolLabel(false);   // v0.5.99-fix 主键盘恢复 20dp
+                        applyLetterCase();
                     }
                     updateCandidateView();
                     return;
@@ -1163,6 +1168,7 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
                     panelMode = 0;
                     calcBuffer = "";
                     keyboardView.setKeyboard(keyboardMain);
+                    keyboardView.setSymbolLabel(false);   // v0.5.99-fix 主键盘恢复 20dp
                     applyLetterCase();
                 } else {
                     toggleLang();
