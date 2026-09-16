@@ -1534,6 +1534,8 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
             checkEnglishCompletion(code);
             if (candidates.isEmpty()) candidates.add(code);
             updateCandidateView();
+            // v0.5.79 用户要求：英文自动补全——打 2+ 字母云端补全完整单词/情景词组（异步回填备选栏）
+            if (GATEWAY_READY && code.length() >= 2) queryEnCompletionAsync(code);
             return;
         }
         // v0.5.35 反馈⑥：超 4 码 = 拼音全拼模式——五笔仅用前 4 码查词组，拼音候选云端异步置前
@@ -1704,6 +1706,55 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** 云端网关查询（异步：后台请求，主线程回填，不阻塞输入） */
+    /** v0.5.79 用户要求：英文自动补全——云端 completion 接口（{completion: code}）返回完整单词/情景词组，异步回填备选栏 */
+    private void queryEnCompletionAsync(final String code) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Thread t = new Thread(() -> {
+            List<String> cloud = new ArrayList<>();
+            try {
+                URL url = new URL(GATEWAY_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
+                String body = "{\"completion\":\"" + code + "\"}";
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(body.getBytes("UTF-8"));
+                }
+                if (conn.getResponseCode() == 200) {
+                    try (InputStream is = conn.getInputStream()) {
+                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = r.readLine()) != null) sb.append(line);
+                        JSONObject obj = new JSONObject(sb.toString());
+                        JSONArray phrases = obj.optJSONArray("phrases");
+                        if (phrases != null) {
+                            for (int i = 0; i < phrases.length(); i++) {
+                                String p = phrases.getString(i);
+                                if (p != null && p.length() > 0 && !cloud.contains(p)) cloud.add(p);
+                            }
+                        }
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) { }
+            final List<String> result = cloud;
+            handler.post(() -> {
+                // 仅当编码仍一致时回填，避免过期结果覆盖（与 queryGatewayAsync 同约束）
+                if (!code.equals(composingCode.toString())) return;
+                if (result.isEmpty()) return;
+                for (String s : result) {
+                    if (!candidates.contains(s)) candidates.add(s);
+                }
+                updateCandidateView();
+            });
+        });
+        t.start();
+    }
+
     private void queryGatewayAsync(final String code) {
         final Handler handler = new Handler(Looper.getMainLooper());
         Thread t = new Thread(() -> {
