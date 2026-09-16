@@ -1770,30 +1770,48 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         final Handler handler = new Handler(Looper.getMainLooper());
         Thread t = new Thread(() -> {
             List<String> cloud = new ArrayList<>();
-            try {
-                URL url = new URL(GATEWAY_URL);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setDoOutput(true);
-                conn.setConnectTimeout(8000);
-                conn.setReadTimeout(8000);
-                String body = "{\"code\":\"" + code + "\",\"phrase\":true}";
-                try (OutputStream os = conn.getOutputStream()) {
-                    os.write(body.getBytes("UTF-8"));
-                }
-                if (conn.getResponseCode() == 200) {
-                    try (InputStream is = conn.getInputStream()) {
-                        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                        StringBuilder sb = new StringBuilder();
-                        String line;
-                        while ((line = r.readLine()) != null) sb.append(line);
-                        List<String> parsed = parseCandidates(sb.toString());
-                        if (parsed != null) cloud.addAll(parsed);
+            String failReason = "";
+            // v0.5.83 云端失败诊断+重试：静默吞异常导致"词组永远打不出且无任何提示"——
+            //   失败时状态栏显示原因（真机 10 秒定位），并自动重试 1 次
+            for (int attempt = 0; attempt < 2 && cloud.isEmpty(); attempt++) {
+                try {
+                    URL url = new URL(GATEWAY_URL);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setDoOutput(true);
+                    conn.setConnectTimeout(8000);
+                    conn.setReadTimeout(8000);
+                    String body = "{\"code\":\"" + code + "\",\"phrase\":true}";
+                    try (OutputStream os = conn.getOutputStream()) {
+                        os.write(body.getBytes("UTF-8"));
                     }
+                    if (conn.getResponseCode() == 200) {
+                        try (InputStream is = conn.getInputStream()) {
+                            BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                            StringBuilder sb = new StringBuilder();
+                            String line;
+                            while ((line = r.readLine()) != null) sb.append(line);
+                            List<String> parsed = parseCandidates(sb.toString());
+                            if (parsed != null) cloud.addAll(parsed);
+                        }
+                    } else {
+                        failReason = "云端HTTP " + conn.getResponseCode();
+                    }
+                    conn.disconnect();
+                } catch (Exception e) {
+                    failReason = e.getClass().getSimpleName();
+                    try { Thread.sleep(300); } catch (InterruptedException ignored2) { }
                 }
-                conn.disconnect();
-            } catch (Exception ignored) { }
+            }
+            if (cloud.isEmpty() && !failReason.isEmpty() && statusInfo != null) {
+                final String reason = failReason;
+                handler.post(() -> {
+                    if (code.equals(composingCode.toString())) {
+                        safeStatusText("云端" + reason + "，稍后自动重试");
+                    }
+                });
+            }
             final List<String> result = cloud;
             handler.post(() -> {
                 // 仅当编码仍一致时回填，避免过期结果覆盖
@@ -2292,7 +2310,9 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
     }
 
     /** v0.5.80 用户固化排序规则：最近上屏 > 高频字 > 二字词 > 三字词 > 四字词 > 其他联想词/句(最后)
-     *  严禁将联想的句子放最前面，只限补全时可供选择；严禁繁体。 */
+     *  严禁将联想的句子放最前面，只限补全时可供选择；严禁繁体。
+     *  v0.5.83 修复"4码词组永远打不出"根因：4 码(全码)时词库词组必须优先于单字——
+     *   旧逻辑单字永远在词组前，云端回填"一点/琅琅上口"被挤到单字后+单行截断不可见（gghk 显示"点一上口琅"） */
     private void reorderCandidates() {
         if (!chineseMode || candidates.size() <= 1) return;
         // ① 严禁繁体：先过滤
@@ -2312,13 +2332,24 @@ public class CloudWubiIME extends InputMethodService implements KeyboardView.OnK
         }
         // 高频单字按词频降序（freqMap 端侧累计）
         high.sort((a, b) -> Integer.compare(freqOf(b), freqOf(a)));
+        // v0.5.83 4 码词组优先：输满 4 码（全码）时，词库词组（2-4 字）排在单字之前——
+        //   否则 gghk 显示"点 一 上 口 琅"，用户看不到"一点/琅琅上口"（违背"输4码时词组优先显示"）
+        String curCode = composingCode.toString();
         candidates.clear();
         candidates.addAll(mru);
-        candidates.addAll(high);
-        candidates.addAll(d2);
-        candidates.addAll(d3);
-        candidates.addAll(d4);
-        candidates.addAll(other);
+        if (curCode.length() >= 4) {
+            candidates.addAll(d2);
+            candidates.addAll(d3);
+            candidates.addAll(d4);
+            candidates.addAll(high);
+            candidates.addAll(other);
+        } else {
+            candidates.addAll(high);
+            candidates.addAll(d2);
+            candidates.addAll(d3);
+            candidates.addAll(d4);
+            candidates.addAll(other);
+        }
     }
 
     private void renderCandidates() {
